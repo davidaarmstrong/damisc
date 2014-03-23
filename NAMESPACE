@@ -1,0 +1,40 @@
+import(car)
+import(effects)
+import(lattice)
+import(sm)
+import(MASS)
+import(nnet)
+import(splines)
+import(pscl)
+import(gdata)
+import(xtable)
+
+export(
+	BGMtest, 
+	binfit, 
+	btscs,
+	cat2Table,
+	crTest,
+	crSpanTest, 
+	DAintfun,
+	DAintfun2, 
+	glmChange, 
+	intEff,
+	intQualQuant,
+	mnlSig, 
+	multiChange,
+	ordChange,
+	panel.2cat,
+	panel.ci, 
+	poisGOF, 
+	pre, 
+	prepanel.ci, 
+	outXT,
+	scaleDataFrame,
+	searchVarLabels, 
+	ziChange,
+	aveEffPlot,
+	glmChange2
+)
+
+S3method(print, pre)
