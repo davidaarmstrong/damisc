@@ -1353,7 +1353,7 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=T){
 }
 intQualQuant <- function(obj, vars, level = .95 , 
 	labs = NULL, n = 10 , onlySig = FALSE, plot = FALSE, 
-	vals = NULL){
+	vals = NULL, rug=TRUE){
 cl <- attr(terms(obj), "dataClasses")[vars]
 if(length(cl) != 2){
 	stop("vars must identify 2 and only 2 model terms")
@@ -1405,7 +1405,6 @@ if(length(inds) == nc){
 rownames(inds) <- dn[[1]][-outind]
 colnames(inds) <- dn[[2]]
 
-
 if(length(faclevs) < 2){stop("Factor must have at least two unique values")}
 {if(length(faclevs) > 2){
 combs <- combn(length(faclevs)-1, 2)
@@ -1413,6 +1412,16 @@ combs <- combn(length(faclevs)-1, 2)
 else{
 	combs <- matrix(1:length(faclevs), ncol=1)
 }}
+mf <- model.frame(obj)
+c2 <- combn(1:length(faclevs), 2)
+dc <- dim(c2)
+fl2 <- matrix(faclevs[c2], nrow=dc[1], ncol=dc[2])
+l <- list()
+for(i in 1:ncol(c2)){
+	l[[i]] <- list()
+	l[[i]][[fl2[[1,i]]]] <- mf[which(mf[[facvar]] == fl2[1,i]), quantvar]
+	l[[i]][[fl2[[2,i]]]] <- mf[which(mf[[facvar]] == fl2[2,i]), quantvar]
+}
 
 tmp.A <- matrix(0, nrow=length(quantseq), ncol=length(b))
 A.list <- list()
@@ -1469,11 +1478,34 @@ else{
 	rl <- range(c(res[, c("lower", "upper")]))
 	p <- xyplot(fit ~ x | contrast, data=res, xlab = quantvar, ylab = "Predicted Difference", ylim = rl, 
 		lower=res$lower, upper=res$upper, 
-		prepanel = prepanel.ci, 
-		panel = panel.ci, zl=TRUE)
+		prepanel = prepanel.ci, zl=TRUE,
+	panel=function(x,y,subscripts,lower,upper,zl){
+		panel.lines(x,y,col="black")
+		panel.lines(x,lower[subscripts], col="black", lty=2)
+		panel.lines(x,upper[subscripts], col="black", lty=2)
+		if(zl)panel.abline(h=0, lty=3, col="gray50")
+		if(rug){
+			panel.doublerug(xa=l[[packet.number()]][[1]],xb=l[[packet.number()]][[2]])
+	}
+}
+)
 	plot(p)
 	return(p)
 }
+}
+
+panel.doublerug <- function (xa = NULL, xb = NULL, 
+	regular = TRUE, start = if (regular) 0 else 0.97, 
+    end = if (regular) 0.03 else 1, x.units = rep("npc", 2), 
+    lty = 1, lwd = 1) 
+{
+    x.units <- rep(x.units, length.out = 2)
+    grid.segments(x0 = unit(xa, "native"), x1 = unit(xa, "native"), 
+        y0 = unit(start, x.units[1]), y1 = unit(end*.75, x.units[2]), 
+		gp=gpar(col.line="black", lty=lty, lwd=lwd))
+	grid.segments(x0 = unit(xb, "native"), x1 = unit(xb, "native"), 
+		y0 = unit(end*1.25, x.units[1]), y1 = unit((2*end), x.units[2]), 
+		gp=gpar(col.line="black", lty=lty, lwd=lwd))
 }
 
 panel.ci <- function(x,y,subscripts,lower,upper,zl){

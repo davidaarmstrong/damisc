@@ -5,7 +5,7 @@
 \usage{
 	intQualQuant(obj, vars, level = .95, labs=NULL, 
 		n=10, onlySig=FALSE, plot=FALSE, 
-		vals = NULL)
+		vals = NULL, rug=TRUE)
 }
 \arguments{
   \item{obj}{An object of class \code{lm}.}
@@ -16,6 +16,7 @@
   \item{onlySig}{Logical indicating whether only contrasts with significant differences should be returned.  Significance is determined to exist if the largest lower bound is greater than zero or the smallest upper bound is smaller than zero.}
   \item{plot}{Logical indicating whether a plot should be made (if \code{TRUE}) or the data should be returned (if \code{FALSE}).}	
   \item{vals}{A vector of values at which the continuous variable will be held constant.  If \code{NULL}, a sequence of length \code{n} across the variable's range will be used.}
+  \item{rug}{Logical indicating whether rug plots should be plotted in the panels.}
 }
 \value{
 A data frame with the following values: 
