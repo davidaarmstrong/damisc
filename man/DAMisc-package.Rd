@@ -9,7 +9,7 @@
 \tabular{ll}{
 Package: \tab DAMisc\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
+Version: \tab 1.2-2\cr
 Date: \tab 2010-05-18\cr
 License: \tab GPL (>=2)\cr
 LazyLoad: \tab yes\cr
@@ -20,6 +20,10 @@ These are functions that help present linear model results.  Largely, the repres
 Maintainer: Dave Armstrong <davearmstrong.ps@gmail.com>
 }
 \references{
+Armstrong, D.A.  (2013)  factorplot: Improving Presentation of Simple Contrasts in GLMs.  The R Journal.  5, 4-15.
 Brambor, T., W.R. Clark and M. Golder.  (2006) Understanding Interaction Models: Improving Empirical Analyses.  Political Analysis 14, 63-82.\cr
-Berrym, W., M. Golder and D. Milton.  (2012) 
+Berrym, W., M. Golder and D. Milton.  (2012) Improving Tests of Theories Positing Interaction.  Journal of Politics 74, 653-671.
 }
+
+
+
