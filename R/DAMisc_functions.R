@@ -1351,9 +1351,11 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=T){
 			"p-value"))
 	return(noquote(out))
 }
+
 intQualQuant <- function(obj, vars, level = .95 , 
-	labs = NULL, n = 10 , onlySig = FALSE, plot = FALSE, 
-	vals = NULL, rug=TRUE){
+	labs = NULL, n = 10 , onlySig = FALSE, plot.type = c("none", "facs", "slopes"), 
+	vals = NULL, rug=TRUE, ci=TRUE, ...){
+plot.type=match.arg(plot.type)
 cl <- attr(terms(obj), "dataClasses")[vars]
 if(length(cl) != 2){
 	stop("vars must identify 2 and only 2 model terms")
@@ -1471,18 +1473,20 @@ if(onlySig){
 	notsig <- which(sigs[,1] < 0 & sigs[,2] > 0)
 	res <- dat[-which(dat$contrast %in% names(notsig)), ]
 }
-if(plot == FALSE){
-	invisible(res)
+if(plot.type == "none"){
+	return(res)
 }
-else{
+if(plot.type == "facs"){
 	rl <- range(c(res[, c("lower", "upper")]))
 	p <- xyplot(fit ~ x | contrast, data=res, xlab = quantvar, ylab = "Predicted Difference", ylim = rl, 
 		lower=res$lower, upper=res$upper, 
 		prepanel = prepanel.ci, zl=TRUE,
 	panel=function(x,y,subscripts,lower,upper,zl){
 		panel.lines(x,y,col="black")
-		panel.lines(x,lower[subscripts], col="black", lty=2)
-		panel.lines(x,upper[subscripts], col="black", lty=2)
+		if(ci){
+			panel.lines(x,lower[subscripts], col="black", lty=2)
+			panel.lines(x,upper[subscripts], col="black", lty=2)
+		}
 		if(zl)panel.abline(h=0, lty=3, col="gray50")
 		if(rug){
 			panel.doublerug(xa=l[[packet.number()]][[1]],xb=l[[packet.number()]][[2]])
@@ -1492,7 +1496,73 @@ else{
 	plot(p)
 	return(p)
 }
+if(plot.type == "slopes"){
+intterm <- NULL
+if(paste(facvar, quantvar, sep=":") %in% colnames(attr(terms(obj), "factors"))){
+	intterm <- paste(facvar, quantvar, sep="*")
 }
+if(paste(quantvar, facvar, sep=":") %in% colnames(attr(terms(obj), "factors"))){
+	intterm <- paste(quantvar, facvar, sep="*")
+}
+if(is.null(intterm)){
+	stop("No interaction in model\n")
+}
+e <- do.call(effect, c(list(term=intterm, mod=obj, default.levels=n, ...)))
+le <- as.list(by(mf[[quantvar]], list(mf[[facvar]]), function(x)x))
+
+edf <- data.frame(fit = e$fit, x = e$x[,quantvar], 
+   fac = e$x[,facvar], se = e$se)
+edf$lower <- edf$fit - qt(.975, obj$df.residual)*edf$se
+edf$upper <- edf$fit + qt(.975, obj$df.residual)*edf$se
+
+yl <- range(c(edf$upper, edf$lower))
+xl <- range(edf$x) + c(-1,1)*.01*diff(range(edf$x))
+if(rug)yl[1] <- yl[1] - (.05*length(faclevs))*diff(yl)
+
+p <- xyplot(fit ~ x, group = edf$fac, data=edf, 
+	lower=edf$lower, upper=edf$upper, 
+	ylim = yl, xlim=xl, 
+	key=simpleKey(faclevs, lines=TRUE, points=FALSE), 
+	panel = function(x,y,groups, lower, upper, ...){
+	if(ci){
+		panel.transci(x,y,groups,lower,upper, ...)
+	}
+	else{
+		panel.superpose(x=x,y=y, ..., panel.groups="panel.xyplot", type="l", groups=groups)
+	}
+	if(rug){
+		for(i in 1:length(faclevs)){
+			st <- (0) + (i-1)*.03
+			end <- st + .02
+			panel.rug(x=le[[i]],y=NULL,col=trellis.par.get("superpose.line")$col[i], start=st, end=end)
+
+			}
+		}
+	})
+plot(p)
+return(p)
+}
+}
+
+panel.transci <- function(x,y,groups,lower,upper,...){
+	sup.poly <- trellis.par.get("superpose.polygon")
+	sup.poly.rgb <- col2rgb(sup.poly$col)/255
+	sup.poly.rgb <- rbind(sup.poly.rgb, .25)
+	rownames(sup.poly.rgb)[4] <- "alpha"
+	ap <- apply(sup.poly.rgb, 2, function(x)lapply(1:4, function(y)x[y]))
+	sup.poly$col <- sapply(ap, function(x)do.call(rgb, x))
+	sup.line <- trellis.par.get("superpose.line")
+	ungroup <- unique(groups)
+	for(i in 1:length(ungroup)){
+	panel.polygon(
+		x=c(x[groups == ungroup[i]], rev(x[groups == ungroup[i]])), 
+		y = c(lower[groups == ungroup[i]], rev(upper[groups == ungroup[i]])), 
+		col = sup.poly$col[i], border="transparent")
+	panel.lines(x[groups == ungroup[i]], y[groups == ungroup[i]], col=sup.line$col[i], lwd=sup.line$lwd[i], lty= sup.line$lty[i])
+	}
+}
+
+
 
 panel.doublerug <- function (xa = NULL, xb = NULL, 
 	regular = TRUE, start = if (regular) 0 else 0.97, 
