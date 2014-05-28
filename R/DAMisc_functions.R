@@ -1353,9 +1353,9 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=T){
 }
 
 intQualQuant <- function(obj, vars, level = .95 , 
-	labs = NULL, n = 10 , onlySig = FALSE, plot.type = c("none", "facs", "slopes"), 
-	vals = NULL, rug=TRUE, ci=TRUE, ...){
-plot.type=match.arg(plot.type)
+	labs = NULL, n = 10 , onlySig = FALSE, type = c("facs", "slopes"), 
+	plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE, ...){
+type=match.arg(type)
 cl <- attr(terms(obj), "dataClasses")[vars]
 if(length(cl) != 2){
 	stop("vars must identify 2 and only 2 model terms")
@@ -1473,74 +1473,104 @@ if(onlySig){
 	notsig <- which(sigs[,1] < 0 & sigs[,2] > 0)
 	res <- dat[-which(dat$contrast %in% names(notsig)), ]
 }
-if(plot.type == "none"){
-	return(res)
-}
-if(plot.type == "facs"){
-	rl <- range(c(res[, c("lower", "upper")]))
-	p <- xyplot(fit ~ x | contrast, data=res, xlab = quantvar, ylab = "Predicted Difference", ylim = rl, 
-		lower=res$lower, upper=res$upper, 
-		prepanel = prepanel.ci, zl=TRUE,
-	panel=function(x,y,subscripts,lower,upper,zl){
-		panel.lines(x,y,col="black")
-		if(ci){
-			panel.lines(x,lower[subscripts], col="black", lty=2)
-			panel.lines(x,upper[subscripts], col="black", lty=2)
-		}
-		if(zl)panel.abline(h=0, lty=3, col="gray50")
-		if(rug){
-			panel.doublerug(xa=l[[packet.number()]][[1]],xb=l[[packet.number()]][[2]])
+if(type == "facs"){
+	if(!plot){
+		return(res)
 	}
+	if(plot){
+		rl <- range(c(res[, c("lower", "upper")]))
+		if(rug)rl[1] <- rl[1] - (.05*length(faclevs))*diff(rl)
+		p <- xyplot(fit ~ x | contrast, data=res, xlab = quantvar, ylab = "Predicted Difference", ylim = rl, 
+			lower=res$lower, upper=res$upper, 
+			prepanel = prepanel.ci, zl=TRUE,
+		panel=function(x,y,subscripts,lower,upper,zl){
+			panel.lines(x,y,col="black")
+			if(ci){
+				panel.lines(x,lower[subscripts], col="black", lty=2)
+				panel.lines(x,upper[subscripts], col="black", lty=2)
+			}
+			if(zl)panel.abline(h=0, lty=3, col="gray50")
+			if(rug){
+				panel.doublerug(xa=l[[packet.number()]][[1]],xb=l[[packet.number()]][[2]])
+		}
 }
 )
 	plot(p)
 	return(p)
 }
-if(plot.type == "slopes"){
-intterm <- NULL
-if(paste(facvar, quantvar, sep=":") %in% colnames(attr(terms(obj), "factors"))){
-	intterm <- paste(facvar, quantvar, sep="*")
 }
-if(paste(quantvar, facvar, sep=":") %in% colnames(attr(terms(obj), "factors"))){
-	intterm <- paste(quantvar, facvar, sep="*")
+if(type == "slopes"){
+	if(!plot){
+	gq1 <- grep(paste(".*\\:", quantvar, "$", sep=""), names(b))
+	gq2 <- grep(paste("^", quantvar, ".*\\:", sep=""), names(b))
+	{if(length(gq1) == 0){qint <- gq2}
+	else{qint <-  gq1}}
+	if(length(qint) == 0){stop("Problem finding interaction coefficients")}
+	qint <- c(grep(paste("^", quantvar, "$", sep=""), names(b)), qint)
+
+
+	W <- matrix(0, nrow=length(faclevs), ncol=length(b))
+	W[, qint[1]] <- 1
+	W[cbind(1:length(faclevs), qint)] <- 1
+
+	V <- vcov(obj)
+	qeff <- W %*% b
+	qse <- sqrt(diag(W %*% V %*% t(W)))
+	qtstats <- qeff/qse
+	qpv <- 2*pt(abs(qtstats), obj$df.residual, lower.tail=F)
+
+	qres <- sapply(list(qeff, qse, qtstats, qpv), function(x)sprintf("%.3f", x))
+	colnames(qres) <- c("B", "SE(B)", "t-stat", "Pr(>|t|)")
+	rownames(qres) <- faclevs
+	cat("Conditional effects of ", quantvar, ":\n")
+	return(noquote(qres))
 }
-if(is.null(intterm)){
-	stop("No interaction in model\n")
-}
-e <- do.call(effect, c(list(term=intterm, mod=obj, default.levels=n, ...)))
-le <- as.list(by(mf[[quantvar]], list(mf[[facvar]]), function(x)x))
-
-edf <- data.frame(fit = e$fit, x = e$x[,quantvar], 
-   fac = e$x[,facvar], se = e$se)
-edf$lower <- edf$fit - qt(.975, obj$df.residual)*edf$se
-edf$upper <- edf$fit + qt(.975, obj$df.residual)*edf$se
-
-yl <- range(c(edf$upper, edf$lower))
-xl <- range(edf$x) + c(-1,1)*.01*diff(range(edf$x))
-if(rug)yl[1] <- yl[1] - (.05*length(faclevs))*diff(yl)
-
-p <- xyplot(fit ~ x, group = edf$fac, data=edf, 
-	lower=edf$lower, upper=edf$upper, 
-	ylim = yl, xlim=xl, 
-	key=simpleKey(faclevs, lines=TRUE, points=FALSE), 
-	panel = function(x,y,groups, lower, upper, ...){
-	if(ci){
-		panel.transci(x,y,groups,lower,upper, ...)
+if(plot){
+	intterm <- NULL
+	if(paste(facvar, quantvar, sep=":") %in% colnames(attr(terms(obj), "factors"))){
+		intterm <- paste(facvar, quantvar, sep="*")
 	}
-	else{
-		panel.superpose(x=x,y=y, ..., panel.groups="panel.xyplot", type="l", groups=groups)
+	if(paste(quantvar, facvar, sep=":") %in% colnames(attr(terms(obj), "factors"))){
+		intterm <- paste(quantvar, facvar, sep="*")
 	}
-	if(rug){
-		for(i in 1:length(faclevs)){
-			st <- (0) + (i-1)*.03
-			end <- st + .02
-			panel.rug(x=le[[i]],y=NULL,col=trellis.par.get("superpose.line")$col[i], start=st, end=end)
+	if(is.null(intterm)){
+		stop("No interaction in model\n")
+	}
+	e <- do.call(effect, c(list(term=intterm, mod=obj, default.levels=n, ...)))
+	le <- as.list(by(mf[[quantvar]], list(mf[[facvar]]), function(x)x))
 
-			}
+	edf <- data.frame(fit = e$fit, x = e$x[,quantvar], 
+	   fac = e$x[,facvar], se = e$se)
+	edf$lower <- edf$fit - qt(.975, obj$df.residual)*edf$se
+	edf$upper <- edf$fit + qt(.975, obj$df.residual)*edf$se
+
+	yl <- range(c(edf$upper, edf$lower))
+	xl <- range(edf$x) + c(-1,1)*.01*diff(range(edf$x))
+	if(rug)yl[1] <- yl[1] - (.05*length(faclevs))*diff(yl)
+
+	p <- xyplot(fit ~ x, group = edf$fac, data=edf, 
+		lower=edf$lower, upper=edf$upper, 
+		ylim = yl, xlim=xl, 
+		key=simpleKey(faclevs, lines=TRUE, points=FALSE), 
+		panel = function(x,y,groups, lower, upper, ...){
+		if(ci){
+			panel.transci(x,y,groups,lower,upper, ...)
 		}
-	})
-plot(p)
-return(p)
+		else{
+			panel.superpose(x=x,y=y, ..., panel.groups="panel.xyplot", type="l", groups=groups)
+		}
+		if(rug){
+			for(i in 1:length(faclevs)){
+				st <- (0) + (i-1)*.03
+				end <- st + .02
+				panel.rug(x=le[[i]],y=NULL,col=trellis.par.get("superpose.line")$col[i], start=st, end=end)
+
+				}
+			}
+		})
+	plot(p)
+	return(p)
+}
 }
 }
 
@@ -1858,5 +1888,4 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
 		}
 	}
 }
-
 
