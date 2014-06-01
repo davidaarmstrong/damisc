@@ -1369,6 +1369,7 @@ faclevs <- obj$xlevels[[facvar]]
 if(is.null(labs)){
 	labs <- faclevs
 }
+if(!is.null(vals)){n <- length(vals)}
 if(!is.null(vals)){
 	quantseq <- vals
 }
