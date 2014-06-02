@@ -26,6 +26,8 @@ export(
 	ordChange,
 	panel.2cat,
 	panel.ci, 
+	panel.transci,
+	panel.doublerug,
 	poisGOF, 
 	pre, 
 	prepanel.ci, 
