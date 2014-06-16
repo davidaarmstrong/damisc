@@ -1648,10 +1648,18 @@ crTest <- function(model, adjust.method="none",...){
 }
 lo.mods <- lapply(terms.list, function(z)loess(y ~ x, data=z,...))
 lin.mods <- lapply(terms.list, function(z)lm(y ~ x, data=z))
+n <- nrow(model.matrix(model))
+d1a <- loess.mod$one.delta; d2a <- loess.mod$two.delta
+dfdenom <- d1a^2/d2a
+dfnum <- (n - dfdenom) - trans.mod$rank
+F0 <- ((rss0-rss1)/dfnum)/
+    (rss1 / dfdenom)
 lo.rss <- sapply(lo.mods, function(x)sum(residuals(x)^2))
 lm.rss <- sapply(lin.mods, function(x)sum(residuals(x)^2))
-num.df <- sapply(lo.mods, function(x)x$trace.hat) - sapply(lin.mods, function(x)x$rank)
-denom.df <- sapply(terms.list, nrow) - sapply(lo.mods, function(x)x$trace.hat)
+d1a <- sapply(lo.mods, function(x)x$one.delta)
+d2a <- sapply(lo.mods, function(x)x$two.delta)
+denom.df <- d1a^2/d2a
+num.df <- (n-dfdenom) - sapply(lin.mods, function(x)x$rank)
 F.stats <- ((lm.rss-lo.rss)/num.df)/(lo.rss/denom.df)
 pvals <- p.adjust(pf(F.stats, num.df, denom.df, lower.tail=F), method=adjust.method)
 out <- data.frame(
