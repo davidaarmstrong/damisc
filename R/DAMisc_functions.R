@@ -1671,6 +1671,7 @@ crSpanTest <-
 function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("both", "across", "within", "none")){
 	span.seq <- seq(from=spfromto[1], to=spfromto[2], 
 		length=n)
+	adjust.type <- match.arg(adjust.type)
 	out.list <- list()
 	for(i in 1:length(span.seq)){
 		out.list[[i]] <- crTest(model, adjust.method="none", 
