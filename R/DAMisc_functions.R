@@ -1654,7 +1654,7 @@ lm.rss <- sapply(lin.mods, function(x)sum(residuals(x)^2))
 d1a <- sapply(lo.mods, function(x)x$one.delta)
 d2a <- sapply(lo.mods, function(x)x$two.delta)
 denom.df <- d1a^2/d2a
-num.df <- (n-dfdenom) - sapply(lin.mods, function(x)x$rank)
+num.df <- (n-denom.df) - sapply(lin.mods, function(x)x$rank)
 F.stats <- ((lm.rss-lo.rss)/num.df)/(lo.rss/denom.df)
 pvals <- p.adjust(pf(F.stats, num.df, denom.df, lower.tail=F), method=adjust.method)
 out <- data.frame(
