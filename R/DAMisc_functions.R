@@ -1668,7 +1668,7 @@ rownames(out) <- terms
 return(out)
 }
 crSpanTest <- 
-function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("both", "across", "within", "none")){
+function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", "across", "within", "both")){
 	span.seq <- seq(from=spfromto[1], to=spfromto[2], 
 		length=n)
 	adjust.type <- match.arg(adjust.type)
@@ -1679,6 +1679,9 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("both", 
 	}
 	pvals <- sapply(out.list, function(x)
 		as.numeric(as.character(x[,"p"])))
+	if(!is.matrix(pvals)){
+		pvals <- matrix(pvals, nrow=1)
+	}
 	if(adjust.type == "within"){
 		pvals <- apply(pvals, 2, p.adjust, 	
 			method=adjust.method)
