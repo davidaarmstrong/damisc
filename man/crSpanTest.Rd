@@ -4,7 +4,7 @@
 \description{This function performs \code{crTest} for a user-defined range of span parameters, optionally allowing for multiple testing corrections in the p-values. }
 \usage{
 crSpanTest(model, spfromto, n=10, adjust.method="none", 
-    adjust.type=c("both", "across", "within", "none"))
+    adjust.type=c("none", "across", "within", "both"))
 }
 \arguments{
   \item{model}{A model object of class \code{lm}}

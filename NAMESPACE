@@ -8,7 +8,6 @@ import(splines)
 import(pscl)
 import(gdata)
 import(xtable)
-
 export(
 	BGMtest, 
 	binfit, 
@@ -16,14 +15,21 @@ export(
 	cat2Table,
 	crTest,
 	crSpanTest, 
+	combTest,
 	DAintfun,
 	DAintfun2, 
 	glmChange, 
 	intEff,
 	intQualQuant,
 	mnlSig, 
-	multiChange,
+   mnlAveEffPlot,
+	mnlChange,
+	mnlChange2,
+	mnlfit,
 	ordChange,
+   ordChange2,
+   ordAveEffPlot, 
+   ordfit,
 	panel.2cat,
 	panel.ci, 
 	panel.transci,

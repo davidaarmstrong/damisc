@@ -87,6 +87,47 @@ function (data, event, tvar, csunit, pad.ts = FALSE)
     }
     invisible(data)
 }
+
+combTest <- function(obj){
+	y <- model.response(model.frame(obj))
+	b <- c(t(coef(obj)))
+	names(b) <- rownames(vcov(obj))
+	l <- levels(y)
+	combs <- combn(l, 2)
+	res <- array(dim=dim(t(combs)))
+	k <- 1
+	inds1 <- which(combs[1,] == l[1])
+	for(j in 1:length(inds1)){
+		inds <- grep(paste("^", combs[2,inds1[j]], ":", sep=""), names(b))
+		inds <- inds[-grep("Intercept", names(b)[inds])]
+		Q <- matrix(0, ncol=length(b), nrow=length(inds))
+		Q[cbind(1:nrow(Q), inds)] <- 1
+		w <- t(Q %*% b) %*% solve(Q %*% vcov(obj) %*% t(Q)) %*% Q %*%b
+		p <- pchisq(w, nrow(Q), lower.tail=F)
+		res[k,]<- c(w,p)
+		k <- k+1
+	}
+	inds2 <- (1:ncol(combs))[-inds1]
+	for(j in 1:length(inds2)){
+		indsa <- grep(paste("^", combs[2,inds2[j]], ":", sep=""), names(b))
+		indsa <- indsa[-grep("Intercept", names(b)[indsa])]
+		indsb <- grep(paste("^", combs[1,inds2[j]], ":", sep=""), names(b))
+		indsb <- indsb[-grep("Intercept", names(b)[indsb])]
+		Q <- matrix(0, ncol=length(b), nrow=length(inds))
+		Q[cbind(1:nrow(Q), indsa)] <- 1
+		Q[cbind(1:nrow(Q), indsb)] <- -1
+		w <- t(Q %*% b) %*% solve(Q %*% vcov(obj) %*% t(Q)) %*% Q %*%b
+		p <- pchisq(w, nrow(Q), lower.tail=F)
+		res[k,]<- c(w,p)
+		k <- k+1
+	}
+	rownames(res) <- apply(combs, 2, paste, collapse="-")
+	colnames(res) <- c("Estimate", "p-value")
+	res[,1] <- round(res[,1], 3)
+	res[,2] <- round(res[,2], 3)
+	return(res)
+}
+
 DAintfun <-
 function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,...) 
 {
@@ -589,21 +630,77 @@ function (obj, pval = 0.05, two.sided = TRUE, flag.sig = TRUE,
     b <- as.data.frame(b)
     return(b)
 }
-multiChange <-
-function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit")) 
-{
+
+mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
     vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    pols <- grep("poly", vars)
-    if (length(pols) > 0) {
-        poly.split <- strsplit(vars[pols], split = "")
-        start <- lapply(poly.split, function(x) grep("(", x, 
-            fixed = T) + 1)
-        stop <- lapply(poly.split, function(x) grep(",", x, fixed = T) - 
-            1)
-        pol.vars <- sapply(1:length(poly.split), function(x) paste(poly.split[[x]][start[[x]]:stop[[x]]], 
-            collapse = ""))
-        vars[pols] <- pol.vars
-    }
+    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    rn <- vars
+    var.classes <- sapply(vars, function(x) class(data[[x]]))
+    b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
+    d0 <- list()
+    if(is.numeric(data[[varname]])){
+	  s <- seq(min(data[[varname]], na.rm=T), max(data[[varname]], na.rm=T), length=nvals)
+	  for(i in 1:length(s)){
+		d0[[i]] <- data
+		d0[[i]][[varname]] <- s[i]
+	   }
+	}
+    if(!is.numeric(data[[varname]])){
+     s <- obj$xlevels[[varname]]
+      for(j in 1:length(s)){
+        d0[[j]] <- data
+        d0[[j]][[varname]] <- factor(j, levels=1:length(s), labels=s)
+      }
+    }  
+	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x))
+	y <- model.response(model.frame(obj))
+	ylev <- levels(y)
+    b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
+	xb <- lapply(Xmats, function(x)lapply(1:nrow(b), function(z)cbind(1, exp(x %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=T))))))
+	probs <- lapply(xb, function(x)lapply(x, function(z)z/rowSums(z)))
+	out.ci <- lapply(probs, function(x)sapply(x, colMeans))
+	out.ci <- lapply(out.ci, apply, 1, quantile, c(.5,.025,.975))
+	tmp <- data.frame(
+		mean = do.call("c", lapply(out.ci, function(x)x[1,])), 
+		lower = do.call("c", lapply(out.ci, function(x)x[2,])), 
+		upper = do.call("c", lapply(out.ci, function(x)x[3,])),  
+		y = rep(ylev, length(out.ci)) 
+		)
+	if(is.numeric(data[[varname]])){tmp$s <- rep(s, each=length(ylev))}
+	else{tmp$s <- factor(rep(1:length(s), each=length(ylev)), labels=s)}
+		if(plot){
+			if(is.factor(data[[varname]])){
+			pl <- xyplot(mean ~ s | y, data=tmp, xlab="", ylab="Predicted Value", ...,
+				lower=tmp$lower, upper=tmp$upper, 
+				prepanel = prepanel.ci, 
+				scales=list(x=list(at=1:length(s), labels=s)), 
+				panel = function(x,y, lower, upper, subscripts){
+					panel.points(x,y, col="black", lty=1, pch=16)
+					panel.segments(x, lower[subscripts], x, upper[subscripts], lty=1, col="black")
+			})
+			}
+			if(is.numeric(data[[varname]])){
+			pl <- xyplot(mean ~ s | y, data=tmp, xlab="", ylab="Predicted Value", ...,
+				lower=tmp$lower, upper=tmp$upper, 
+				prepanel = prepanel.ci, 
+				panel=panel.ci, zl=FALSE)
+			}
+			return(pl)
+		}
+		else{
+			return(tmp)
+		}
+	}
+
+
+mnlChange <-
+function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
+ 	sim=TRUE, R=1500){
+	y <- model.response(model.frame(obj))
+    vars <- names(attr(terms(obj), "dataClasses"))[-1]
+ 	vars <- gsub("poly\\((.*?),.*\\)", "\\1", vars)
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     minmax <- lapply(vars, function(x) c(NA, NA))
@@ -614,20 +711,17 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"))
         for (i in 1:length(levs)) {
             tmp.levs <- paste(names(levs)[i], unlist(levs[i]), 
                 sep = "")
-            col.inds <- sapply(tmp.levs, function(x) grep(x, 
-                colnames(coefficients(obj))))
-            col.inds[which(sapply(col.inds, length) == 0)] <- NA
-            col.inds <- unlist(col.inds)
-            if (length(grep("1$", names(col.inds))) > 0) {
+            col.inds <- match(tmp.levs, obj$coef)
+            if (length(grep("1$", obj$coef[col.inds])) > 
+                0) {
                 col.inds <- c(col.inds[which(is.na(col.inds))], 
                   col.inds[grep("1$", names(col.inds))])
                 names(col.inds) <- gsub("1$", "", names(col.inds))
                 col.inds <- col.inds[match(tmp.levs, names(col.inds))]
             }
-            tmp.coefs <- coefficients(obj)[, col.inds]
+            tmp.coefs <- coef(obj)[,col.inds]
             tmp.coefs[which(is.na(tmp.coefs))] <- 0
-            tmp.coefs <- apply(tmp.coefs, 2, sum)
-            mm <- c(which.min(tmp.coefs), which.max(tmp.coefs))
+            mm <- c(which.min(colMeans(tmp.coefs)), which.max(colMeans(tmp.coefs)))
             minmax[[names(levs)[i]]] <- factor(levs[[i]][mm], 
                 levels = levs[[i]])
             tmp.tab <- table(data[[names(levs)[i]]])
@@ -669,36 +763,123 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"))
     for (j in 1:length(minmax)) {
         tmp.df[inds[j]:(inds[j] + 1), j] <- minmax[[j]]
     }
+	if(!sim){
+	    preds <- predict(obj, newdata = tmp.df, type = "probs")
+	    preds.min <- as.matrix(preds[seq(1, nrow(preds), by = 2), ])
+	    preds.max <- as.matrix(preds[seq(2, nrow(preds), by = 2), ])
+	    diffs <- preds.max - preds.min
+	    rownames(preds.min) <- rownames(preds.max) <- rownames(diffs) <- rn
+	}
+	if(sim){
     preds <- predict(obj, newdata = tmp.df, type = "probs")
-    preds.min <- preds[seq(1, nrow(preds), by = 2), ]
-    preds.max <- preds[seq(2, nrow(preds), by = 2), ]
-    diffs <- preds.max - preds.min
-    rownames(preds.min) <- rownames(preds.max) <- rownames(diffs) <- rn
-    minmax.mat <- do.call(data.frame, minmax)
-    minmax.mat <- rbind(do.call(data.frame, meds), minmax.mat)
-    rownames(minmax.mat) <- c("typical", "min", "max")
-    ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min, 
-        maxPred = preds.max)
-    class(ret) <- "change"
-    return(ret)
+    preds.min <- as.matrix(preds[seq(1, nrow(preds), by = 2), ])
+    preds.max <- as.matrix(preds[seq(2, nrow(preds), by = 2), ])
+    b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
+	X <- model.matrix(as.formula(paste("~", as.character(formula(obj))[3], sep="")), data=tmp.df)
+	xb <- lapply(1:nrow(b), function(z)cbind(1, exp(X %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=T)))))
+	probs <- lapply(xb, function(x)t(apply(x, 1, function(z)z/sum(z))))
+	pminlist <- lapply(probs, function(x)x[seq(1, nrow(probs[[1]]), by=2), ])
+	pmaxlist <- lapply(probs, function(x)x[seq(2, nrow(probs[[1]]), by=2), ])
+	difflist <- lapply(1:length(probs), function(i)pmaxlist[[i]]-pminlist[[i]])
+	eg <- as.matrix(expand.grid(1:nrow(difflist[[1]]), 1:ncol(difflist[[1]])))
+	means <- matrix(sapply(1:nrow(eg), function(ind)mean(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]))), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))	
+	lower <- matrix(sapply(1:nrow(eg), function(ind)quantile(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]), .025)), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))	
+	upper <- matrix(sapply(1:nrow(eg), function(ind)quantile(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]), .975)), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))	
+
+	colnames(means) <- colnames(lower) <- colnames(upper) <- colnames(preds.min) <- colnames(preds.max) <- levels(y)
+	rownames(means) <- rownames(lower) <- rownames(upper) <- rownames(preds.min) <- rownames(preds.max) <- colnames(tmp.df)
+	diffs <- list(mean = means, lower=lower, upper=upper)
 }
-ordChange <-
-function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit")) 
-{
+minmax.mat <- do.call(data.frame, minmax)
+minmax.mat <- rbind(do.call(data.frame, meds), minmax.mat)
+rownames(minmax.mat) <- c("typical", "min", "max")
+
+ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min, 
+    maxPred = preds.max)
+class(ret) <- "change"
+return(ret)
+}
+
+mnlChange2 <-
+  function (obj, varname, data, change=c("unit", "sd"), R=1500) 
+  {
     vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    pols <- grep("poly", vars)
-    if (length(pols) > 0) {
-        poly.split <- strsplit(vars[pols], split = "")
-        start <- lapply(poly.split, function(x) grep("(", x, 
-            fixed = T) + 1)
-        stop <- lapply(poly.split, function(x) grep(",", x, fixed = T) - 
-            1)
-        pol.vars <- sapply(1:length(poly.split), function(x) paste(poly.split[[x]][start[[x]]:stop[[x]]], 
-            collapse = ""))
-        vars[pols] <- pol.vars
-    }
+    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
+    b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
+    change <- match.arg(change)
+    delt <- switch(change, 
+                   unit=1, 
+                   sd = sd(data[[varname]], na.rm=T))
+    d0 <- list()
+    if(is.numeric(data[[varname]])){
+      d0[[1]] <- d0[[2]] <- data
+      d0[[1]][[varname]] <- d0[[1]][[varname]]-(.5*delt)
+      d0[[2]][[varname]] <- d0[[2]][[varname]]+(.5*delt)
+    }
+    if(!is.numeric(data[[varname]])){
+      l <- obj$xlevels[[varname]]
+      for(j in 1:length(l)){
+        d0[[j]] <- data
+        d0[[j]][[varname]] <- factor(j, levels=1:length(l), labels=l)
+      }
+    }  
+	y <- model.response(model.frame(obj))
+	ylev <- levels(y)
+	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x))
+	xb <- lapply(Xmats, function(x)lapply(1:nrow(b), function(z)cbind(1, exp(x %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=T))))))
+	probs <- lapply(xb, function(x)lapply(x, function(z)z/rowSums(z)))
+
+	if(is.numeric(data[[varname]])){
+	diffs <- lapply(1:R, function(x)probs[[1]][[x]] - probs[[2]][[x]])
+	probdiffs <- sapply(diffs, colMeans)
+
+	pwdiffmean <- apply(probdiffs, 1, quantile, c(.5,.025,.975))
+	means <- matrix(pwdiffmean[1,], ncol=1)
+	lower <- matrix(pwdiffmean[2,], ncol=1)
+	upper <- matrix(pwdiffmean[3,], ncol=1)
+
+	}
+	if(is.factor(data[[varname]])){
+	combs <- combn(length(probs), 2)
+	pwdiffprob <- list()
+	for(j in 1:ncol(combs)){
+		pwdiffprob[[j]] <- lapply(1:R, function(i)probs[[combs[2,j]]][[i]] - probs[[combs[1,j]]][[i]])
+	}
+	
+	out <- lapply(pwdiffprob, function(x)sapply(x, colMeans))
+	out.ci <- lapply(out, apply, 1, quantile, c(.5,.025,.975))
+	means <- sapply(out.ci, function(x)x[1,])
+	lower <- sapply(out.ci, function(x)x[2,])
+	upper <- sapply(out.ci, function(x)x[3,])
+	}
+	l <- obj$xlevels[[varname]]
+	if(is.numeric(data[[varname]])){cn <- varname}
+	else{
+		cn <- paste(l[combs[2,]], l[combs[1,]], sep="-")
+	}
+	colnames(means) <- colnames(lower) <- colnames(upper) <- cn
+	rownames(means) <- rownames(lower) <- rownames(upper) <- ylev
+	res <- list(mean = means, lower=lower, upper=upper)
+	return(res)
+}
+
+
+ordChange <-
+function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
+ 	sim=TRUE, R=1500){
+    vars <- names(attr(terms(obj), "dataClasses"))[-1]
+    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    rn <- vars
+    var.classes <- sapply(vars, function(x) class(data[[x]]))
+	probfun <- function(x){
+		c(cbind(matrix(x, ncol=(ncol(dmat)-1)), 1) %*% dmat)
+	}
     minmax <- lapply(vars, function(x) c(NA, NA))
     meds <- lapply(vars, function(x) NA)
     names(minmax) <- names(meds) <- vars
@@ -759,19 +940,431 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"))
     for (j in 1:length(minmax)) {
         tmp.df[inds[j]:(inds[j] + 1), j] <- minmax[[j]]
     }
-    preds <- predict(obj, newdata = tmp.df, type = "probs")
-    preds.min <- preds[seq(1, nrow(preds), by = 2), ]
-    preds.max <- preds[seq(2, nrow(preds), by = 2), ]
-    diffs <- preds.max - preds.min
-    rownames(preds.min) <- rownames(preds.max) <- rownames(diffs) <- rn
-    minmax.mat <- do.call(data.frame, minmax)
-    minmax.mat <- rbind(do.call(data.frame, meds), minmax.mat)
-    rownames(minmax.mat) <- c("typical", "min", "max")
-    ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min, 
-        maxPred = preds.max)
-    class(ret) <- "change"
-    return(ret)
+	if(!sim){
+	    preds <- predict(obj, newdata = tmp.df, type = "probs")
+	    preds.min <- as.matrix(preds[seq(1, nrow(preds), by = 2), ])
+	    preds.max <- as.matrix(preds[seq(2, nrow(preds), by = 2), ])
+	    diffs <- preds.max - preds.min
+	    rownames(preds.min) <- rownames(preds.max) <- rownames(diffs) <- rn
+	}
+	if(sim){
+    b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
+	
+	X <- model.matrix(as.formula(paste("~", as.character(formula(obj))[3], sep="")), data=tmp.df)
+	intlist <- list()
+	ylev <- obj$lev
+		for(i in 1:(length(obj$lev)-1)){
+			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(X))
+			intlist[[i]][,i] <- 1
+		}
+	X <- X[,-1]
+	tmp <- do.call(rbind, lapply(intlist, function(y)cbind(X,y)))
+	cprobs <- plogis(tmp %*% t(b))
+
+	dmat <- matrix(0, ncol=length(ylev), nrow=length(ylev))
+	dmat[1,1] <- 1
+	for(j in 2:length(ylev)){
+		dmat[(j-1), j] <- -1
+		dmat[j,j] <- 1
+	}
+	probs <- t(apply(cprobs, 2, probfun))
+	cats <- rep(1:length(ylev), each=nrow(tmp.df))
+	problist <- lapply(1:max(cats), function(x)probs[, which(cats == x)])
+	pminlist <- lapply(problist, function(x)x[,seq(1, ncol(problist[[1]]), by=2)])
+	pmaxlist <- lapply(problist, function(x)x[,seq(2, ncol(problist[[1]]), by=2)])
+	difflist <- lapply(1:length(problist), function(i)pmaxlist[[i]]-pminlist[[i]])
+	means <- sapply(difflist, colMeans)
+	lower <- sapply(difflist, apply, 2, quantile, .025)
+	upper <- sapply(difflist, apply, 2, quantile, .975)
+	rownames(means) <- rownames(lower) <- rownames(upper) <- colnames(tmp.df)
+	colnames(means) <- colnames(lower) <- colnames(upper) <- ylev
+	preds.min <- sapply(pminlist, colMeans)
+	preds.max <- sapply(pmaxlist, colMeans)
+    rownames(preds.min) <- rownames(preds.max)  <- colnames(tmp.df)
+	colnames(preds.min) <- colnames(preds.max) <- ylev
+	diffs <- list(mean = means, lower=lower, upper=upper)
 }
+minmax.mat <- do.call(data.frame, minmax)
+minmax.mat <- rbind(do.call(data.frame, meds), minmax.mat)
+rownames(minmax.mat) <- c("typical", "min", "max")
+
+ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min, 
+    maxPred = preds.max)
+class(ret) <- "change"
+return(ret)
+}
+
+ordChange2 <- function (obj, varname, data, diffchange=c("sd", "unit"), 
+      R=1500){
+    vars <- names(attr(terms(obj), "dataClasses"))[-1]
+    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    rn <- vars
+    var.classes <- sapply(vars, function(x) class(data[[x]]))
+    b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
+    change <- match.arg(diffchange)
+    delt <- switch(change, 
+                   unit=1, 
+                   sd = sd(data[[varname]], na.rm=T))
+    d0 <- list()
+    if(is.numeric(data[[varname]])){
+      d0[[1]] <- d0[[2]] <- data
+      d0[[1]][[varname]] <- d0[[1]][[varname]]-(.5*delt)
+      d0[[2]][[varname]] <- d0[[2]][[varname]]+(.5*delt)
+    }
+    if(!is.numeric(data[[varname]])){
+      l <- obj$xlevels[[varname]]
+      for(j in 1:length(l)){
+        d0[[j]] <- data
+        d0[[j]][[varname]] <- factor(j, levels=1:length(l), labels=l)
+      }
+    }  
+	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x)[,-1])
+	intlist <- list()
+	ylev <- obj$lev
+		for(i in 1:(length(obj$lev)-1)){
+			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(Xmats[[1]]))
+			intlist[[i]][,i] <- 1
+		}
+	tmp <- lapply(Xmats, function(x)do.call(rbind, lapply(intlist, function(y)cbind(x,y))))
+	cprobs <- lapply(tmp, function(x)cbind(plogis(x %*% t(b))))
+
+	dmat <- matrix(0, ncol=length(ylev), nrow=length(ylev))
+	dmat[1,1] <- 1
+	for(j in 2:length(ylev)){
+		dmat[(j-1), j] <- -1
+		dmat[j,j] <- 1
+	}
+	probfun <- function(x){
+		c(cbind(matrix(x, ncol=(ncol(dmat)-1)), 1) %*% dmat)
+	}
+	probs <- lapply(cprobs, apply, 2, probfun)
+	combs <- combn(length(probs), 2)
+	pwdiffprob <- list()
+	for(j in 1:ncol(combs)){
+		pwdiffprob[[j]] <- probs[[combs[2,j]]] - probs[[combs[1,j]]]
+	}
+	pwdiffmean <- sapply(pwdiffprob, rowMeans)
+	means <- apply(pwdiffmean, 2, function(x)colMeans(matrix(x, ncol=length(ylev))))
+	lower <- apply(pwdiffmean, 2, function(x)apply(matrix(x, ncol=length(ylev)), 2, quantile, .025))
+ 	upper <- apply(pwdiffmean, 2, function(x)apply(matrix(x, ncol=length(ylev)), 2, quantile, .975))
+	if(is.numeric(data[[varname]])){cn <- varname}
+	else{
+		cn <- paste(l[combs[2,]], l[combs[1,]], sep="-")
+	}
+	colnames(means) <- colnames(lower) <- colnames(upper) <- cn
+	rownames(means) <- rownames(lower) <- rownames(upper) <- ylev
+	res <- list(mean = means, lower=lower, upper=upper)
+	return(res)
+}
+
+mnlfit <- function(obj, permute=FALSE){
+	obj <- update(obj, trace=F)
+	y <- model.response(model.frame(obj))
+	pp <- predict(obj, type="probs")
+	s <- 1-pp[,1]
+	g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=F, include.lowest=T)
+	w <- lapply(1:length(levels(g_fac)), function(x)which(g_fac == levels(g_fac)[x]))
+	obs <- sapply(w, function(x)table(factor(as.numeric(y[x]), levels=1:length(levels(y)), labels=levels(y))))
+	exp <- sapply(w, function(x)colSums(pp[x, ]))
+	lt5 <- mean(exp < 5)
+	if(lt5 != 0 ){warning(paste(round(lt5*100), "% of expected counts < 5", sep=""))}
+	Cg <- sum(c((obs-exp)^2/exp))
+	Cgrefdf <- (nlevels(g_fac)-2)*(ncol(pp)-1) 
+	Cg_p <- pchisq(Cg, Cgrefdf, lower.tail=F)
+	predcat <- predict(obj, type="class")
+	r2_count <- mean(predcat == y)
+	modal <- max(table(y))
+	r2_counta <- (sum(y == predcat) - modal)/(length(y) - modal)
+	r2_mcf <- 1-(logLik(obj)/logLik(update(obj, .~1)))
+	r2_mcfa <- 1-((logLik(obj) - (obj$edf + ncol(pp)))/logLik(update(obj, .~1)))
+	g2 <- -2*(logLik(update(obj, .~1)) - logLik(obj))
+	r2_ml <- 1-exp(-g2/length(y))
+    r2cu <- (r2_ml)/(1-exp(2*logLik(update(obj, .~1))/nrow(pp)))
+	res <- matrix(nrow=7, ncol=2)
+	colnames(res) <- c("Estimate", "p-value")
+	rownames(res) <- c("Fagerland, Hosmer and Bonfi", "Count R2", "Count R2 (Adj)", 
+		"ML R2", "McFadden R2", "McFadden R2 (Adj)", "Cragg-Uhler(Nagelkerke) R2")
+	res[1,1] <- Cg
+	res[1,2] <- Cg_p
+	res[2,1] <- r2_count
+	res[3,1] <- r2_counta
+	res[4,1] <- r2_ml
+	res[5,1] <- r2_mcf
+	res[6,1] <- r2_mcfa
+	res[7,1] <- r2cu
+
+	permres <- NULL
+	if(permute){
+		X <- model.matrix(obj)
+		l <- levels(y)
+		for(i in 1:length(l)){
+		y <- model.response(model.frame(obj))
+		y <- relevel(y, l[i])
+		tmpmod <- multinom(y ~ X-1, trace=F)
+		pp <- predict(tmpmod, type="probs")
+		s <- 1-pp[,1]
+		g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=F, include.lowest=T)
+		w <- lapply(1:length(levels(g_fac)), function(x)which(g_fac == levels(g_fac)[x]))
+		obs <- sapply(w, function(x)table(factor(as.numeric(y[x]), levels=1:length(levels(y)), labels=levels(y))))
+		exp <- sapply(w, function(x)colSums(pp[x, ]))
+		Cg <- sum(c((obs-exp)^2/exp))
+		Cgrefdf <- (nlevels(g_fac)-2)*(ncol(pp)-1) 
+		Cg_p <- pchisq(Cg, Cgrefdf, lower.tail=F)
+		permres <- rbind(permres, data.frame(base = l[i], Cg = Cg, p = Cg_p))
+		}
+	}
+
+	if(is.null(permres)){
+		out <- list(result=res)
+	}
+	else{
+		out <- list(result=res, permres=permres)
+	}
+	class(out) <- "mnlfit"
+	return(out)
+}
+
+print.mnlfit <- function(x, ..., digits=3){
+	fmt <- paste("%.", digits, "f", sep="")
+	est <- sprintf(fmt, x$result[,1])
+	p <- gsub("NA", "", sprintf(fmt, x$result[,2]))
+	newx <- cbind(est, p)
+	dimnames(newx) <- dimnames(x$result)
+	cat("Fit Statistics\n")
+	print(noquote(newx))
+	if(exists("permres", x)){
+		permbase <- as.character(x$permres[,1])
+		permest <- sprintf(fmt, x$permres[,2])
+		permp <- gsub("NA", "", sprintf(fmt, x$permres[,3]))
+		newp <- cbind(permbase, permest, permp)
+		dimnames(newp) <- dimnames(x$permres)
+		cat("\nPermutations for Fagerland et. al\n")
+		print(noquote(newp))
+	}
+}
+
+
+print.ordfit <- function(x,..., digits=3){
+	fmt <- paste("%.", digits, "f", sep="")
+	est <- sprintf(fmt, x[,1])
+	p <- gsub("NA", "", sprintf(fmt, x[,2]))
+	newx <- cbind(est, p)
+	dimnames(newx) <- dimnames(x)
+	print(noquote(newx[-(1:4), 1, drop=FALSE]))
+}
+
+ordfit <- function(obj){
+	# combfun <- function(mytab){
+	# 	lt <- sum(mytab[,2] < 5)
+	# 	while(lt > 0){
+	# 		myw <- which(mytab[,2] < 5)
+	# 		combrow <- ifelse(max(myw) == 1, 2, max(myw)-1)
+	# 		mytab[combrow, ] <- apply(mytab[c(combrow, max(myw)), ], 2, sum)
+	# 		mytab <- matrix(mytab[-max(myw), ], ncol=2)
+	# 		lt <- sum(mytab[,2] < 5)
+	# 	}
+	# 	mytab
+	# }
+	# combcount <- function(mytab){
+	# 	k <- 0
+	# 	lt <- sum(mytab[,2] < 5)
+	# 	while(lt > 0){
+	# 		myw <- which(mytab[,2] < 5)
+	# 		combrow <- ifelse(max(myw) == 1, 2, max(myw)-1)
+	# 		mytab[combrow, ] <- apply(mytab[c(combrow, max(myw)), ], 2, sum)
+	# 		mytab <- matrix(mytab[-max(myw), ], ncol=2)
+	# 		lt <- sum(mytab[,2] < 5)
+	# 		k <- k+1
+	# 	}
+	# 	k
+	# }
+	pp <- predict(obj, type="probs")
+	# ints <- 1:ncol(pp)
+	# n <- nrow(pp)
+	# up <- floor(n/(5*ncol(pp)))
+	# g <- ifelse(up > 10, 10, max(6, up))
+	# s <- pp %*% ints
+	# g_fac <- cut(s, breaks=(g))
+	X <- model.matrix(obj)[,-1]
+	y <- model.response(model.frame(obj))
+	orig <- polr(y ~ X)
+	# upmod <- polr(y ~ X + g_fac)
+	# lrt <- lrtest(orig, upmod)
+	# facs <- which(attr(obj$terms, "dataClasses") == "factor")[-1]
+	# mf <- model.frame(obj)
+	# pats <- factor(apply(mf[, facs, drop=F], 1, function(x)paste(x, collapse=":")))
+	predcat <- predict(obj, type="class")
+	# prchi2 <- 0
+	# prD <- 0
+	# combcountPR <- 0
+	# for(i in 1:length(levels(pats))){
+	# 	w <- which(pats == levels(pats)[i])
+	# 	tmpg <- cut(s[w], breaks=2)
+	# 	tmpdat <- data.frame(obs = y[w], expect = predcat[w])
+	# 	m1 <- apply(tmpdat[which(tmpg == levels(tmpg)[1]), ], 2, function(x)table(factor(x, levels=levels(y))))
+	# 	combcountPR <- combcountPR + combcount(m1)
+	# 	lt51 <- sum(m1[,2] < 5)
+	# 	while(lt51 > 0 & nrow(m1) > 1){
+	# 		w1 <- which(m1[,2] < 5)
+	# 		combrow <- ifelse(max(w1) == 1, 2, max(w1)-1)
+	# 		m1[combrow, ] <- apply(m1[c(combrow, max(w1)), ], 2, sum)
+	# 		m1 <- m1[-max(w1), ]
+	# 		if(is.null(nrow(m1))){m1 <- matrix(m1, ncol=2)}
+	# 		lt51 <- sum(m1[,2] < 5)
+	# 	}
+	# 	m2 <- apply(tmpdat[which(tmpg == levels(tmpg)[2]), ], 2, function(x)table(factor(x, levels=levels(y))))
+	# 	combcountPR <- combcountPR + combcount(m2)
+	# 	lt52 <- sum(m2[,2] < 5)
+	# 	while(lt52 > 0 & nrow(m2) >1){
+	# 		w2 <- which(m2[,2] < 5)
+	# 		combrow <- ifelse(max(w2) == 1, 2, max(w2)-1)
+	# 		m2[combrow, ] <- apply(m2[c(combrow, max(w2)), ], 2, sum)
+	# 		m2 <- m2[-max(w2), ]
+	# 		if(is.null(nrow(m2))){m2 <- matrix(m2, ncol=2)}
+	# 		lt52 <- sum(m2[,2] < 5)
+	# 	}
+	# 	if(combcountPR > 0){warning(paste(combcountPR, " rows combined due to low expected counts for P&R tests", sep=""), call.=FALSE)}
+	# 	d1 <- (m1[,1] - m1[,2])^2/m1[,2]
+	# 	d2 <- (m2[,1] - m2[,2])^2/m2[,2]
+	# 	prchi2 <- prchi2 + sum(d1, d2)
+	# 	d1a <- m1[,1] * log(m1[,1]/m1[,2])
+	# 	d2a <- m2[,1] * log(m2[,1]/m2[,2])
+	# 	prD <- prD + sum(d1a, d2a)
+	# }
+	# prD <- 2*prD
+	# refdf <- (2*nlevels(pats) -1)*(ncol(pp)-1) - length(facs) - 1
+	# prchi2_p <- pchisq(prchi2, refdf, lower.tail=F)
+	# prD_p <- pchisq(prD, refdf, lower.tail=F)
+	# tmp <- data.frame(y = y, exp = predcat, g = g_fac)
+	# tabs <- by(tmp[,c("y", "exp")], list(tmp$g), apply, 2, function(x)table(factor(x, levels=levels(y))))
+	# 
+	# combk <- sum(sapply(tabs, combcount))
+	# if(combk > 0){warning(paste(combk, " rows combined due to low expected counts for F&H tests", sep=""), call.=FALSE)}
+	# tabs <- lapply(tabs, combfun)
+	# Cg <- sum(unlist(lapply(tabs, function(x)sum((x[,1]-x[,2])^2/x[,2]))))
+	# Cgrefdf <- (nlevels(g_fac)-2)*(ncol(pp)-1) + (ncol(pp) - 2)
+	# Cg_p <- pchisq(Cg, Cgrefdf, lower.tail=F)
+	r2_count <- mean(predcat == y)
+	modal <- max(table(y))
+	r2_counta <- (sum(y == predcat) - modal)/(length(y) - modal)
+	b <- matrix(c(0, obj$coef), ncol=1)
+	X <- model.matrix(obj)
+	r2_mz <- (t(b)%*%var(X)%*%b)/(t(b)%*%var(X)%*%b + (pi^2/3))
+	r2_mcf <- 1-(logLik(obj)/logLik(update(obj, .~1)))
+	r2_mcfa <- 1-((logLik(obj) - obj$edf)/logLik(update(obj, .~1)))
+	g2 <- -2*(logLik(update(obj, .~1)) - logLik(obj))
+	r2_ml <- 1-exp(-g2/length(y))
+
+	res <- matrix(nrow=10, ncol=2)
+	colnames(res) <- c("Estimate", "p-value")
+	rownames(res) <- c("Lipsitz et al", "Pulkstein and Robinson (chi-squared)", "Pulkstein and Robinson (D)", "Fagerland and Hosmer", "Count R2", "Count R2 (Adj)", 
+		"ML R2", "McFadden R2", "McFadden R2 (Adj)", "McKelvey & Zavoina R2")
+	# res[1,1] <- lrt[2,4]
+	# res[1,2] <- lrt[2,5]
+	# res[2,1] <- prchi2
+	# res[2,2] <- prchi2_p
+	# res[3,1] <- prD
+	# res[3,2] <- prD_p
+	# res[4,1] <- Cg
+	# res[4,2] <- Cg_p
+	res[5,1] <- r2_count
+	res[6,1] <- r2_counta
+	res[7,1] <- r2_ml
+	res[8,1] <- r2_mcf
+	res[9,1] <- r2_mcfa
+	res[10,1] <- r2_mz
+	class(res) <- c("ordfit", "matrix")
+	return(res)
+}
+
+ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
+    vars <- names(attr(terms(obj), "dataClasses"))[-1]
+    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
+    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    rn <- vars
+    var.classes <- sapply(vars, function(x) class(data[[x]]))
+    b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
+    objs <- list()
+    for(i in 1:R){
+      objs[[i]] <- as.list(obj)
+      objs[[i]]$coefficients <- b[i, 1:length(obj$coef)]
+      objs[[i]]$zeta <- b[i, -(1:length(obj$coef))]
+    }
+    d0 <- list()
+    if(is.numeric(data[[varname]])){
+	  s <- seq(min(data[[varname]], na.rm=T), max(data[[varname]], na.rm=T), length=nvals)
+	  for(i in 1:length(s)){
+		d0[[i]] <- data
+		d0[[i]][[varname]] <- s[i]
+	   }
+	}
+    if(!is.numeric(data[[varname]])){
+     s <- obj$xlevels[[varname]]
+      for(j in 1:length(s)){
+        d0[[j]] <- data
+        d0[[j]][[varname]] <- factor(j, levels=1:length(s), labels=s)
+      }
+    }  
+	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x)[,-1])
+	intlist <- list()
+	ylev <- obj$lev
+		for(i in 1:(length(obj$lev)-1)){
+			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(Xmats[[1]]))
+			intlist[[i]][,i] <- 1
+		}
+	tmp <- lapply(Xmats, function(x)do.call(rbind, lapply(intlist, function(y)cbind(x,y))))
+	cprobs <- lapply(tmp, function(x)cbind(plogis(x %*% t(b))))
+
+	dmat <- matrix(0, ncol=length(ylev), nrow=length(ylev))
+	dmat[1,1] <- 1
+	for(j in 2:length(ylev)){
+		dmat[(j-1), j] <- -1
+		dmat[j,j] <- 1
+	}
+	probfun <- function(x){
+		c(cbind(matrix(x, ncol=(ncol(dmat)-1)), 1) %*% dmat)
+	}
+	probs <- lapply(cprobs, apply, 2, probfun)
+	m <- sapply(probs, apply, 1, mean)
+	sp <- split(as.data.frame(m), rep(1:length(ylev), each=(nrow(m)/length(ylev))))
+	m <- do.call(cbind, lapply(sp, colMeans))
+	l <- do.call(cbind, lapply(sp, apply, 2, quantile, .025))
+	u <- do.call(cbind, lapply(sp, apply, 2, quantile, .975))
+	tmp <- data.frame(
+		mean = c(m), 
+		lower = c(l), 
+		upper = c(u), 
+		y = rep(ylev, each = length(s))
+		)
+	if(is.numeric(data[[varname]])){tmp$s <- s}
+	else{tmp$s <- factor(1:length(s), labels=s)}
+		if(plot){
+			if(is.factor(data[[varname]])){
+			pl <- xyplot(mean ~ s | y, data=tmp, xlab="", ylab="Predicted Value", ...,
+				lower=tmp$lower, upper=tmp$upper, 
+				prepanel = prepanel.ci, 
+				scales=list(x=list(at=1:length(s), labels=s)), 
+				panel = function(x,y, lower, upper, subscripts){
+					panel.points(x,y, col="black", lty=1, pch=16)
+					panel.segments(x, lower[subscripts], x, upper[subscripts], lty=1, col="black")
+			})
+			}
+			if(is.numeric(data[[varname]])){
+			pl <- xyplot(mean ~ s | y, data=tmp, xlab="", ylab="Predicted Value", ...,
+				lower=tmp$lower, upper=tmp$upper, 
+				prepanel = prepanel.ci, 
+				panel=panel.ci, zl=FALSE)
+			}
+			return(pl)
+		}
+		else{
+			return(tmp)
+		}
+	}
+
 poisGOF <-
 function (obj) 
 {

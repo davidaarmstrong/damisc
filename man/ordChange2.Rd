@@ -1,17 +1,16 @@
-\name{ordChange}
-\alias{ordChange}
-\title{Maximal First Differences for Proportional Odds Logistic Regression Models}
-\description{For objects of class \code{polr}, it calculates the change in predicted probabilities, for maximal discrete changes in all covariates holding all other variables constant at typical values.}
+\name{ordChange2}
+\alias{ordChange2}
+\title{Average Effects for Proportional Odds Logistic Regression Models}
+\description{For objects of class \code{polr}, it calculates the average change in predicted probabilities, for discrete changes in a covariate holding all other variables at their observed values.}
 \usage{
-ordChange(obj, data, typical.dat=NULL, diffchange = c("range", "sd", "unit"), 
-    sim = TRUE, R=1500)
+ordChange2(obj, varname, data, diffchange = c("sd", "unit"), 
+   R=1500)
 }
 \arguments{
   \item{obj}{A model object of class \code{polr}.}
+  \item{varname}{A string identifying the variable to be manipulated.}
   \item{data}{Data frame used to fit \code{object}.}
-  \item{typical.dat}{Data frame with a single row containing values at which to hold variables constant when calculating first differences.  These values will be passed to \code{predict}, so factors must take on a single value, but have all possible levels as their levels attribute.}
-  \item{diffchange}{A string indicating the difference in predictor values to calculate the discrete change.  \code{range} gives the difference between the minimum and maximum, \code{sd} gives plus and minus one-half standard deviation change around the median and \code{unit} gives a plus and minus one-half unit change around the median.}
-  \item{sim}{Logical indicating whether or not simulations should be done to generate confidence intervals for the difference.}
+  \item{diffchange}{A string indicating the difference in predictor values to calculate the discrete change. \code{sd} gives plus and minus one-half standard deviation change around the median and \code{unit} gives a plus and minus one-half unit change around the median.}
   \item{R}{Number of simulations.}
 }
 \details{
@@ -33,5 +32,5 @@ typical.france <- data.frame(
 	age = 35, 
 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
 	)
-ordChange(polr.mod, data=france, typical.dat=typical.france, sim=FALSE)	
+ordChange2(polr.mod, "age", data=france, diffchange="sd")	
 }
