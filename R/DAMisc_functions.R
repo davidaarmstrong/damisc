@@ -1276,7 +1276,7 @@ ordfit <- function(obj){
 	res[9,1] <- r2_mcfa
 	res[10,1] <- r2_mz
 	class(res) <- c("ordfit", "matrix")
-	return(res)
+	print(res)
 }
 
 ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
