@@ -1947,7 +1947,7 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=T){
 
 intQualQuant <- function(obj, vars, level = .95 , 
 	labs = NULL, n = 10 , onlySig = FALSE, type = c("facs", "slopes"), 
-	plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE, ...){
+	plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE,...){
 type=match.arg(type)
 cl <- attr(terms(obj), "dataClasses")[vars]
 if(length(cl) != 2){
@@ -2145,6 +2145,7 @@ if(plot){
 	p <- xyplot(fit ~ x, group = edf$fac, data=edf, 
 		lower=edf$lower, upper=edf$upper, 
 		ylim = yl, xlim=xl, 
+		xlab = quantvar, ylab="Predicted Values", 
 		key=simpleKey(faclevs, lines=TRUE, points=FALSE), 
 		panel = function(x,y,groups, lower, upper, ...){
 		if(ci){
