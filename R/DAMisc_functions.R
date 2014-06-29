@@ -2108,11 +2108,11 @@ if(type == "slopes"){
 	W[cbind(1:length(faclevs), qint)] <- 1
 
 	V <- vcov(obj)
-	qeff <- W %*% b
+	qeff <- c(W %*% b)
 	qvar <- W %*% V %*% t(W)
-	qse <- sqrt(diag(qvar))
-	qtstats <- qeff/qse
-	qpv <- 2*pt(abs(qtstats), obj$df.residual, lower.tail=F)
+	qse <- c(sqrt(diag(qvar)))
+	qtstats <- c(qeff/qse)
+	qpv <- c(2*pt(abs(qtstats), obj$df.residual, lower.tail=F))
 
 	qres <- sapply(list(qeff, qse, qtstats, qpv), function(x)sprintf("%.3f", x))
 	colnames(qres) <- c("B", "SE(B)", "t-stat", "Pr(>|t|)")
