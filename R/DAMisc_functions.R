@@ -2109,7 +2109,8 @@ if(type == "slopes"){
 
 	V <- vcov(obj)
 	qeff <- W %*% b
-	qse <- sqrt(diag(W %*% V %*% t(W)))
+	qvar <- W %*% V %*% t(W)
+	qse <- sqrt(diag(qvar))
 	qtstats <- qeff/qse
 	qpv <- 2*pt(abs(qtstats), obj$df.residual, lower.tail=F)
 
@@ -2117,7 +2118,9 @@ if(type == "slopes"){
 	colnames(qres) <- c("B", "SE(B)", "t-stat", "Pr(>|t|)")
 	rownames(qres) <- faclevs
 	cat("Conditional effects of ", quantvar, ":\n")
-	return(noquote(qres))
+	print(noquote((qres)))
+	res <- list(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv, vcov=qvar)
+	invisible(res)
 }
 if(plot){
 	intterm <- NULL
