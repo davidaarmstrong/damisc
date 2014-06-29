@@ -2120,7 +2120,7 @@ if(type == "slopes"){
 	cat("Conditional effects of ", quantvar, ":\n")
 	print(noquote((qres)))
 	res <- list(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv, vcov=qvar)
-	invisible(res)
+	return(res)
 }
 if(plot){
 	intterm <- NULL
