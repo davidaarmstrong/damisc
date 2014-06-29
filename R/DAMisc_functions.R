@@ -2117,6 +2117,7 @@ if(type == "slopes"){
 	qres <- sapply(list(qeff, qse, qtstats, qpv), function(x)sprintf("%.3f", x))
 	colnames(qres) <- c("B", "SE(B)", "t-stat", "Pr(>|t|)")
 	rownames(qres) <- faclevs
+	names(qeff) <- faclevs
 	cat("Conditional effects of ", quantvar, ":\n")
 	print(noquote((qres)))
 	res <- list(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv, vcov=qvar)
