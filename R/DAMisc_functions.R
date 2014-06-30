@@ -134,6 +134,9 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,.
     if (length(varnames) != 2) {
         stop("varnames must be a vector of 2 variable names")
     }
+	if(!all(varnames %in% names(obj$coef) )){
+		stop("not all variables in varnames are in the model")
+	}
     else {
         v1 <- varnames[1]
         v2 <- varnames[2]
