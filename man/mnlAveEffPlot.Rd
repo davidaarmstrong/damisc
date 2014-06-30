@@ -31,5 +31,5 @@ Hanmer, M.J. and K.O. Kalkan.  2013.  \sQuote{Behind the Curve: Clarifying the B
 library(nnet)
 data(france)
 mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
-mnlAveEffPlot(mnl.mod, "lrself", data=france)	
+\dontrun{mnlAveEffPlot(mnl.mod, "lrself", data=france)}
 }

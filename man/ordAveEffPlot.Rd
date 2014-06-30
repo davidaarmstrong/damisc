@@ -36,5 +36,5 @@ Hanmer, M.J. and K.O. Kalkan.  2013.  \sQuote{Behind the Curve: Clarifying the B
 library(MASS)
 data(france)
 polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
-ordAveEffPlot(polr.mod, "lrself", data=france)	
+\dontrun{ordAveEffPlot(polr.mod, "lrself", data=france)	}
 }
