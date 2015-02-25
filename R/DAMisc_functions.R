@@ -325,17 +325,9 @@ function (obj, varnames, rug = TRUE, ticksize = -0.03, hist = FALSE,
 glmChange <-
 function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), sim=FALSE, R=1000) 
 {
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    pols <- grep("poly", vars)
-    if (length(pols) > 0) {
-        poly.split <- strsplit(vars[pols], split = "")
-        start <- lapply(poly.split, function(x) grep("(", x, 
-            fixed = T) + 1)
-        stop <- lapply(poly.split, function(x) grep(",", x, fixed = T) - 
-            1)
-        pol.vars <- sapply(1:length(poly.split), function(x) paste(poly.split[[x]][start[[x]]:stop[[x]]], 
-            collapse = ""))
-        vars[pols] <- pol.vars
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
     }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
@@ -635,10 +627,10 @@ function (obj, pval = 0.05, two.sided = TRUE, flag.sig = TRUE,
 }
 
 mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
+    }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
@@ -702,8 +694,10 @@ mnlChange <-
 function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
  	sim=TRUE, R=1500){
 	y <- model.response(model.frame(obj))
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
- 	vars <- gsub("poly\\((.*?),.*\\)", "\\1", vars)
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
+    }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     minmax <- lapply(vars, function(x) c(NA, NA))
@@ -806,10 +800,10 @@ return(ret)
 mnlChange2 <-
   function (obj, varname, data, change=c("unit", "sd"), R=1500) 
   {
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+      vars <- all.vars(formula(obj))[-1]
+      if(any(!(vars %in% names(data)))){
+          vars <- vars[-which(!vars %in% names(data))]
+      }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
@@ -874,10 +868,10 @@ mnlChange2 <-
 ordChange <-
 function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
  	sim=TRUE, R=1500){
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+        vars <- all.vars(formula(obj))[-1]
+        if(any(!(vars %in% names(data)))){
+            vars <- vars[-which(!vars %in% names(data))]
+        }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
 	probfun <- function(x){
@@ -953,7 +947,7 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 	if(sim){
     b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
 	
-	X <- model.matrix(as.formula(paste("~", as.character(formula(obj))[3], sep="")), data=tmp.df)
+	X <- model.matrix(update(formula(obj), NULL ~ .), data=tmp.df)
 	intlist <- list()
 	ylev <- obj$lev
 		for(i in 1:(length(obj$lev)-1)){
@@ -999,10 +993,10 @@ return(ret)
 
 ordChange2 <- function (obj, varname, data, diffchange=c("sd", "unit"), 
       R=1500){
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
+    }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
@@ -1283,10 +1277,10 @@ ordfit <- function(obj){
 }
 
 ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
+    }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
@@ -1774,21 +1768,9 @@ function (object, coefs, n.coef)
 ziChange <-
 function (obj, data, typical.dat = NULL, type = "count") 
 {
-    vars <- as.character(formula(obj))[3]
-    vars <- gsub("*", "+", vars, fixed = T)
-    vars <- strsplit(vars, split = "|", fixed = T)[[1]]
-    vars <- c(unlist(strsplit(vars, "+", fixed = T)))
-    vars <- unique(trim(vars))
-    pols <- grep("poly", vars)
-    if (length(pols) > 0) {
-        poly.split <- strsplit(vars[pols], split = "")
-        start <- lapply(poly.split, function(x) grep("(", x, 
-            fixed = T) + 1)
-        stop <- lapply(poly.split, function(x) grep(",", x, fixed = T) - 
-            1)
-        pol.vars <- sapply(1:length(poly.split), function(x) paste(poly.split[[x]][start[[x]]:stop[[x]]], 
-            collapse = ""))
-        vars[pols] <- pol.vars
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
     }
     rn <- vars
     vars.type <- as.character(formula(obj))[3]
@@ -2363,10 +2345,10 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 glmChange2 <-
 function (obj, varname, data, change=c("unit", "sd"), R=1500) 
 {
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-	vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
-	vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
-	vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
+    }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
 	b <- mvrnorm(R, coef(obj), vcov(obj))
@@ -2428,10 +2410,10 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
 }
 aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...) 
 {
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-	vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
-	vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
-	vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
+    }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
 	b <- mvrnorm(R, coef(obj), vcov(obj))

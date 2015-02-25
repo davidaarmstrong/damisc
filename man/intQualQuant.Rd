@@ -47,10 +47,6 @@ intQualQuant(mod, c("income", "type"), n=10,
 	plot.type="none")
 intQualQuant(mod, c("income", "type"), n=10, 
 	plot.type="facs")
-trellis.par.set(superpose.polygon =list(
-	col=list(c("blue", "green", "red"))), 
-	superpose.line= list(
-	col=list(c("blue", "green", "red"))))
 intQualQuant(mod, c("income", "type"), n=10, 
 	plot.type="slopes")
 }
