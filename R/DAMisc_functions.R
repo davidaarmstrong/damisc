@@ -709,13 +709,13 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
             tmp.levs <- paste(names(levs)[i], unlist(levs[i]), 
                 sep = "")
             col.inds <- match(tmp.levs, obj$coef)
-            if (length(grep("1$", obj$coef[col.inds])) > 
-                0) {
-                col.inds <- c(col.inds[which(is.na(col.inds))], 
-                  col.inds[grep("1$", names(col.inds))])
-                names(col.inds) <- gsub("1$", "", names(col.inds))
-                col.inds <- col.inds[match(tmp.levs, names(col.inds))]
-            }
+            # if (length(grep("1$", obj$coef[col.inds])) > 
+            #     0) {
+            #     col.inds <- c(col.inds[which(is.na(col.inds))], 
+            #       col.inds[grep("1$", names(col.inds))])
+            #     names(col.inds) <- gsub("1$", "", names(col.inds))
+            #     col.inds <- col.inds[match(tmp.levs, names(col.inds))]
+            # }
             tmp.coefs <- coef(obj)[,col.inds]
             tmp.coefs[which(is.na(tmp.coefs))] <- 0
             mm <- c(which.min(colMeans(tmp.coefs)), which.max(colMeans(tmp.coefs)))
@@ -868,10 +868,10 @@ mnlChange2 <-
 ordChange <-
 function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
  	sim=TRUE, R=1500){
-        vars <- all.vars(formula(obj))[-1]
-        if(any(!(vars %in% names(data)))){
-            vars <- vars[-which(!vars %in% names(data))]
-        }
+    vars <- all.vars(formula(obj))[-1]
+    if(any(!(vars %in% names(data)))){
+        vars <- vars[-which(!vars %in% names(data))]
+    }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
 	probfun <- function(x){
@@ -886,13 +886,13 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
             tmp.levs <- paste(names(levs)[i], unlist(levs[i]), 
                 sep = "")
             col.inds <- match(tmp.levs, names(obj$coef))
-            if (length(grep("1$", names(obj$coef)[col.inds])) > 
-                0) {
-                col.inds <- c(col.inds[which(is.na(col.inds))], 
-                  col.inds[grep("1$", names(col.inds))])
-                names(col.inds) <- gsub("1$", "", names(col.inds))
-                col.inds <- col.inds[match(tmp.levs, names(col.inds))]
-            }
+            # if (length(grep("1$", names(obj$coef)[col.inds])) > 
+            #     0) {
+            #     col.inds <- c(col.inds[which(is.na(col.inds))], 
+            #       col.inds[grep("1$", names(obj$coef))])
+            #     names(col.inds) <- gsub("1$", "", names(col.inds))
+            #     col.inds <- col.inds[match(tmp.levs, names(col.inds))]
+            # }
             tmp.coefs <- obj$coef[col.inds]
             tmp.coefs[which(is.na(tmp.coefs))] <- 0
             mm <- c(which.min(tmp.coefs), which.max(tmp.coefs))
