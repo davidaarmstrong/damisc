@@ -1061,7 +1061,7 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
     }
 	res <- list(diffs=list(mean = t(allmean), lower=t(alllower), upper=t(allupper)))
     class(res) <- "ordChange"
-	return(res)
+    res
 }
 
 print.ordChange <- function(x, ..., digits=3){
