@@ -12,6 +12,7 @@ import(xtable)
 S3method(print, pre)
 S3method(print, mnlfit)
 S3method(print, ordfit)
+S3method(print, ordChange)
 export(
     binfit,
     btscs,

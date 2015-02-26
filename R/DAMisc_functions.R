@@ -987,11 +987,11 @@ rownames(minmax.mat) <- c("typical", "min", "max")
 
 ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min, 
     maxPred = preds.max)
-class(ret) <- "change"
+class(ret) <- "ordChange"
 return(ret)
 }
 
-ordChange2 <- function (obj, varname, data, diffchange=c("sd", "unit"), 
+ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"), 
       R=1500){
     vars <- all.vars(formula(obj))[-1]
     if(any(!(vars %in% names(data)))){
@@ -1001,60 +1001,78 @@ ordChange2 <- function (obj, varname, data, diffchange=c("sd", "unit"),
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
     change <- match.arg(diffchange)
-    delt <- switch(change, 
-                   unit=1, 
-                   sd = sd(data[[varname]], na.rm=T))
-    d0 <- list()
-    if(is.numeric(data[[varname]])){
-      d0[[1]] <- d0[[2]] <- data
-      d0[[1]][[varname]] <- d0[[1]][[varname]]-(.5*delt)
-      d0[[2]][[varname]] <- d0[[2]][[varname]]+(.5*delt)
-    }
-    if(!is.numeric(data[[varname]])){
-      l <- obj$xlevels[[varname]]
-      for(j in 1:length(l)){
-        d0[[j]] <- data
-        d0[[j]][[varname]] <- factor(j, levels=1:length(l), labels=l)
-      }
-    }  
-	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x)[,-1])
-	intlist <- list()
-	ylev <- obj$lev
-		for(i in 1:(length(obj$lev)-1)){
-			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(Xmats[[1]]))
-			intlist[[i]][,i] <- 1
-		}
-	tmp <- lapply(Xmats, function(x)do.call(rbind, lapply(intlist, function(y)cbind(x,y))))
-	cprobs <- lapply(tmp, function(x)cbind(plogis(x %*% t(b))))
+    allmean <- alllower <- allupper <- NULL
 
-	dmat <- matrix(0, ncol=length(ylev), nrow=length(ylev))
-	dmat[1,1] <- 1
-	for(j in 2:length(ylev)){
-		dmat[(j-1), j] <- -1
-		dmat[j,j] <- 1
-	}
-	probfun <- function(x){
-		c(cbind(matrix(x, ncol=(ncol(dmat)-1)), 1) %*% dmat)
-	}
-	probs <- lapply(cprobs, apply, 2, probfun)
-	combs <- combn(length(probs), 2)
-	pwdiffprob <- list()
-	for(j in 1:ncol(combs)){
-		pwdiffprob[[j]] <- probs[[combs[2,j]]] - probs[[combs[1,j]]]
-	}
-	pwdiffmean <- sapply(pwdiffprob, rowMeans)
-	means <- apply(pwdiffmean, 2, function(x)colMeans(matrix(x, ncol=length(ylev))))
-	lower <- apply(pwdiffmean, 2, function(x)apply(matrix(x, ncol=length(ylev)), 2, quantile, .025))
- 	upper <- apply(pwdiffmean, 2, function(x)apply(matrix(x, ncol=length(ylev)), 2, quantile, .975))
-	if(is.numeric(data[[varname]])){cn <- varname}
-	else{
-		cn <- paste(l[combs[2,]], l[combs[1,]], sep="-")
-	}
-	colnames(means) <- colnames(lower) <- colnames(upper) <- cn
-	rownames(means) <- rownames(lower) <- rownames(upper) <- ylev
-	res <- list(mean = means, lower=lower, upper=upper)
+    for(m in 1:length(varnames)){
+        delt <- switch(change, 
+                       unit=1, 
+                       sd = sd(data[[varnames[m]]], na.rm=T))
+        d0 <- list()
+        if(is.numeric(data[[varnames[m]]])){
+          d0[[1]] <- d0[[2]] <- data
+          d0[[1]][[varnames[m]]] <- d0[[1]][[varnames[m]]]-(.5*delt)
+          d0[[2]][[varnames[m]]] <- d0[[2]][[varnames[m]]]+(.5*delt)
+        }
+        if(!is.numeric(data[[varnames[m]]])){
+          l <- obj$xlevels[[varnames[m]]]
+          for(j in 1:length(l)){
+            d0[[j]] <- data
+            d0[[j]][[varnames[m]]] <- factor(j, levels=1:length(l), labels=l)
+          }
+        }  
+    	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x)[,-1])
+    	intlist <- list()
+    	ylev <- obj$lev
+    		for(i in 1:(length(obj$lev)-1)){
+    			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(Xmats[[1]]))
+    			intlist[[i]][,i] <- 1
+    		}
+    	tmp <- lapply(Xmats, function(x)do.call(rbind, lapply(intlist, function(y)cbind(x,y))))
+    	cprobs <- lapply(tmp, function(x)cbind(plogis(x %*% t(b))))
+
+    	dmat <- matrix(0, ncol=length(ylev), nrow=length(ylev))
+    	dmat[1,1] <- 1
+    	for(j in 2:length(ylev)){
+    		dmat[(j-1), j] <- -1
+    		dmat[j,j] <- 1
+    	}
+    	probfun <- function(x){
+    		c(cbind(matrix(x, ncol=(ncol(dmat)-1)), 1) %*% dmat)
+    	}
+    	probs <- lapply(cprobs, apply, 2, probfun)
+    	combs <- combn(length(probs), 2)
+    	pwdiffprob <- list()
+    	for(j in 1:ncol(combs)){
+    		pwdiffprob[[j]] <- probs[[combs[2,j]]] - probs[[combs[1,j]]]
+    	}
+    	pwdiffmean <- sapply(pwdiffprob, rowMeans)
+    	means <- apply(pwdiffmean, 2, function(x)colMeans(matrix(x, ncol=length(ylev))))
+    	lower <- apply(pwdiffmean, 2, function(x)apply(matrix(x, ncol=length(ylev)), 2, quantile, .025))
+     	upper <- apply(pwdiffmean, 2, function(x)apply(matrix(x, ncol=length(ylev)), 2, quantile, .975))
+    	if(is.numeric(data[[varnames[m]]])){cn <- varnames[m]}
+    	else{
+    		cn <- paste(varnames[m], ": ", l[combs[2,]], "-", l[combs[1,]], sep="")
+    	}
+    	colnames(means) <- colnames(lower) <- colnames(upper) <- cn
+    	rownames(means) <- rownames(lower) <- rownames(upper) <- ylev
+        allmean <- cbind(allmean, means)
+        alllower <- cbind(alllower, lower)
+        allupper <- cbind(allupper, upper)
+    }
+	res <- list(diffs=list(mean = t(allmean), lower=t(alllower), upper=t(allupper)))
+    class(res) <- "ordChange"
 	return(res)
 }
+
+print.ordChange <- function(x, ..., digits=3){
+    diffs <- x$diffs
+    sig <- ifelse(sign(diffs$lower) == sign(diffs$upper), "*", " ")
+    leads <- ifelse(sign(diffs$mean) == -1, "", " ")
+    out <- array(paste(leads, sprintf(paste("%0.", digits, "f", sep=""), diffs$mean), sig, sep=""), dim=dim(diffs$mean))
+    dimnames(out) <- dimnames(diffs$mean)
+    noquote(out)
+}
+
 
 mnlfit <- function(obj, permute=FALSE){
 	obj <- update(obj, trace=F)
