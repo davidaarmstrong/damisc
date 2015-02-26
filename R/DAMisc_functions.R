@@ -1302,9 +1302,8 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
-    objs <- list()
+    objs <- lapply(1:R, function(x)as.list(obj))
     for(i in 1:R){
-      objs[[i]] <- as.list(obj)
       objs[[i]]$coefficients <- b[i, 1:length(obj$coef)]
       objs[[i]]$zeta <- b[i, -(1:length(obj$coef))]
     }
@@ -1343,16 +1342,16 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 		c(cbind(matrix(x, ncol=(ncol(dmat)-1)), 1) %*% dmat)
 	}
 	probs <- lapply(cprobs, apply, 2, probfun)
-	m <- sapply(probs, apply, 1, mean)
-	sp <- split(as.data.frame(m), rep(1:length(ylev), each=(nrow(m)/length(ylev))))
-	m <- do.call(cbind, lapply(sp, colMeans))
-	l <- do.call(cbind, lapply(sp, apply, 2, quantile, .025))
-	u <- do.call(cbind, lapply(sp, apply, 2, quantile, .975))
+    probs2 <- lapply(probs, function(x)by(x, list(rep(1:length(ylev), each=(nrow(x)/length(ylev)))), colMeans))
+    m <- t(sapply(probs2, function(x)sapply(x, mean)))
+    l <- t(sapply(probs2, function(x)sapply(x, quantile, .025)))
+    u <- t(sapply(probs2, function(x)sapply(x, quantile, .975)))
 	tmp <- data.frame(
 		mean = c(m), 
 		lower = c(l), 
 		upper = c(u), 
-		y = rep(ylev, each = length(s))
+		y = rep(ylev, each = length(s)), 
+		s=s
 		)
 	if(is.numeric(data[[varname]])){tmp$s <- s}
 	else{tmp$s <- factor(1:length(s), labels=s)}
