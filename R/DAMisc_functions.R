@@ -121,11 +121,13 @@ combTest <- function(obj){
 		res[k,]<- c(w,p)
 		k <- k+1
 	}
+	ns <- max(nchar(as.character(round(res[,1], 0))))
+	r1 <- sprintf(paste("%", ns+4, ".3f", sep=""), res[,1])
+    r2 <- sprintf("%.3f", res[,2])
+    res <- cbind(r1, r2)
 	rownames(res) <- apply(combs, 2, paste, collapse="-")
 	colnames(res) <- c("Estimate", "p-value")
-	res[,1] <- round(res[,1], 3)
-	res[,2] <- round(res[,2], 3)
-	return(res)
+	noquote(res)
 }
 
 DAintfun <-
@@ -793,7 +795,7 @@ rownames(minmax.mat) <- c("typical", "min", "max")
 
 ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min, 
     maxPred = preds.max)
-class(ret) <- "change"
+class(ret) <- "ordChange"
 return(ret)
 }
 
@@ -808,60 +810,68 @@ mnlChange2 <-
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
     change <- match.arg(change)
-    delt <- switch(change, 
-                   unit=1, 
-                   sd = sd(data[[varname]], na.rm=T))
-    d0 <- list()
-    if(is.numeric(data[[varname]])){
-      d0[[1]] <- d0[[2]] <- data
-      d0[[1]][[varname]] <- d0[[1]][[varname]]-(.5*delt)
-      d0[[2]][[varname]] <- d0[[2]][[varname]]+(.5*delt)
-    }
-    if(!is.numeric(data[[varname]])){
-      l <- obj$xlevels[[varname]]
-      for(j in 1:length(l)){
-        d0[[j]] <- data
-        d0[[j]][[varname]] <- factor(j, levels=1:length(l), labels=l)
-      }
-    }  
-	y <- model.response(model.frame(obj))
-	ylev <- levels(y)
-	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x))
-	xb <- lapply(Xmats, function(x)lapply(1:nrow(b), function(z)cbind(1, exp(x %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=T))))))
-	probs <- lapply(xb, function(x)lapply(x, function(z)z/rowSums(z)))
+    allmean <- alllower <- allupper <- NULL
+    for(m in 1:length(varnames)){
+        delt <- switch(change, 
+                       unit=1, 
+                       sd = sd(data[[varname]], na.rm=T))
+        d0 <- list()
+        if(is.numeric(data[[varname]])){
+          d0[[1]] <- d0[[2]] <- data
+          d0[[1]][[varname]] <- d0[[1]][[varname]]-(.5*delt)
+          d0[[2]][[varname]] <- d0[[2]][[varname]]+(.5*delt)
+        }
+        if(!is.numeric(data[[varname]])){
+          l <- obj$xlevels[[varname]]
+          for(j in 1:length(l)){
+            d0[[j]] <- data
+            d0[[j]][[varname]] <- factor(j, levels=1:length(l), labels=l)
+          }
+        }  
+    	y <- model.response(model.frame(obj))
+    	ylev <- levels(y)
+    	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x))
+    	xb <- lapply(Xmats, function(x)lapply(1:nrow(b), function(z)cbind(1, exp(x %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=T))))))
+    	probs <- lapply(xb, function(x)lapply(x, function(z)z/rowSums(z)))
 
-	if(is.numeric(data[[varname]])){
-	diffs <- lapply(1:R, function(x)probs[[1]][[x]] - probs[[2]][[x]])
-	probdiffs <- sapply(diffs, colMeans)
+    	if(is.numeric(data[[varname]])){
+    	diffs <- lapply(1:R, function(x)probs[[1]][[x]] - probs[[2]][[x]])
+    	probdiffs <- sapply(diffs, colMeans)
 
-	pwdiffmean <- apply(probdiffs, 1, quantile, c(.5,.025,.975))
-	means <- matrix(pwdiffmean[1,], ncol=1)
-	lower <- matrix(pwdiffmean[2,], ncol=1)
-	upper <- matrix(pwdiffmean[3,], ncol=1)
+    	pwdiffmean <- apply(probdiffs, 1, quantile, c(.5,.025,.975))
+    	means <- matrix(pwdiffmean[1,], ncol=1)
+    	lower <- matrix(pwdiffmean[2,], ncol=1)
+    	upper <- matrix(pwdiffmean[3,], ncol=1)
 
-	}
-	if(is.factor(data[[varname]])){
-	combs <- combn(length(probs), 2)
-	pwdiffprob <- list()
-	for(j in 1:ncol(combs)){
-		pwdiffprob[[j]] <- lapply(1:R, function(i)probs[[combs[2,j]]][[i]] - probs[[combs[1,j]]][[i]])
-	}
+    	}
+    	if(is.factor(data[[varname]])){
+    	combs <- combn(length(probs), 2)
+    	pwdiffprob <- list()
+    	for(j in 1:ncol(combs)){
+    		pwdiffprob[[j]] <- lapply(1:R, function(i)probs[[combs[2,j]]][[i]] - probs[[combs[1,j]]][[i]])
+    	}
 	
-	out <- lapply(pwdiffprob, function(x)sapply(x, colMeans))
-	out.ci <- lapply(out, apply, 1, quantile, c(.5,.025,.975))
-	means <- sapply(out.ci, function(x)x[1,])
-	lower <- sapply(out.ci, function(x)x[2,])
-	upper <- sapply(out.ci, function(x)x[3,])
-	}
-	l <- obj$xlevels[[varname]]
-	if(is.numeric(data[[varname]])){cn <- varname}
-	else{
-		cn <- paste(l[combs[2,]], l[combs[1,]], sep="-")
-	}
-	colnames(means) <- colnames(lower) <- colnames(upper) <- cn
-	rownames(means) <- rownames(lower) <- rownames(upper) <- ylev
-	res <- list(mean = means, lower=lower, upper=upper)
-	return(res)
+    	out <- lapply(pwdiffprob, function(x)sapply(x, colMeans))
+    	out.ci <- lapply(out, apply, 1, quantile, c(.5,.025,.975))
+    	means <- sapply(out.ci, function(x)x[1,])
+    	lower <- sapply(out.ci, function(x)x[2,])
+    	upper <- sapply(out.ci, function(x)x[3,])
+    	}
+    	l <- obj$xlevels[[varname]]
+    	if(is.numeric(data[[varname]])){cn <- varname}
+    	else{
+    		cn <- paste(varnames[m], ": ", l[combs[2,]], "-", l[combs[1,]], sep="")
+    	}
+    	colnames(means) <- colnames(lower) <- colnames(upper) <- cn
+    	rownames(means) <- rownames(lower) <- rownames(upper) <- ylev
+        allmean <- cbind(allmean, means)
+        alllower <- cbind(alllower, lower)
+        allupper <- cbind(allupper, upper)
+
+    }
+	res <- list(diffs=list(mean = t(allmean), lower=t(alllower), upper=t(allupper)))
+    class(res) <- "ordChange"
+    res
 }
 
 
@@ -1120,7 +1130,7 @@ mnlfit <- function(obj, permute=FALSE){
 		tmpmod <- multinom(y ~ X-1, trace=F)
 		pp <- predict(tmpmod, type="probs")
 		s <- 1-pp[,1]
-		g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=F, include.lowest=T)
+		g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=F, include.lowest=F)
 		w <- lapply(1:length(levels(g_fac)), function(x)which(g_fac == levels(g_fac)[x]))
 		obs <- sapply(w, function(x)table(factor(as.numeric(y[x]), levels=1:length(levels(y)), labels=levels(y))))
 		exp <- sapply(w, function(x)colSums(pp[x, ]))
@@ -1294,64 +1304,67 @@ ordfit <- function(obj){
 	print(res)
 }
 
-ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
+ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, returnInd=FALSE, returnMprob=FALSE,...){
+    pfun <- switch(obj$method, logistic = plogis, probit = pnorm, 
+           loglog = pgumbel, cloglog = pGumbel, cauchit = pcauchy)
+    rI <- rMP <- list()
     vars <- all.vars(formula(obj))[-1]
     if(any(!(vars %in% names(data)))){
         vars <- vars[-which(!vars %in% names(data))]
     }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
-    b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
-    objs <- lapply(1:R, function(x)as.list(obj))
-    for(i in 1:R){
-      objs[[i]]$coefficients <- b[i, 1:length(obj$coef)]
-      objs[[i]]$zeta <- b[i, -(1:length(obj$coef))]
+    b <- mvrnorm(R, c(coef(obj), obj$zeta), vcov(obj))
+    ints <- list()
+    nc <- length(obj$coef)
+    for(i in 1:(length(obj$lev)-1)){
+        ints[[i]] <- matrix(b[,(nc+i)], byrow=T, nrow=nrow(model.matrix(obj)), ncol=R)
     }
-    d0 <- list()
     if(is.numeric(data[[varname]])){
 	  s <- seq(min(data[[varname]], na.rm=T), max(data[[varname]], na.rm=T), length=nvals)
-	  for(i in 1:length(s)){
-		d0[[i]] <- data
-		d0[[i]][[varname]] <- s[i]
-	   }
 	}
-    if(!is.numeric(data[[varname]])){
-     s <- obj$xlevels[[varname]]
-      for(j in 1:length(s)){
-        d0[[j]] <- data
-        d0[[j]][[varname]] <- factor(j, levels=1:length(s), labels=s)
-      }
+    else{
+        s <- obj$xlevels[[varname]]
     }  
-	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x)[,-1])
-	intlist <- list()
-	ylev <- obj$lev
-		for(i in 1:(length(obj$lev)-1)){
-			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(Xmats[[1]]))
-			intlist[[i]][,i] <- 1
-		}
-	tmp <- lapply(Xmats, function(x)do.call(rbind, lapply(intlist, function(y)cbind(x,y))))
-	cprobs <- lapply(tmp, function(x)cbind(plogis(x %*% t(b))))
+    d0 <- data
+    m <- l <- u <- matrix(NA, nrow=nvals, ncol=length(obj$lev))
+    for(i in 1:length(s)){
+        if(is.numeric(data[[varname]])){
+    		d0[[varname]] <- s[i]
+        }
+        else{
+            d0[[varname]] <- factor(j, levels=1:length(s), labels=s)
+        }
+       X <- model.matrix(formula(obj), data=d0)[,-1]
+       XB <- X %*% t(b[,1:length(obj$coef)])
+       Q <- lapply(ints, function(x)pfun(x-XB))
+       P <- list()
+       for(j in 1:length(Q)){
+           if(j == 1){
+               P[[j]] <- Q[[j]]
+           }
+           else{
+               P[[j]] <- Q[[j]]-Q[[(j-1)]]
+           }
+        }
+        P[[(length(Q)+1)]] <- 1-Q[[length(Q)]]
+        if(returnInd){
+            rI[[i]] <- sapply(P, rowMeans)
+        }
+        if(returnMprob){
+            rMP[[i]] <- sapply(P, colMeans)
+        }
+        P2 <- sapply(P, colMeans)
+        m[i,] <- colMeans(P2)
+        l[i,] <- apply(P2, 2, quantile, .025)
+        u[i,] <- apply(P2, 2, quantile, .975)
+    }
 
-	dmat <- matrix(0, ncol=length(ylev), nrow=length(ylev))
-	dmat[1,1] <- 1
-	for(j in 2:length(ylev)){
-		dmat[(j-1), j] <- -1
-		dmat[j,j] <- 1
-	}
-	probfun <- function(x){
-		c(cbind(matrix(x, ncol=(ncol(dmat)-1)), 1) %*% dmat)
-	}
-	probs <- lapply(cprobs, apply, 2, probfun)
-    probs2 <- lapply(probs, function(x)by(x, list(rep(1:length(ylev), each=(nrow(x)/length(ylev)))), colMeans))
-    m <- t(sapply(probs2, function(x)sapply(x, mean)))
-    l <- t(sapply(probs2, function(x)sapply(x, quantile, .025)))
-    u <- t(sapply(probs2, function(x)sapply(x, quantile, .975)))
 	tmp <- data.frame(
 		mean = c(m), 
 		lower = c(l), 
 		upper = c(u), 
-		y = rep(ylev, each = length(s)), 
-		s=s
+		y = rep(obj$lev, each = length(s))
 		)
 	if(is.numeric(data[[varname]])){tmp$s <- s}
 	else{tmp$s <- factor(1:length(s), labels=s)}
@@ -1375,7 +1388,15 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 			return(pl)
 		}
 		else{
-			return(tmp)
+            ret <- list()
+            ret$data <- tmp
+            if(returnInd){
+                ret$Ind <- rI
+            }
+            if(returnMprob){
+                ret$Mprob <- rMP
+            }
+			return(ret)
 		}
 	}
 
