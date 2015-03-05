@@ -92,7 +92,9 @@ combTest <- function(obj){
 	y <- model.response(model.frame(obj))
 	b <- c(t(coef(obj)))
 	names(b) <- rownames(vcov(obj))
+    names(b) <- gsub("[^a-zA-Z0-9\\:.]", "", names(b))
 	l <- levels(y)
+	l <- gsub("[^a-zA-Z0-9\\:.]", "", l)
 	combs <- combn(l, 2)
 	res <- array(dim=dim(t(combs)))
 	k <- 1
