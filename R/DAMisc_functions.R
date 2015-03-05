@@ -800,7 +800,7 @@ return(ret)
 }
 
 mnlChange2 <-
-  function (obj, varname, data, change=c("unit", "sd"), R=1500) 
+  function (obj, varnames, data, diffchange=c("unit", "sd"), R=1500) 
   {
       vars <- all.vars(formula(obj))[-1]
       if(any(!(vars %in% names(data)))){
@@ -809,23 +809,23 @@ mnlChange2 <-
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
-    change <- match.arg(change)
+    change <- match.arg(diffchange)
     allmean <- alllower <- allupper <- NULL
     for(m in 1:length(varnames)){
         delt <- switch(change, 
                        unit=1, 
-                       sd = sd(data[[varname]], na.rm=T))
+                       sd = sd(data[[varnames]], na.rm=T))
         d0 <- list()
-        if(is.numeric(data[[varname]])){
+        if(is.numeric(data[[varnames]])){
           d0[[1]] <- d0[[2]] <- data
-          d0[[1]][[varname]] <- d0[[1]][[varname]]-(.5*delt)
-          d0[[2]][[varname]] <- d0[[2]][[varname]]+(.5*delt)
+          d0[[1]][[varnames]] <- d0[[1]][[varnames]]-(.5*delt)
+          d0[[2]][[varnames]] <- d0[[2]][[varnames]]+(.5*delt)
         }
-        if(!is.numeric(data[[varname]])){
-          l <- obj$xlevels[[varname]]
+        if(!is.numeric(data[[varnames]])){
+          l <- obj$xlevels[[varnames]]
           for(j in 1:length(l)){
             d0[[j]] <- data
-            d0[[j]][[varname]] <- factor(j, levels=1:length(l), labels=l)
+            d0[[j]][[varnames]] <- factor(j, levels=1:length(l), labels=l)
           }
         }  
     	y <- model.response(model.frame(obj))
@@ -834,7 +834,7 @@ mnlChange2 <-
     	xb <- lapply(Xmats, function(x)lapply(1:nrow(b), function(z)cbind(1, exp(x %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=T))))))
     	probs <- lapply(xb, function(x)lapply(x, function(z)z/rowSums(z)))
 
-    	if(is.numeric(data[[varname]])){
+    	if(is.numeric(data[[varnames]])){
     	diffs <- lapply(1:R, function(x)probs[[1]][[x]] - probs[[2]][[x]])
     	probdiffs <- sapply(diffs, colMeans)
 
@@ -844,7 +844,7 @@ mnlChange2 <-
     	upper <- matrix(pwdiffmean[3,], ncol=1)
 
     	}
-    	if(is.factor(data[[varname]])){
+    	if(is.factor(data[[varnames]])){
     	combs <- combn(length(probs), 2)
     	pwdiffprob <- list()
     	for(j in 1:ncol(combs)){
@@ -857,8 +857,8 @@ mnlChange2 <-
     	lower <- sapply(out.ci, function(x)x[2,])
     	upper <- sapply(out.ci, function(x)x[3,])
     	}
-    	l <- obj$xlevels[[varname]]
-    	if(is.numeric(data[[varname]])){cn <- varname}
+    	l <- obj$xlevels[[varnames]]
+    	if(is.numeric(data[[varnames]])){cn <- varnames}
     	else{
     		cn <- paste(varnames[m], ": ", l[combs[2,]], "-", l[combs[1,]], sep="")
     	}
@@ -1076,10 +1076,16 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
 
 print.ordChange <- function(x, ..., digits=3){
     diffs <- x$diffs
-    sig <- ifelse(sign(diffs$lower) == sign(diffs$upper), "*", " ")
-    leads <- ifelse(sign(diffs$mean) == -1, "", " ")
-    out <- array(paste(leads, sprintf(paste("%0.", digits, "f", sep=""), diffs$mean), sig, sep=""), dim=dim(diffs$mean))
-    dimnames(out) <- dimnames(diffs$mean)
+    if(class(diffs) == "list"){
+        sig <- ifelse(sign(diffs$lower) == sign(diffs$upper), "*", " ")
+        leads <- ifelse(sign(diffs$mean) == -1, "", " ")
+        out <- array(paste(leads, sprintf(paste("%0.", digits, "f", sep=""), diffs$mean), sig, sep=""), dim=dim(diffs$mean))
+        dimnames(out) <- dimnames(diffs$mean)
+    }
+    else{
+        out <- array(sprintf(paste("%0.", digits, "f", sep=""), diffs), dim=dim(diffs))
+        dimnames(out) <- dimnames(diffs)
+    }
     noquote(out)
 }
 

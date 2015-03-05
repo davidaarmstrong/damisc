@@ -3,12 +3,12 @@
 \title{Average Effects for Proportional Odds Logistic Regression Models}
 \description{For objects of class \code{polr}, it calculates the average change in predicted probabilities, for discrete changes in a covariate holding all other variables at their observed values.}
 \usage{
-ordChange2(obj, varname, data, diffchange = c("sd", "unit"), 
+ordChange2(obj, varnames, data, diffchange = c("sd", "unit"), 
    R=1500)
 }
 \arguments{
   \item{obj}{A model object of class \code{polr}.}
-  \item{varname}{A string identifying the variable to be manipulated.}
+  \item{varnames}{A vector of strings identifying the variable to be manipulated.}
   \item{data}{Data frame used to fit \code{object}.}
   \item{diffchange}{A string indicating the difference in predictor values to calculate the discrete change. \code{sd} gives plus and minus one-half standard deviation change around the median and \code{unit} gives a plus and minus one-half unit change around the median.}
   \item{R}{Number of simulations.}
