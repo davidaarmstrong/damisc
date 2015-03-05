@@ -858,7 +858,7 @@ mnlChange2 <-
     	upper <- sapply(out.ci, function(x)x[3,])
     	}
     	l <- obj$xlevels[[varnames[m]]]
-    	if(is.numeric(data[[varnames[m]]])){cn <- varnames}
+    	if(is.numeric(data[[varnames[m]]])){cn <- varnames[m]}
     	else{
     		cn <- paste(varnames[m], ": ", l[combs[2,]], "-", l[combs[1,]], sep="")
     	}
