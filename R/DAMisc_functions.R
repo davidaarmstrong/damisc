@@ -1095,7 +1095,7 @@ mnlfit <- function(obj, permute=FALSE){
 	y <- model.response(model.frame(obj))
 	pp <- predict(obj, type="probs")
 	s <- 1-pp[,1]
-	g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=F, include.lowest=T)
+	g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=FALSE, include.lowest=FALSE)
 	w <- lapply(1:length(levels(g_fac)), function(x)which(g_fac == levels(g_fac)[x]))
 	obs <- sapply(w, function(x)table(factor(as.numeric(y[x]), levels=1:length(levels(y)), labels=levels(y))))
 	exp <- sapply(w, function(x)colSums(pp[x, ]))
@@ -1136,7 +1136,7 @@ mnlfit <- function(obj, permute=FALSE){
 		tmpmod <- multinom(y ~ X-1, trace=F)
 		pp <- predict(tmpmod, type="probs")
 		s <- 1-pp[,1]
-		g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=F, include.lowest=F)
+		g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=FALSE, include.lowest=FALSE)
 		w <- lapply(1:length(levels(g_fac)), function(x)which(g_fac == levels(g_fac)[x]))
 		obs <- sapply(w, function(x)table(factor(as.numeric(y[x]), levels=1:length(levels(y)), labels=levels(y))))
 		exp <- sapply(w, function(x)colSums(pp[x, ]))
