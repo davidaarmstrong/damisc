@@ -814,18 +814,18 @@ mnlChange2 <-
     for(m in 1:length(varnames)){
         delt <- switch(change, 
                        unit=1, 
-                       sd = sd(data[[varnames]], na.rm=T))
+                       sd = sd(data[[varnames[m]]], na.rm=T))
         d0 <- list()
-        if(is.numeric(data[[varnames]])){
+        if(is.numeric(data[[varnames[m]]])){
           d0[[1]] <- d0[[2]] <- data
-          d0[[1]][[varnames]] <- d0[[1]][[varnames]]-(.5*delt)
-          d0[[2]][[varnames]] <- d0[[2]][[varnames]]+(.5*delt)
+          d0[[1]][[varnames[m]]] <- d0[[1]][[varnames[m]]]-(.5*delt)
+          d0[[2]][[varnames[m]]] <- d0[[2]][[varnames[m]]]+(.5*delt)
         }
-        if(!is.numeric(data[[varnames]])){
-          l <- obj$xlevels[[varnames]]
+        if(!is.numeric(data[[varnames[m]]])){
+          l <- obj$xlevels[[varnames[m]]]
           for(j in 1:length(l)){
             d0[[j]] <- data
-            d0[[j]][[varnames]] <- factor(j, levels=1:length(l), labels=l)
+            d0[[j]][[varnames[m]]] <- factor(j, levels=1:length(l), labels=l)
           }
         }  
     	y <- model.response(model.frame(obj))
@@ -834,7 +834,7 @@ mnlChange2 <-
     	xb <- lapply(Xmats, function(x)lapply(1:nrow(b), function(z)cbind(1, exp(x %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=T))))))
     	probs <- lapply(xb, function(x)lapply(x, function(z)z/rowSums(z)))
 
-    	if(is.numeric(data[[varnames]])){
+    	if(is.numeric(data[[varnames[m]]])){
     	diffs <- lapply(1:R, function(x)probs[[1]][[x]] - probs[[2]][[x]])
     	probdiffs <- sapply(diffs, colMeans)
 
@@ -844,7 +844,7 @@ mnlChange2 <-
     	upper <- matrix(pwdiffmean[3,], ncol=1)
 
     	}
-    	if(is.factor(data[[varnames]])){
+    	if(is.factor(data[[varnames[m]]])){
     	combs <- combn(length(probs), 2)
     	pwdiffprob <- list()
     	for(j in 1:ncol(combs)){
@@ -857,8 +857,8 @@ mnlChange2 <-
     	lower <- sapply(out.ci, function(x)x[2,])
     	upper <- sapply(out.ci, function(x)x[3,])
     	}
-    	l <- obj$xlevels[[varnames]]
-    	if(is.numeric(data[[varnames]])){cn <- varnames}
+    	l <- obj$xlevels[[varnames[m]]]
+    	if(is.numeric(data[[varnames[m]]])){cn <- varnames}
     	else{
     		cn <- paste(varnames[m], ": ", l[combs[2,]], "-", l[combs[1,]], sep="")
     	}
