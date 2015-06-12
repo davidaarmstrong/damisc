@@ -2089,7 +2089,10 @@ dat$lower <- dat$fit - qt(level,
 	obj$df.residual)*dat$se.fit
 dat$upper <- dat$fit + qt(level, 
 	obj$df.residual)*dat$se.fit
-res <- dat
+print.res <- res <- dat
+for(i in c(1,2,3,5,6)){
+    print.res[,i] <- sprintf("%.3f", dat[,i])
+}
 if(onlySig){
 	sigs <- do.call(rbind, 
 		by(dat[,c("lower", "upper")], 
@@ -2100,7 +2103,7 @@ if(onlySig){
 }
 if(type == "facs"){
 	if(!plot){
-		return(res)
+		return(print.res)
 	}
 	if(plot){
 		rl <- range(c(res[, c("lower", "upper")]))
@@ -2152,7 +2155,7 @@ if(type == "slopes"){
 	cat("Conditional effects of ", quantvar, ":\n")
 	print(noquote((qres)))
 	res <- list(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv, vcov=qvar)
-	return(res)
+	invisible(res)
 }
 if(plot){
 	intterm <- NULL
