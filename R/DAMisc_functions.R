@@ -2529,3 +2529,82 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
 	}
 }
 
+NKnots <- function(form, var, data, degree=3, min.knots=1, 
+   max.knots=10, includePoly = FALSE, plot=FALSE, criterion=c("AIC", "BIC")){
+   crit <- match.arg(criterion)
+   k <- seq(min.knots, max.knots, by=1)
+   forms <- vector("list", ifelse(includePoly, length(k)+3, length(k)))
+   m <- 1
+   if(includePoly){
+      forms[[1]]<- as.formula(paste(as.character(form)[2], "~", 
+      as.character(form)[3], " + ", var, sep=""))
+      forms[[2]]<- as.formula(paste(as.character(form)[2], "~", 
+      as.character(form)[3], "+ poly(", var,  ", 2)", sep=""))
+      forms[[3]]<- as.formula(paste(as.character(form)[2], "~", 
+      as.character(form)[3], "+ poly(", var,  ", 3)", sep=""))
+      m <- 4
+   }
+   for(i in 1:length(k)){
+      forms[[m]]<- as.formula(paste(as.character(form)[2], "~", 
+      as.character(form)[3], "+ bs(", var, ", df=", degree+k[i], ")", sep=""))
+      m <- m+1
+   }
+   mods <- lapply(forms, function(x)lm(x, data=data))
+   stats <- sapply(mods, function(x)do.call(crit, list(object=x)))
+   if(plot){
+      k <- k+3
+      if(includePoly){k <- c(1:3, k)}
+      plot(k, stats, type="o", pch=16, col="black", xlab="# Degrees of Freedom", ylab = crit)
+      points(k[which.min(stats)], min(stats), pch=16, col="red")
+   }
+}
+
+NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1, 
+   max.knots=10, adjust="none"){
+   k <- seq(min.knots, max.knots, by=1)
+   forms <- vector("list", length(k)+3)
+   m <- 1
+   forms[[1]]<- as.formula(paste(as.character(form)[2], "~", 
+   as.character(form)[3], " + ", var, sep=""))
+   forms[[2]]<- as.formula(paste(as.character(form)[2], "~", 
+   as.character(form)[3], "+ poly(", var,  ", 2)", sep=""))
+   forms[[3]]<- as.formula(paste(as.character(form)[2], "~", 
+   as.character(form)[3], "+ poly(", var,  ", 3)", sep=""))
+   m <- 4
+   for(i in 1:length(k)){
+      forms[[m]]<- as.formula(paste(as.character(form)[2], "~", 
+      as.character(form)[3], "+ bs(", var, ", df=", degree+k[i], ")", sep=""))
+      m <- m+1
+   }
+   mods <- lapply(forms, function(x)lm(x, data=data))
+   mods.df <- c(1:3, k+3)
+
+   target.mod <- mods[[which(mods.df == targetdf)]]
+   cand.mods <- mods
+   cand.mods[[which(mods.df == targetdf)]] <- NULL
+   tests <- lapply(cand.mods, function(x)as.matrix(anova(target.mod, x)))
+   num.df <- sapply(tests, function(x)abs(diff(x[,1])))
+   denom.df <- sapply(tests, function(x)min(x[,1]))
+   Fstats <- sapply(tests, function(x)x[2,5])
+   pval <- p.adjust(sapply(tests, function(x)x[2,6]), method=adjust)
+   res <- cbind(Fstats, num.df, denom.df, pval)
+   sigchar <- ifelse(res[,4] < .05, "*", " ")
+   strres <- NULL
+   digs <- c(3,0,0,3)
+   for(i in 1:4){
+      tmp <- sprintf(paste("%.", digs[i], "f", sep=""), res[,i])
+      if(i == 1){
+         tmp <- paste(tmp, sigchar, sep="")
+      }
+      strres <- cbind(strres,tmp )
+   }
+   colnames(strres) <- c("F", "DF1", "DF2", "p-value")
+   rownames(strres) <- paste("DF=", targetdf, " vs. DF=", mods.df[-targetdf], sep="")
+   if(targetdf > 1){
+      below <- strres[1:(targetdf-1), , drop=F]
+      above <- strres[targetdf:nrow(strres),, drop=F]
+      strres <- rbind(below, c("", "", "", ""), above)
+      rownames(strres)[targetdf] <- "   Target"
+   }
+   return(noquote(strres))
+}

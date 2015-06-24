@@ -1,11 +1,11 @@
 \name{NKnots}
 \alias{NKnots}
-\title{AIC, BIC and CV selection of number of spline knots}
-\description{Calculates AIC, BIC and CV criteria for the selection of knots in a spline over values (potentially including polynomials) up to a user-defined maximum.}
+\title{AIC and BIC selection of number of spline knots}
+\description{Calculates AIC and BIC for the selection of knots in a spline over values (potentially including polynomials) up to a user-defined maximum.}
 \usage{
     NKnots(form, var, data, degree=3, min.knots=1, 
        max.knots=10, includePoly = FALSE, plot=FALSE, 
-       criterion=c("AIC", "BIC", "CV"), K=10)
+       criterion=c("AIC", "BIC"), K=10)
 }
 \arguments{
   \item{form}{A formula detailing the model for which smoothing is to be evaluated.}
