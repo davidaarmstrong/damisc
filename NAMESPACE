@@ -50,4 +50,7 @@ export(
     crSpanTest,
     scaleDataFrame,
     outXT, 
-    aveEffPlot) 
+    aveEffPlot,
+    NKnots,
+    NKnotsTest,
+    testLoess) 

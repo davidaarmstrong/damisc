@@ -1978,7 +1978,7 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=T){
 
 intQualQuant <- function(obj, vars, level = .95 , 
 	labs = NULL, n = 10 , onlySig = FALSE, type = c("facs", "slopes"), 
-	plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE,...){
+	plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE, digits=3,...){
 type=match.arg(type)
 cl <- attr(terms(obj), "dataClasses")[vars]
 if(length(cl) != 2){
@@ -2089,9 +2089,9 @@ dat$lower <- dat$fit - qt(level,
 	obj$df.residual)*dat$se.fit
 dat$upper <- dat$fit + qt(level, 
 	obj$df.residual)*dat$se.fit
-print.res <- res <- dat
+res <- dat
 for(i in c(1,2,3,5,6)){
-    print.res[,i] <- sprintf("%.3f", dat[,i])
+    res[,i] <- round(res[,i], digits)
 }
 if(onlySig){
 	sigs <- do.call(rbind, 
@@ -2099,11 +2099,12 @@ if(onlySig){
 		list(dat$contrast), function(x)
 		c(max(x[,1]), min(x[,2]))))
 	notsig <- which(sigs[,1] < 0 & sigs[,2] > 0)
-	res <- dat[-which(dat$contrast %in% names(notsig)), ]
+    res <- res[-which(dat$contrast %in% names(notsig)), ]
 }
+
 if(type == "facs"){
 	if(!plot){
-		return(print.res)
+        return(res)
 	}
 	if(plot){
 		rl <- range(c(res[, c("lower", "upper")]))
@@ -2607,4 +2608,27 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
       rownames(strres)[targetdf] <- "   Target"
    }
    return(noquote(strres))
+}
+
+testLoess <- function(lmobj, loessobj, alpha=.05){
+   n <- nrow(model.matrix(lmobj))
+   if(n != loessobj$n){
+       stop("Models estimated on different numbers of observations")
+   }
+rss0 <- sum(lmobj$residuals^2)
+rss1 <- sum(loessobj$residuals^2)
+d1a <- loessobj$one.delta; d2a <- loessobj$two.delta
+dfdenom <- d1a^2/d2a
+dfnum <- (n - dfdenom) - lmobj$rank
+F0 <- ((rss0-rss1)/dfnum)/
+    (rss1 / dfdenom)
+cat("F = ", round(F0, 2), "\n", sep="")
+pval <- pf(F0, dfnum, dfdenom, lower.tail=F)
+cat("Pr( > F) = ", round(pval, 2), "\n", sep="")
+if(pval < alpha){
+    cat("LOESS preferred to alternative\n")
+}
+else{
+    cat("LOESS not statistically better than alternative\n")
+}
 }

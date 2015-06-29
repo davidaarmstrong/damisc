@@ -5,7 +5,7 @@
 \usage{
 	intQualQuant(obj, vars, level = .95, labs=NULL, 
 		n=10, onlySig=FALSE, type=c("facs", "slopes"),
-		plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE, ...)
+		plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE, digits=3,...)
 }
 \arguments{
   \item{obj}{An object of class \code{lm}.}
@@ -19,6 +19,7 @@
   \item{vals}{A vector of values at which the continuous variable will be held constant.  If \code{NULL}, a sequence of length \code{n} across the variable's range will be used.}
   \item{rug}{Logical indicating whether rug plots should be plotted in the panels.}
   \item{ci}{Logical indicating whether confidence bounds should be drawn.}
+  \item{digits}{Number indicating how many decimal places to round the numeric output.}
   \item{...}{Other arguments to be passed down to \code{effect} if \code{plot.type} = \sQuote{slopes}.}
 }
 \value{
