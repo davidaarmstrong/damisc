@@ -3,13 +3,14 @@
 \title{Conditional Effects Plots for Interactions in Linear Models}
 \description{Generates two conditional effects plots for two interacted continuous covariates in linear models.}
 \usage{
-DAintfun2(obj, varnames, rug=TRUE, ticksize=-.03, hist=FALSE, hist.col="gray75", 
-	nclass=c(10, 10), scale.hist=.5, border=NA, name.stem = "cond_eff", 
-	xlab = NULL, ylab = NULL, plot.type = "screen")
+DAintfun2(obj, varnames, varcov=NULL, rug=TRUE, ticksize=-.03, hist=FALSE, 
+	hist.col="gray75", nclass=c(10, 10), scale.hist=.5, border=NA, 
+	name.stem = "cond_eff", xlab = NULL, ylab = NULL, plot.type = "screen")
 }
 \arguments{
   \item{obj}{A model object of class \code{lm}}
   \item{varnames}{A two-element character vector where each element is the name of a variable involved in a two-way interaction.}
+  \item{varcov}{A variance-covariance matrix with which to calculate the conditional standard errors.  If \code{NULL}, it is calculated with \code{vcov(obj)}.}
   \item{rug}{Logical indicating whether a rug plot should be included.}
   \item{ticksize}{A scalar indicating the size of ticks in the rug plot (if included) positive values put the rug inside the plotting region and negative values put it outside the plotting region.}
   \item{hist}{Logical indicating whether a histogram of the x-variable should be included in the plotting region.}

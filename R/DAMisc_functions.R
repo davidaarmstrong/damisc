@@ -174,7 +174,7 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,.
             zlab = ifelse(is.null(zlab), toupper("Predictions"), zlab), 
 			col = hcols[1], theta = theta, phi = phi,...)
         par(new = TRUE)
-        persp(v1.seq, v2.seq, pred1, col = hcols[2], axes = FALSE, 
+            persp(v1.seq, v2.seq, pred1, col = hcols[2], axes = FALSE, 
             xlab = "", ylab = "", zlab = "", theta = theta, phi = phi, 
             zlim = c(min(c(predsurf)), max(c(predsurf))), ylim = c(min(v2.seq), 
                 max(v2.seq)), xlim = c(min(v1.seq), max(v1.seq)))
@@ -192,7 +192,7 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,.
     }
 }
 DAintfun2 <-
-function (obj, varnames, rug = TRUE, ticksize = -0.03, hist = FALSE, 
+function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE, 
     hist.col = "gray75", nclass = c(10, 10), scale.hist = 0.5, 
     border = NA, name.stem = "cond_eff", 
 	xlab = NULL, ylab=NULL, plot.type = "screen") 
@@ -216,11 +216,14 @@ function (obj, varnames, rug = TRUE, ticksize = -0.03, hist = FALSE,
     a2[, ind2[1]] <- 1
     a2[, ind2[2]] <- s1
     eff1 <- a1 %*% obj$coef
-    se.eff1 <- sqrt(diag(a1 %*% vcov(obj) %*% t(a1)))
+    if(is.null(varcov)){
+        varcov <- vcov(obj)
+    }
+    se.eff1 <- sqrt(diag(a1 %*% varcov %*% t(a1)))
     low1 <- eff1 - qt(0.975, obj$df.residual) * se.eff1
     up1 <- eff1 + qt(0.975, obj$df.residual) * se.eff1
     eff2 <- a2 %*% obj$coef
-    se.eff2 <- sqrt(diag(a2 %*% vcov(obj) %*% t(a2)))
+    se.eff2 <- sqrt(diag(a2 %*% varcov %*% t(a2)))
     low2 <- eff2 - qt(0.975, obj$df.residual) * se.eff2
     up2 <- eff2 + qt(0.975, obj$df.residual) * se.eff2
     if (!plot.type %in% c("pdf", "png", "eps", "screen")) {
