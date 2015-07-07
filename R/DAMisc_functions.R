@@ -1979,7 +1979,7 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=T){
 	return(noquote(out))
 }
 
-intQualQuant <- function(obj, vars, level = .95 , 
+intQualQuant <- function(obj, vars, level = .95 , varcov=NULL,
 	labs = NULL, n = 10 , onlySig = FALSE, type = c("facs", "slopes"), 
 	plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE, digits=3,...){
 type=match.arg(type)
@@ -2005,6 +2005,9 @@ else{
 	quantseq <- seq(qrange[1], qrange[2], length=n)
 }
 b <- coef(obj)
+if(is.null(varcov)){
+    varcov <- vcov(obj)
+}
 faccoef <- paste(facvar, faclevs, sep="")
 main.ind <- sapply(faccoef, function(x)
 	grep(paste("^", x, "$", sep=""), names(b)))
@@ -2074,7 +2077,7 @@ for(i in 1:ncol(combs)){
 }
 
 effs <- lapply(A.list, function(x)x%*%b)
-se.effs <- lapply(A.list, function(x)sqrt(diag(x %*% vcov(obj)%*%t(x))))
+se.effs <- lapply(A.list, function(x)sqrt(diag(x %*% varcov %*%t(x))))
 allcombs <- combn(length(faclevs), 2)
 list.labs <- apply(rbind(labs[allcombs[2,]], 
 	labs[allcombs[1,]]), 2, 

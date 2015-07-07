@@ -1,7 +1,7 @@
 Package: DAMisc
 Type: Package
 Title: Dave Armstrong's Miscellaneous Functions
-Version: 1.4
+Version: 1.4-2
 Depends: car, effects, 
 Imports: lattice, sm, MASS, nnet, splines, pscl, gdata, xtable, QRM, VGAM
 Date: 2015-06-23
