@@ -2264,9 +2264,9 @@ prepanel.ci <- function(x,y,subscripts, lower,upper){
          dy = diff(range(c(lower[subscripts], upper[subscripts]), 
             finite = TRUE)))
 }
-panel.2cat <- function(x,y,subscripts,lower,upper){
+panel.2cat <- function(x,y,subscripts,lower,upper, length=.2){
 	panel.points(x,y, pch=16, col="black")
-	panel.arrows(x, lower[subscripts], x, upper[subscripts], code=3, angle=90, length=.2)
+	panel.arrows(x, lower[subscripts], x, upper[subscripts], code=3, angle=90, length=length)
 }	
 crTest <- function(model, adjust.method="none",...){
 	cl <- attr(terms(model), "dataClasses")

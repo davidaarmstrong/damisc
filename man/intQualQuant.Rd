@@ -11,7 +11,7 @@
   \item{obj}{An object of class \code{lm}.}
   \item{vars}{A vector of two variable names giving the two quantitative variables involved in the interaction.  These variables must be involved in one, and only one, interaction. }
   \item{level}{Confidence level desired for lower and upper bounds of confidence interval.}
-  \item{varcov}{A potentially clustered or robust variance-covariance matrix of parameters used to calculate standard errors.  If \code{NULL}, the \code{vcov} function will be used. 
+  \item{varcov}{A potentially clustered or robust variance-covariance matrix of parameters used to calculate standard errors.  If \code{NULL}, the \code{vcov} function will be used. }
   \item{labs}{An optional vector of labels that will be used to identify the effects, if \code{NULL}, the factor levels will be used.}
   \item{n}{Number of values of the conditioning variable to use.}
   \item{onlySig}{Logical indicating whether only contrasts with significant differences should be returned.  Significance is determined to exist if the largest lower bound is greater than zero or the smallest upper bound is smaller than zero.}
