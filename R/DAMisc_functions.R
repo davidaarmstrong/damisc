@@ -2161,8 +2161,8 @@ if(type == "slopes"){
 	names(qeff) <- faclevs
 	cat("Conditional effects of ", quantvar, ":\n")
 	print(noquote((qres)))
-	res <- data.frame(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv)
-	invisible(res)
+	res <- list(out = data.frame(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv), varcor = qvar)
+	return(res)
 }
 if(plot){
 	intterm <- NULL
