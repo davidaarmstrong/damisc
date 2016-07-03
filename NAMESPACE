@@ -9,8 +9,11 @@ importFrom("stats", "AIC", "BIC", "alias", "anova", "as.formula",
              "na.omit", "p.adjust", "pcauchy", "pchisq", "pf", "plogis",
              "pnorm", "predict", "pt", "qt", "quantile", "relevel",
              "residuals", "residuals.glm", "sd", "terms", "update",
-             "var", "vcov")
+             "var", "vcov", "gaussian", "glm")
 importFrom("utils", "combn")
+importFrom("boot", "cv.glm")
+importFrom("VGAM", "pgumbel")
+importFrom("QRM", "pGumbel")
 import(car)
 import(effects)
 import(grid)
@@ -22,8 +25,6 @@ import(splines)
 import(pscl)
 import(gdata)
 import(xtable)
-importFrom(VGAM, pgumbel)
-importFrom(QRM, pGumbel)
 S3method(print, pre)
 S3method(print, mnlfit)
 S3method(print, ordfit)

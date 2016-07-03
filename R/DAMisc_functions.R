@@ -2537,7 +2537,7 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
 }
 
 NKnots <- function(form, var, data, degree=3, min.knots=1, 
-   max.knots=10, includePoly = FALSE, plot=FALSE, criterion=c("AIC", "BIC")){
+   max.knots=10, includePoly = FALSE, plot=FALSE, criterion=c("AIC", "BIC", "CV"), cvk=10){
    crit <- match.arg(criterion)
    k <- seq(min.knots, max.knots, by=1)
    forms <- vector("list", ifelse(includePoly, length(k)+3, length(k)))
@@ -2553,11 +2553,23 @@ NKnots <- function(form, var, data, degree=3, min.knots=1,
    }
    for(i in 1:length(k)){
       forms[[m]]<- as.formula(paste(as.character(form)[2], "~", 
-      as.character(form)[3], "+ bs(", var, ", df=", degree+k[i], ")", sep=""))
+      as.character(form)[3], "+ bs(", var, ", df=", degree+k[i], 
+        ", Boundary.knots=c(", min(data[[var]], na.rm=T),", ", max(data[[var]], na.rm=T), "))", sep=""))
       m <- m+1
    }
-   mods <- lapply(forms, function(x)lm(x, data=data))
-   stats <- sapply(mods, function(x)do.call(crit, list(object=x)))
+   if(crit %in% c("AIC", "BIC")){
+       mods <- lapply(forms, function(x)lm(x, data=data))
+       stats <- sapply(mods, function(x)do.call(crit, list(object=x)))
+   }
+   if(crit == "CV"){
+       mods <- list()
+       for(i in 1:length(forms)){
+           tmp <- glm(forms[[i]], data=data, family=gaussian)
+           tmpdat <- data[rownames(model.frame(tmp)), ]
+           mods[[i]] <- cv.glm(tmpdat, tmp, K=cvk)
+       }
+       stats <- sapply(mods, function(x)x$delta[1])
+   }
    if(plot){
       k <- k+3
       if(includePoly){k <- c(1:3, k)}

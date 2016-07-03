@@ -5,7 +5,7 @@
 \usage{
     NKnots(form, var, data, degree=3, min.knots=1, 
        max.knots=10, includePoly = FALSE, plot=FALSE, 
-       criterion=c("AIC", "BIC"))
+       criterion=c("AIC", "BIC", "CV"), cvk=10)
 }
 \arguments{
   \item{form}{A formula detailing the model for which smoothing is to be evaluated.}
@@ -16,7 +16,8 @@
   \item{max.knots}{Maximum number of internal B-spline knots to be evaluated.}
   \item{includePoly}{Include linear and polynomial models up to, and including \code{degree}-th order polynomials.}
   \item{plot}{Logical indicating whether a plot should be returned.}
-  \item{criterion}{Statistical criterion to minimize in order to find the best number of knots.}
+  \item{criterion}{Statistical criterion to minimize in order to find the best number of knots - AIC, BIC or Cross-validation.}
+  \item{cvk}{Number of groups for cross-validation}
 }
 \value{
     A plot, if \code{plot=TRUE}, otherwise a data frame with the degrees of freedom and corresponding fit measure. 
