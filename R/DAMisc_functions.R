@@ -2268,23 +2268,38 @@ panel.2cat <- function(x,y,subscripts,lower,upper, length=.2){
 	panel.points(x,y, pch=16, col="black")
 	panel.arrows(x, lower[subscripts], x, upper[subscripts], code=3, angle=90, length=length)
 }	
-crTest <- function(model, adjust.method="none",...){
+crTest <- function(model, adjust.method="none", cat = 5, var=NULL, ...){
 	cl <- attr(terms(model), "dataClasses")
-	cl <- cl[which(cl != "factor")]
+	cl <- cl[which(cl != "factor")]   
+    mf <- model.frame(model)
+    tabs <- apply(mf, 2, table)
+    lens <- sapply(tabs, length)
+    cats <- names(mf)[which(lens <= cat)]
+    if(length(intersect(names(cl), cats)) > 0){
+        cl <- cl[-which(names(cl) %in% cats)]
+    }
     terms <- predictor.names(model)
 	terms <- intersect(terms, names(cl))
     if (any(attr(terms(model), "order") > 1)) {
         stop("C+R plots not available for models with interactions.")
     }
+    if(!is.null(var)){
+        terms <- intersect(terms, var)
+    }                                 
+    if(length(terms) == 0){
+        stop(paste0(var, " not in list of model terms"))
+    }
 	terms.list <- list()
 	orders <- sapply(terms, function(x)df.terms(model, x))
 	for(i in 1:length(terms)){
-    tmp.x <- {if (df.terms(model, terms[i]) > 1) predict(model, type = "terms", term = terms[i])
-    else model.matrix(model)[, terms[i]]}
-	if(!is.null(colnames(tmp.x))){colnames(tmp.x) <- "x"}
-	terms.list[[i]] <- data.frame(x=tmp.x, 
-		y = residuals.glm(model, "partial")[,terms[i]])
-}
+        tmp.x <- {
+            if (df.terms(model, terms[i]) > 1) predict(model, type = "terms", term = terms[i])
+            else model.matrix(model)[, terms[i]]
+        }
+    	if(!is.null(colnames(tmp.x))){colnames(tmp.x) <- "x"}
+    	terms.list[[i]] <- data.frame(x=tmp.x, 
+    		y = residuals.glm(model, "partial")[,terms[i]])
+    }
 lo.mods <- lapply(terms.list, function(z)loess(y ~ x, data=z,...))
 lin.mods <- lapply(terms.list, function(z)lm(y ~ x, data=z))
 n <- nrow(model.matrix(model))
