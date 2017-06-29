@@ -18,7 +18,6 @@ import(car)
 import(effects)
 import(grid)
 import(lattice)
-import(sm)
 import(MASS)
 import(nnet)
 import(splines)
@@ -51,20 +50,20 @@ export(
     poisGOF,
     pre,
     searchVarLabels,
-    simPredpolr, 
+    simPredpolr,
     ziChange,
     BGMtest,
     intQualQuant,
-    panel.transci, 
-    panel.doublerug, 
-    panel.ci, 
+    panel.transci,
+    panel.doublerug,
+    panel.ci,
     prepanel.ci,
     panel.2cat,
     crTest,
     crSpanTest,
     scaleDataFrame,
-    outXT, 
+    outXT,
     aveEffPlot,
     NKnots,
     NKnotsTest,
-    testLoess) 
+    testLoess)
