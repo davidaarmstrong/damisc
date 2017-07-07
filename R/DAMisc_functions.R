@@ -209,16 +209,17 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
         rx <- range(x, na.rm = TRUE)
         seq(rx[1], rx[2], length = 25)
     }
-    if (!("model" %in% names(obj))) {
-        obj <- update(obj, model = T)
-    }
+    MM <- model.matrix(obj)
     v1 <- varnames[1]
     v2 <- varnames[2]
-    ind1 <- grep(v1, names(obj$coef))
-    ind2 <- grep(v2, names(obj$coef))
-    s1 <- rseq(model.matrix(obj)[, v1])
-    s2 <- rseq(model.matrix(obj)[, v2])
-    a1 <- a2 <- matrix(0, nrow = 25, ncol = ncol(model.matrix(obj)))
+    ind1 <- grep(paste0("^",v1,"$"), names(obj$coef))
+    ind2 <- grep(paste0("^",v2,"$"), names(obj$coef))
+    indboth <- which(names(obj$coef) %in% c(paste0(v1,":",v2),paste0(v2,":",v1)))
+    ind1 <- c(ind1, indboth)
+    ind2 <- c(ind2, indboth)
+    s1 <- rseq(MM[, v1])
+    s2 <- rseq(MM[, v2])
+    a1 <- a2 <- matrix(0, nrow = 25, ncol = ncol(MM))
     a1[, ind1[1]] <- 1
     a1[, ind1[2]] <- s2
     a2[, ind2[1]] <- 1
@@ -259,7 +260,7 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
                 toupper(v1), " | ", toupper(v2), sep = ""), ylab[1]))
         if (hist == TRUE) {
             rng <- diff(par()$usr[3:4])
-            h2 <- hist(obj$model[[v2]], nclass = nclass[1], plot = FALSE)
+            h2 <- hist(MM[, v2], nclass = nclass[1], plot = FALSE)
             prop2 <- h2$counts/sum(h2$counts)
             plot.prop2 <- (prop2/max(prop2)) * rng * scale.hist +
                 par()$usr[3]
@@ -275,7 +276,7 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
             }
         }
         if (rug == TRUE) {
-            rug(obj$model[[v2]], ticksize = ticksize)
+            rug(MM[,v2], ticksize = ticksize)
         }
         if (par()$usr[3] < 0 & par()$usr[4] > 0) {
             abline(h = 0, col = "gray50")
@@ -302,7 +303,7 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
                 toupper(v2), " | ", toupper(v1), sep = ""), ylab[2]))
         if (hist == TRUE) {
             rng <- diff(par()$usr[3:4])
-            h1 <- hist(obj$model[[v1]], nclass = nclass[2], plot = FALSE)
+            h1 <- hist(MM[,v1], nclass = nclass[2], plot = FALSE)
             prop1 <- h1$counts/sum(h1$counts)
             plot.prop1 <- (prop1/max(prop1)) * rng * scale.hist +
                 par()$usr[3]
@@ -318,7 +319,7 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
             }
         }
         if (rug == TRUE) {
-            rug(obj$model[[v1]], ticksize = ticksize)
+            rug(MM[, v1], ticksize = ticksize)
         }
         if (par()$usr[3] < 0 & par()$usr[4] > 0) {
             abline(h = 0, col = "gray50")
