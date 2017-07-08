@@ -2561,7 +2561,8 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
 }
 
 NKnots <- function(form, var, data, degree=3, min.knots=1,
-   max.knots=10, includePoly = FALSE, plot=FALSE, criterion=c("AIC", "BIC", "CV"), cvk=10){
+   max.knots=10, includePoly = FALSE, plot=FALSE, criterion=c("AIC", "BIC", "CV"),
+   cvk=10, cviter=10){
    crit <- match.arg(criterion)
    k <- seq(min.knots, max.knots, by=1)
    forms <- vector("list", ifelse(includePoly, length(k)+3, length(k)))
@@ -2586,13 +2587,17 @@ NKnots <- function(form, var, data, degree=3, min.knots=1,
        stats <- sapply(mods, function(x)do.call(crit, list(object=x)))
    }
    if(crit == "CV"){
+      tmp.stats <- NULL
+      for(j in 1:cviter){
        mods <- list()
        for(i in 1:length(forms)){
            tmp <- glm(forms[[i]], data=data, family=gaussian)
            tmpdat <- data[rownames(model.frame(tmp)), ]
            mods[[i]] <- cv.glm(tmpdat, tmp, K=cvk)
        }
-       stats <- sapply(mods, function(x)x$delta[1])
+       tmp.stats <- rbind(tmp.stats, sapply(mods, function(x)x$delta[1]))
+     }
+     stats <- colMeans(tmp.stats)
    }
    if(plot){
       k <- k+3

@@ -3,9 +3,9 @@
 \title{AIC and BIC selection of number of spline knots}
 \description{Calculates AIC and BIC for the selection of knots in a spline over values (potentially including polynomials) up to a user-defined maximum.}
 \usage{
-    NKnots(form, var, data, degree=3, min.knots=1, 
-       max.knots=10, includePoly = FALSE, plot=FALSE, 
-       criterion=c("AIC", "BIC", "CV"), cvk=10)
+    NKnots(form, var, data, degree=3, min.knots=1,
+       max.knots=10, includePoly = FALSE, plot=FALSE,
+       criterion=c("AIC", "BIC", "CV"), cvk=10, cviter=10)
 }
 \arguments{
   \item{form}{A formula detailing the model for which smoothing is to be evaluated.}
@@ -18,9 +18,10 @@
   \item{plot}{Logical indicating whether a plot should be returned.}
   \item{criterion}{Statistical criterion to minimize in order to find the best number of knots - AIC, BIC or Cross-validation.}
   \item{cvk}{Number of groups for cross-validation}
+  \item{cviter}{Number of iterations of cross-validation to average over.  10 is the default but in real-world applications, this should be somewhere around 200.}
 }
 \value{
-    A plot, if \code{plot=TRUE}, otherwise a data frame with the degrees of freedom and corresponding fit measure. 
+    A plot, if \code{plot=TRUE}, otherwise a data frame with the degrees of freedom and corresponding fit measure.
 }
 \author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
 \examples{

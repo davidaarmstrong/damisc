@@ -1,12 +1,12 @@
 Package: DAMisc
 Type: Package
 Title: Dave Armstrong's Miscellaneous Functions
-Version: 1.4-4
-Depends: car, effects 
+Version: 1.4-5
+Depends: car, effects
 Imports: lattice, sm, MASS, nnet, splines, pscl, gdata, xtable, QRM, VGAM, boot
-Date: 2016-07-03
-Author: Dave Armstrong (UW-Milwaukee, Department of Political Science)
+Date: 2017-07-08
+Author: Dave Armstrong (Western University, Department of Political Science)
 Maintainer: Dave Armstrong <dave@quantoid.net>
-Description: Miscellaneous set of functions I use in my teaching either at the University of Wisconsin-Milwaukee or the Inter-university Consortium for Political and Social Research Summer Program in Quantitative Methods.  Broadly, the functions help with presentation and interpretation of GLMs.  
+Description: Miscellaneous set of functions I use in my teaching either at the University of Wisconsin-Milwaukee or the Inter-university Consortium for Political and Social Research Summer Program in Quantitative Methods.  Broadly, the functions help with presentation and interpretation of GLMs.
 License: GPL (>=2)
 LazyLoad: yes
