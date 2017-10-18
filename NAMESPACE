@@ -15,6 +15,8 @@ S3method(print, pre)
 S3method(print, mnlfit)
 S3method(print, ordfit)
 S3method(print, ordChange)
+S3method(searchVarLabels, data.frame)
+S3method(searchVarLabels, tbl_df)
 export(
     binfit,
     btscs,
@@ -37,20 +39,22 @@ export(
     poisGOF,
     pre,
     searchVarLabels,
-    simPredpolr, 
+    searchVarLabels.data.frame,
+    searchVarLabels.tbl_df,
+    simPredpolr,
     ziChange,
     BGMtest,
     intQualQuant,
-    panel.transci, 
-    panel.doublerug, 
-    panel.ci, 
+    panel.transci,
+    panel.doublerug,
+    panel.ci,
     prepanel.ci,
     panel.2cat,
     crTest,
     crSpanTest,
     scaleDataFrame,
-    outXT, 
+    outXT,
     aveEffPlot,
     NKnots,
     NKnotsTest,
-    testLoess) 
+    testLoess)

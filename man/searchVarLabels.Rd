@@ -1,5 +1,7 @@
 \name{searchVarLabels}
 \alias{searchVarLabels}
+\alias{searchVarLabels.data.frame}
+\alias{searchVarLabels.tbl_df}
 \title{Search Variable Labels Attribute}
 \description{Data imported from SPSS or Stata comes with the variable labels set (if they were set in the original dataset) as one of the dataframe's attributes.  This allows you to search the variable labels and returns the variable column number, name and label for all variables that have partially match the search term either in their labels or names.}
 \usage{
