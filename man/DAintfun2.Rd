@@ -3,8 +3,8 @@
 \title{Conditional Effects Plots for Interactions in Linear Models}
 \description{Generates two conditional effects plots for two interacted continuous covariates in linear models.}
 \usage{
-DAintfun2(obj, varnames, varcov=NULL, rug=TRUE, ticksize=-.03, hist=FALSE, 
-	hist.col="gray75", nclass=c(10, 10), scale.hist=.5, border=NA, 
+DAintfun2(obj, varnames, varcov=NULL, rug=TRUE, ticksize=-.03, hist=FALSE,
+	hist.col="gray75", nclass=c(10, 10), scale.hist=.5, border=NA,
 	name.stem = "cond_eff", xlab = NULL, ylab = NULL, plot.type = "screen")
 }
 \arguments{
@@ -17,7 +17,7 @@ DAintfun2(obj, varnames, varcov=NULL, rug=TRUE, ticksize=-.03, hist=FALSE,
   \item{hist.col}{Argument to be passed to \code{polygon} indicating the color of the histogram bins.}
   \item{nclass}{vector of two integers indicating the number of bins in the two histograms, which will be passed to \code{hist}.}
   \item{scale.hist}{A scalar in the range (0,1] indicating how much vertical space in the plotting region the histogram should take up.}
-  \item{border}{Argument passed to \code{polygon} indicating how the border of the histogram bins should be printed (\code{NA} for no border).} 
+  \item{border}{Argument passed to \code{polygon} indicating how the border of the histogram bins should be printed (\code{NA} for no border).}
   \item{name.stem}{A character string giving filename to which the appropriate extension will be appended}
   \item{xlab}{Optional vector of length two giving the x-labels for the two plots that are generated.  The first element of the vector corresponds to the figure plotting the conditional effect of the first variable in \code{varnames} given the second and the second element of the vector corresponds to the figure plotting the conditional effect of the second variable in \code{varnames} conditional on the first.}
   \item{ylab}{Optional vector of length two giving the y-labels for the two plots that are generated.  The first element of the vector corresponds to the figure plotting the conditional effect of the first variable in \code{varnames} given the second and the second element of the vector corresponds to the figure plotting the conditional effect of the second variable in \code{varnames} conditional on the first.}
