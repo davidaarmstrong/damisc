@@ -2234,14 +2234,18 @@ if(plot){
 }
 
 panel.transci <- function(x,y,groups,lower,upper,...){
+	ungroup <- unique(groups)
 	sup.poly <- trellis.par.get("superpose.polygon")
 	sup.poly.rgb <- col2rgb(sup.poly$col)/255
 	sup.poly.rgb <- rbind(sup.poly.rgb, .25)
 	rownames(sup.poly.rgb)[4] <- "alpha"
 	ap <- apply(sup.poly.rgb, 2, function(x)lapply(1:4, function(y)x[y]))
 	sup.poly$col <- sapply(ap, function(x)do.call(rgb, x))
+    sup.poly$col <- rep(sup.poly$col, ceiling(length(ungroup)/length(sup.poly$col)))
 	sup.line <- trellis.par.get("superpose.line")
-	ungroup <- unique(groups)
+    sup.line$col <- rep(sup.line$col, ceiling(length(ungroup)/length(sup.line$col)))
+    sup.line$lwd <- rep(sup.line$lwd, ceiling(length(ungroup)/length(sup.line$lwd)))
+    sup.line$lty <- rep(sup.line$lty, ceiling(length(ungroup)/length(sup.line$lty)))
 	for(i in 1:length(ungroup)){
 	panel.polygon(
 		x=c(x[groups == ungroup[i]], rev(x[groups == ungroup[i]])),
