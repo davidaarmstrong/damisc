@@ -2693,3 +2693,24 @@ else{
     cat("LOESS not statistically better than alternative\n")
 }
 }
+
+inspect <- function(data, x, ...)UseMethod("inspect")
+inspect.tbl_df <- function(data, x){
+  tmp <- data[[as.character(x)]]
+  var.lab <- attr(tmp, "label")
+  if(is.null(var.lab)){var.lab <- "No Label Found"}
+  val.labs <- attr(tmp, "labels")
+  if(is.null(val.labs)){val.labs <- sort(unique(tmp))}
+  tab <- cbind(freq = table(tmp), prop = round(table(tmp)/sum(table(tmp), na.rm=T), 3))
+  out <- list(variable_label = var.lab, value_labels=t(t(val.labs)), freq_dist = tab)
+  return(out)
+}
+inspect.data.frame <- function(data, x){
+  var.lab <- attr(data, "var.label")[which(names(data) == x)]
+  if(is.null(var.lab)){var.lab <- "No Label Found"}
+  val.labs <- if(!is.null(levels(data[[x]]))){levels(data[[x]])}
+    else {sort(unique(data[[x]]))}
+  tab <- cbind(freq = table(data[[x]]), prop = round(table(data[[x]])/sum(table(data[[x]]), na.rm=T), 3))
+  out <- list(variable_label = var.lab, value_labels=t(t(val.labs)), freq_dist = tab)
+  return(out)
+}

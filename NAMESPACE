@@ -30,7 +30,12 @@ S3method(print, ordfit)
 S3method(print, ordChange)
 S3method(searchVarLabels, data.frame)
 S3method(searchVarLabels, tbl_df)
+S3method(inspect, data.frame)
+S3method(inspect, tbl_df)
 export(
+    inspect,
+    inspect.data.frame, 
+    inspect.tbl_df,
     binfit,
     btscs,
     cat2Table,
