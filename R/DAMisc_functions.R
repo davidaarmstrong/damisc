@@ -2150,7 +2150,7 @@ if(type == "facs"){
 }
 )
 	plot(p)
-	return(p)
+	invisible(p)
 }
 }
 if(type == "slopes"){
@@ -2228,7 +2228,7 @@ if(plot){
 			}
 		})
 	plot(p)
-	return(p)
+	invisible(p)
 }
 }
 }
