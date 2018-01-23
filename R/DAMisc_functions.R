@@ -2386,6 +2386,7 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", 
 	}
 	rownames(pvals) <- predictor.names(model)
 	ret = list(x=span.seq, y=t(pvals))
+    return(ret)
 }
 scaleDataFrame <-
 function(data){
