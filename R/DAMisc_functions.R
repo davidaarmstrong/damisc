@@ -483,13 +483,22 @@ function (obj, vars, data)
         int.var = int.var, vars = vars, b = b, X = X), pcd = probit_cd(obj = obj,
         int.var = int.var, vars = vars, b = b, X = X), pdd = probit_dd(obj = obj,
         int.var = int.var, vars = vars, b = b, X = X))
+    meanX <- matrix(colMeans(X), nrow=1)
+    mean.out.dat <- switch(type.int, lcc = logit_cc(obj = obj, int.var = int.var,
+        vars = vars, b = b, X = meanX), lcd = logit_cd(obj = obj,
+        int.var = int.var, vars = vars, b = b, X = meanX), ldd = logit_dd(obj = obj,
+        int.var = int.var, vars = vars, b = b, X = meanX), pcc = probit_cc(obj = obj,
+        int.var = int.var, vars = vars, b = b, X = meanX), pcd = probit_cd(obj = obj,
+        int.var = int.var, vars = vars, b = b, X = meanX), pdd = probit_dd(obj = obj,
+        int.var = int.var, vars = vars, b = b, X = meanX))
+    res <- list(byobs = list(int = out.dat, X=X), atmean = list(mean.out.dat, X=meanX))
     invisible(out.dat)
 }
 logit_cc <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
-    phat <- predict(obj, type = "response")
-    xb <- predict(obj, type = "link")
+    xb <- X %*% b
+    phat <- plogis(xb)
     phi <- phat * (1 - phat)
     linear <- b[int.var] * phi
     logitcc <- b[int.var] * phi + (b[vars[1]] + b[int.var] *
@@ -516,9 +525,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) b[int.var] * d2f * x +
         b1b4x2 * b2b4x1 * x * d3f)
-    mat123 <- cbind(deriv11, deriv22, deriv44, nn, derivcc)
+    mat123 <- cbind(deriv11, deriv22, deriv44, nn, derivcc)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
-    mat123 <- mat123[, match(colnames(X), colnames(mat123))]
+    mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
     logit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     logit_t <- logitcc/logit_se
     out <- data.frame(int_eff = logitcc, linear = linear, phat = phat,
@@ -528,7 +537,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 logit_cd <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
-    phat <- predict(obj, type = "response")
+    xb <- X %*% b
+    phat <- plogis(xb)
     phi <- phat * (1 - phat)
     linear <- b[int.var] * phi
     dum <- vars[which(sapply(apply(X[, vars], 2, table), length) ==
@@ -561,9 +571,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) ((b[cont] + b[int.var]) *
         d2f1 - b[cont] * d2f2) * x)
-    mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)
+    mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
-    mat123 <- mat123[, match(colnames(X), colnames(mat123))]
+    mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
     logit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     logit_t <- logitcd/logit_se
     out <- data.frame(int_eff = logitcd, linear = linear, phat = phat,
@@ -573,7 +583,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 logit_dd <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
-    phat <- predict(obj, type = "response")
+    xb <- X %*% b
+    phat <- plogis(xb)
     phi <- phat * (1 - phat)
     linear <- b[int.var] * phi
     X11 <- X01 <- X10 <- X00 <- X
@@ -610,9 +621,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) ((phi11 - phi01) - (phi10 -
         phi00)) * x)
-    mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)
+    mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
-    mat123 <- mat123[, match(colnames(X), colnames(mat123))]
+    mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
     logit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     logit_t <- logitdd/logit_se
     out <- data.frame(int_eff = logitdd, linear = linear, phat = phat,
@@ -1650,8 +1661,8 @@ function (x, ..., sim.ci = 0.95)
 probit_cc <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
-    phat <- predict(obj, type = "response")
     xb <- X %*% b
+    phat <- pnorm(xb)
     phi <- dnorm(xb)
     linear <- b[int.var] * phi
     probitcc <- (b[int.var] - (b[vars[1]] + b[int.var] * X[,
@@ -1678,9 +1689,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) b[int.var] * d2f * x +
         b1b4x2 * b2b4x1 * x * d3f)
-    mat123 <- cbind(deriv11, deriv22, deriv44, nn, derivcc)
+    mat123 <- cbind(deriv11, deriv22, deriv44, nn, derivcc)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
-    mat123 <- mat123[, match(colnames(X), colnames(mat123))]
+    mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
     probit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     probit_t <- probitcc/probit_se
     out <- data.frame(int_eff = probitcc, linear = linear, phat = phat,
@@ -1690,8 +1701,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 probit_cd <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
-    phat <- predict(obj, type = "response")
-    xb <- predict(obj, type = "link")
+    xb <- X %*% b
+    phat <- pnorm(xb)
     phi <- dnorm(xb)
     linear <- b[int.var] * phi
     dum <- vars[which(sapply(apply(X[, vars], 2, table), length) ==
@@ -1722,9 +1733,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) ((b[cont] + b[int.var]) *
         d2f1 - b[cont] * d2f2) * x)
-    mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)
+    mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
-    mat123 <- mat123[, match(colnames(X), colnames(mat123))]
+    mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
     probit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     probit_t <- probitcd/probit_se
     out <- data.frame(int_eff = probitcd, linear = linear, phat = phat,
@@ -1734,8 +1745,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 probit_dd <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
-    phat <- predict(obj, type = "response")
-    xb <- predict(obj, type = "link")
+    xb <- X %*% b
+    phat <- pnorm(xb)
     phi <- dnorm(xb)
     linear <- b[int.var] * phi
     X11 <- X01 <- X10 <- X00 <- X
@@ -1776,9 +1787,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) ((phi11 - phi01) - (phi10 -
         phi00)) * x)
-    mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)
+    mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
-    mat123 <- mat123[, match(colnames(X), colnames(mat123))]
+    mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
     probit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     probit_t <- probitdd/probit_se
     out <- data.frame(int_eff = probitdd, linear = linear, phat = phat,
