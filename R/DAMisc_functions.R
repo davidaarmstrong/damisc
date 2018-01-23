@@ -493,7 +493,7 @@ function (obj, vars, data)
         int.var = int.var, vars = vars, b = b, X = meanX), pdd = probit_dd(obj = obj,
         int.var = int.var, vars = vars, b = b, X = meanX))
     res <- list(byobs = list(int = out.dat, X=X), atmean = list(mean.out.dat, X=meanX))
-    invisible(out.dat)
+    invisible(res)
 }
 logit_cc <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
