@@ -484,6 +484,7 @@ function (obj, vars, data)
         int.var = int.var, vars = vars, b = b, X = X), pdd = probit_dd(obj = obj,
         int.var = int.var, vars = vars, b = b, X = X))
     meanX <- matrix(colMeans(X), nrow=1)
+    colnames(meanX) <- colnames(X)
     mean.out.dat <- switch(type.int, lcc = logit_cc(obj = obj, int.var = int.var,
         vars = vars, b = b, X = meanX), lcd = logit_cd(obj = obj,
         int.var = int.var, vars = vars, b = b, X = meanX), ldd = logit_dd(obj = obj,
