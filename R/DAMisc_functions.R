@@ -861,7 +861,7 @@ mnlChange2 <-
     	probs <- lapply(xb, function(x)lapply(x, function(z)z/rowSums(z)))
 
     	if(is.numeric(data[[varnames[m]]])){
-    	diffs <- lapply(1:R, function(x)probs[[1]][[x]] - probs[[2]][[x]])
+    	diffs <- lapply(1:R, function(x)probs[[2]][[x]] - probs[[1]][[x]])
     	probdiffs <- sapply(diffs, colMeans)
 
     	pwdiffmean <- apply(probdiffs, 1, quantile, c(.5,.025,.975))
