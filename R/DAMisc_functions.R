@@ -498,7 +498,7 @@ function (obj, vars, data)
 logit_cc <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
-    xb <- X %*% b
+    xb <- (X %*% b)[,,drop=F]
     phat <- plogis(xb)
     phi <- phat * (1 - phat)
     linear <- b[int.var] * phi
@@ -526,6 +526,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) b[int.var] * d2f * x +
         b1b4x2 * b2b4x1 * x * d3f)
+    nn <- array(nn, dim=dim(others))
+    dimnames(nn) <- dimnames(others)
     mat123 <- cbind(deriv11, deriv22, deriv44, nn, derivcc)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
     mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
@@ -572,6 +574,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) ((b[cont] + b[int.var]) *
         d2f1 - b[cont] * d2f2) * x)
+    nn <- array(nn, dim=dim(others))
+    dimnames(nn) <- dimnames(others)
     mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
     mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
@@ -622,6 +626,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) ((phi11 - phi01) - (phi10 -
         phi00)) * x)
+    nn <- array(nn, dim=dim(others))
+    dimnames(nn) <- dimnames(others)
     mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
     mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
@@ -2708,7 +2714,7 @@ else{
 }
 
 inspect <- function(data, x, ...)UseMethod("inspect")
-inspect.tbl_df <- function(data, x){
+inspect.tbl_df <- function(data, x, ...){
   tmp <- data[[as.character(x)]]
   var.lab <- attr(tmp, "label")
   if(is.null(var.lab)){var.lab <- "No Label Found"}
@@ -2718,7 +2724,7 @@ inspect.tbl_df <- function(data, x){
   out <- list(variable_label = var.lab, value_labels=t(t(val.labs)), freq_dist = tab)
   return(out)
 }
-inspect.data.frame <- function(data, x){
+inspect.data.frame <- function(data, x, ...){
   var.lab <- attr(data, "var.label")[which(names(data) == x)]
   if(is.null(var.lab)){var.lab <- "No Label Found"}
   val.labs <- if(!is.null(levels(data[[x]]))){levels(data[[x]])}

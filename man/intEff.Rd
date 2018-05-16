@@ -32,6 +32,7 @@ Norton, Edward C., Hua Wang and Chunrong Ai.  2004.  inteff: Computing Interacti
 data(france)
 mod <- glm(voteleft ~ age*lrself + retnat + male, data=france, family=binomial)
 out <- intEff(obj=mod, vars=c("age", "lrself"), data=france)
+out <- out$byobs$int
 plot(out$phat, out$int_eff, xlab="Predicted Pr(Y=1|X)", 
 	ylab = "Interaction Effect")
 ag <- aggregate(out$linear, list(out$phat), mean)

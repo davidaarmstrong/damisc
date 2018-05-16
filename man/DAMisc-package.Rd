@@ -9,8 +9,8 @@
 \tabular{ll}{
 Package: \tab DAMisc\cr
 Type: \tab Package\cr
-Version: \tab 1.4-7\cr
-Date: \tab 2018-01-23\cr
+Version: \tab 1.4-8\cr
+Date: \tab 2018-05-16\cr
 License: \tab GPL (>=2)\cr
 LazyLoad: \tab yes\cr
 }
