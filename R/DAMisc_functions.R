@@ -987,12 +987,27 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 	    rownames(preds.min) <- rownames(preds.max) <- rownames(diffs) <- rn
 	}
 	if(sim){
-    b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
-
-	X <- model.matrix(update(formula(obj), NULL ~ .), data=tmp.df)
+        if(class(obj) == "polr"){
+            b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
+        }
+        if(class(obj) == "clm"){
+            zeta.ind <- grep("|", names(coef(obj)), fixed=T)
+            b.ind <- (1:length(coef(obj)))[-zeta.ind]
+            b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]), 
+                vcov(obj)[c(b.ind, zeta.ind),c(b.ind, zeta.ind)])
+        }
+        if(!(class(obj) %in% c("clm", "polr"))){stop("Simulation requires either a clm or polr object\n")}
+    
+    X <- model.matrix(update(formula(obj), NULL ~ .), data=tmp.df)
 	intlist <- list()
-	ylev <- obj$lev
-		for(i in 1:(length(obj$lev)-1)){
+    if(class(obj) == "polr"){
+        ylev <- obj$lev
+    }
+    if(class(obj) == "clm"){
+        ylev <- obj$y.levels
+    }
+    
+    	for(i in 1:(length(ylev)-1)){
 			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(X))
 			intlist[[i]][,i] <- 1
 		}
@@ -1030,7 +1045,7 @@ rownames(minmax.mat) <- c("typical", "min", "max")
 ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min,
     maxPred = preds.max)
 class(ret) <- "ordChange"
-return(ret)
+ret
 }
 
 ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
@@ -1041,7 +1056,16 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
     }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
-    b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
+    if(class(obj) == "polr"){
+        b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
+    }
+    if(class(obj) == "clm"){
+        zeta.ind <- grep("|", names(coef(obj)), fixed=T)
+        b.ind <- (1:length(coef(obj)))[-zeta.ind]
+        b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]), 
+            vcov(obj)[c(b.ind, zeta.ind),c(b.ind, zeta.ind)])
+    }
+    if(!(class(obj) %in% c("clm", "polr"))){stop("Simulation requires either a clm or polr object\n")}
     change <- match.arg(diffchange)
     allmean <- alllower <- allupper <- NULL
 
@@ -1064,8 +1088,13 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
         }
     	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x)[,-1])
     	intlist <- list()
-    	ylev <- obj$lev
-    		for(i in 1:(length(obj$lev)-1)){
+            if(class(obj) == "polr"){
+                ylev <- obj$lev
+            }
+            if(class(obj) == "clm"){
+                ylev <- obj$y.levels
+            }
+        		for(i in 1:(length(ylev)-1)){
     			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(Xmats[[1]]))
     			intlist[[i]][,i] <- 1
     		}
@@ -2167,8 +2196,8 @@ if(type == "facs"){
 		}
 }
 )
-	plot(p)
-	invisible(p)
+#	plot(p)
+	return(p)
 }
 }
 if(type == "slopes"){
@@ -2245,8 +2274,8 @@ if(plot){
 				}
 			}
 		})
-	plot(p)
-	invisible(p)
+	# plot(p)
+	return(p)
 }
 }
 }
