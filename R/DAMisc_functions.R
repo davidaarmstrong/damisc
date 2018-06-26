@@ -2984,3 +2984,13 @@ changeSig <- function(obj, vars, alpha=.05){
     names(res) <- vars
     invisible(res)
 }
+
+test.balsos <- function(orig, chains, N=NULL){
+    if(is.null(N))N <- nrow(chains)
+    f1 <- fitted(lm(chains[,1:N] ~ orig))
+    f2 <- apply(chains[,1:N], 2, function(x)fitted(loess(x ~ orig)))
+    r2a <- sapply(1:ncol(f1), function(i)cor(f1[,i], f2[,i], use="pair")^2)
+    samps <- sapply(1:N, function(i)sample((1:ncol(chains))[-i], 1, replace=T))
+    r2b <- sapply(1:N, function(i)cor(chains[,i], chains[,samps[i]])^2)
+    mean(r2a < r2b)
+}

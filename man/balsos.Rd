@@ -14,7 +14,7 @@
 
   \item{chains}{Number of parallel chains to be run. }
 
-  \item{alg}{Algorithm used to do sampling.  See \link{\code{stan}} for more details. }
+  \item{alg}{Algorithm used to do sampling.  See \code{\link{stan}} for more details. }
   
   \item{...}{Other arguments to be passed down to \code{stanfit}.}
 }
