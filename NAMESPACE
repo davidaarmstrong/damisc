@@ -35,6 +35,7 @@ S3method(searchVarLabels, tbl_df)
 S3method(inspect, data.frame)
 S3method(inspect, tbl_df)
 export(
+    alsosDV,
     plot.loess, 
     changeSig,
     loessDeriv,
