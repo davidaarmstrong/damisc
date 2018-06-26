@@ -1,5 +1,3 @@
-obj, ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE, col.alpha=.5, ...
-
 \name{plot.loess}
 \alias{plot.loess}
 \title{Plot LOESS curve.}
