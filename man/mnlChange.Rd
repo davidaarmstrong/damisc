@@ -24,7 +24,7 @@ A list with the following elements:
 	\item{minPred}{A matrix of predicted probabilities when each variable is held at its minimum value, in turn.}
 	\item{maxPred}{A matrix of predicted probabilities when each variable is held at its maximum value, in turn.}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(nnet)
 data(france)

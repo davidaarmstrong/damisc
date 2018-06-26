@@ -25,7 +25,7 @@ Either a plot or a data frame with variables
 \references{
 Hanmer, M.J. and K.O. Kalkan.  2013.  \sQuote{Behind the Curve: Clarifying the Best Approach to Calculating Predicted Probabilities and Marginal Effects from Limited Dependent Variable Models}.  American Journal of Political Science.  57(1): 263-277.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 
 \examples{
 library(nnet)

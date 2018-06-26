@@ -2,8 +2,8 @@ Package: DAMisc
 Type: Package
 Title: Dave Armstrong's Miscellaneous Functions
 Version: 1.4-8
-Depends: car, effects
-Imports: lattice, sm, MASS, nnet, splines, pscl, gdata, xtable, QRM, VGAM, boot
+Depends: car, effects, rstan
+Imports: lattice, sm, MASS, nnet, splines, pscl, gdata, xtable, QRM, VGAM, boot, optiscale
 Date: 2018-05-16
 Author: Dave Armstrong (Western University, Department of Political Science)
 Maintainer: Dave Armstrong <dave@quantoid.net>

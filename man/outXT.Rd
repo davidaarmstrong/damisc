@@ -21,4 +21,4 @@
 \value{
 A file containing LaTeX Code or CSV data to make a table
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}

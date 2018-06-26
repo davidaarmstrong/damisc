@@ -21,7 +21,7 @@ crTest(model, adjust.method="none", cat=5, var=NULL, ...)
 	\item{F}{F-statistic}
 	\item{p}{p-value, potentially adjusted for multiple comparisons.}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 mod <- lm(prestige ~ income + education + women, data=Prestige)

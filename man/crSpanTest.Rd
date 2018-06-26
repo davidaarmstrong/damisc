@@ -19,7 +19,7 @@ crSpanTest(model, spfromto, n=10, adjust.method="none",
 	\item{x}{Sequence of span values used in testing}
 	\item{y}{p-values for each variable for each span parameter}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 mod <- lm(prestige ~ income + education + women, data=Prestige)

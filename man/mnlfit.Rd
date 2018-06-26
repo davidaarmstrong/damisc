@@ -19,7 +19,7 @@ mnlfit(obj, permute = FALSE)
 \references{
 Fagerland M. W., D. W. Hosmer and A. M. Bonfi.  2008.  \sQuote{Multinomial goodness-of-fit tests for logistic regression models.}  Statistics in Medicine.  27(21): 4238-4253.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(nnet)
 data(france)

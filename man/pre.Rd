@@ -30,7 +30,7 @@ An object of class \code{pre}, which is a list with the following elements:
 \references{
 Herron, M.  1999.  Postestimation Uncertainty in Limited Dependent Variable Models.  Political Analysis 8(1): 83--98. 
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(france)
 left.mod <- glm(voteleft ~ male + age + retnat + 

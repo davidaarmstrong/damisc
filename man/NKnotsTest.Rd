@@ -19,7 +19,7 @@
 \value{
     A matrix with F statistics, numerator and denominator DF and p-values for all required tests.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 NKnotsTest(prestige ~ education + type, var="income", data=na.omit(Prestige), targetdf=3)

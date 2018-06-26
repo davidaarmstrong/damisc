@@ -13,7 +13,7 @@ testLoess(lmobj, loessobj, alpha=.05)
 \value{
     Printed output describing the results of the test.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 linmod <- lm(prestige ~ income, data=Prestige)

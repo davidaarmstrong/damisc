@@ -14,7 +14,7 @@ cat2Table(eff.obj, digits, rownames=NULL, colnames=NULL)
 \value{
 A matrix of fitted values and confidence intervals
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 data(Duncan)

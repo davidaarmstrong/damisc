@@ -23,7 +23,7 @@
 \value{
     A plot, if \code{plot=TRUE}, otherwise a data frame with the degrees of freedom and corresponding fit measure.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 NKnots(prestige ~ education + type, var="income", data=na.omit(Prestige), plot=FALSE)

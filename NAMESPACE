@@ -10,6 +10,7 @@ importFrom("stats", "AIC", "BIC", "alias", "anova", "as.formula",
              "pnorm", "predict", "pt", "qt", "quantile", "relevel",
              "residuals", "residuals.glm", "sd", "terms", "update",
              "var", "vcov", "gaussian", "glm")
+importFrom("optiscale", "opscale")
 importFrom("utils", "combn")
 importFrom("boot", "cv.glm")
 importFrom("VGAM", "pgumbel")
@@ -25,6 +26,7 @@ import(pscl)
 import(gdata)
 import(xtable)
 S3method(print, pre)
+S3method(plot, loess)
 S3method(print, mnlfit)
 S3method(print, ordfit)
 S3method(print, ordChange)

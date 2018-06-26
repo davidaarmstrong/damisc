@@ -19,7 +19,7 @@ Long, J.S.  1997.  Regression Models for Categorical and Limited Dependent Varia
 
 Long, J.S. and J. Freese.  2005.  Regression Models for Categorical Outcomes Using Stata, 2nd ed.  College Station, TX: Stata Press. 
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(france)
 left.mod <- glm(voteleft ~ male + age + retnat + 

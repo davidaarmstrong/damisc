@@ -14,7 +14,7 @@ A 2x2 data frame with rows representing the different types of statistics (Devia
 \references{
 Dobson, A. J. (1990) An Introduction to Generalized Linear Models. London: Chapman and Hall.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 ## Example taken from MASS help file for glm, identified to be
 ## Dobson (1990) Page 93: Randomized Controlled Trial :

@@ -22,7 +22,7 @@ A list with elements:
    \item{lower}{Lower 95 percent confidence bound}
    \item{upper}{Upper 95 percent confidence bound}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(nnet)
 data(france)

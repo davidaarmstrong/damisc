@@ -1,0 +1,31 @@
+obj, ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE, col.alpha=.5, ...
+
+\name{plot.loess}
+\alias{plot.loess}
+\title{Plot LOESS curve.}
+\description{Plots the loess curve of the fitted values against a focal x-variable. .}
+\usage{
+	\method{plot}{loess}(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE, col.alpha=.5)
+}
+\arguments{
+  \item{x}{An object of class \code{loess}.}
+
+  \item{ci}{Logical indicating whether point-wise confidence intervals should be included around the fitted curve.}
+
+  \item{level}{The confidence level of the confidence intervals}
+
+  \item{linear}{Logical indicating whether the OLS line should also be included. }
+
+  \item{addPoints}{Logical indicating whether or not points should be added to the figure idtntifying the postion of individual observations. }
+
+  \item{col.alpha}{Value for alpha channel of the RGB color palette.}
+  
+  \item{...}{Other arguments to be passed down to \code{xyplot}.}
+}
+\details{
+Plots the fitted loess curve potentially with point-wise confidence bounds. 
+}
+\value{
+A plot. 
+}
+\author{Dave Armstrong}

@@ -16,7 +16,7 @@ LazyLoad: \tab yes\cr
 }
 These are functions that help present linear model results.  Largely, the represent alternatives in presentation to other R packages.  For example, the \code{factorplot} function offers an alternative to David Firth's \code{qvcalc} package.  This function calculates and presents exact variances of all simple contrasts.  Both \code{DAintfun} and \code{DAintfun2} are alternative ways of presenting interactions between two continuous variables.  \code{DAintfun2} gives results in line with the suggestions in Brambor, Clark and Golder (2006). 
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)\cr
+\author{Dave Armstrong\cr
 Maintainer: Dave Armstrong <davearmstrong.ps@gmail.com>
 }
 \references{

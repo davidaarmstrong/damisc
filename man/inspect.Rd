@@ -17,7 +17,7 @@
 \value{
 A list with a variable label (if present), factor levels/value labels (if present) and a frequency distribution
 }
-\author{Dave Armstrong (Western University, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(france)
 inspect(france, "vote")

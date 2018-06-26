@@ -15,7 +15,7 @@ mnlSig(obj, pval=.05, two.sided=TRUE, flag.sig=TRUE, insig.blank=FALSE)
 \value{
 A data frame suitable for printing with the (optionally significance-flagged) coefficients from a multinomial logit model. 
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(nnet)
 data(france)

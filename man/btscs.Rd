@@ -20,7 +20,7 @@ Alvarez, M., J.A. Cheibub, F. Limongi and A. Przeworski. 1996. Classifying polit
 
 Beck, N.. J. Katz and R. Tucker. 1998. Beyond Ordinary Logit: Taking Time Seriously in Binary-Time-Series-Cross-Section Models. American Journal of Political Science 42(4): 1260-1288.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(splines)
 ## Data from Alvarez et. al. (1996)

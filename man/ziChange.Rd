@@ -19,7 +19,7 @@ A list with the following elements:
 	\item{diffs}{A matrix of calculated first differences}
 	\item{minmax}{A matrix of values that were used to calculate the predicted changes}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(pscl)
 ## Example from the help file for zeroinfl in the pscl package

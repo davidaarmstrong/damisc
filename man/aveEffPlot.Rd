@@ -20,7 +20,7 @@ The function plots the average effect of a model covariate, for objects of class
 \value{
 A plot or a data frame
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(france)
 p <- poly(france$lrself, 2)

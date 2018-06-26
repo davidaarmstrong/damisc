@@ -39,7 +39,7 @@ for different values of \eqn{X_{2}}{X2} and then switches the places of \eqn{X_{
 Brambor, T., W.R. Clark and M. Golder.  (2006) Understanding Interaction Models: Improving Empirical Analyses.  Political Analysis 14, 63-82.\cr
 Berry, W., M. Golder and D. Milton.  (2012)  Improving Tests of Theories Positing Interactions.  Journal of Politics.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(InteractionEx)
 mod <- lm(y ~ x1*x2 + z, data=InteractionEx)

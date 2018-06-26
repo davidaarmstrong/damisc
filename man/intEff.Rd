@@ -27,7 +27,7 @@ Ai, Chunrong and Edward C. Norton.  2003.  Interaction Terms in Logit and Probit
 
 Norton, Edward C., Hua Wang and Chunrong Ai.  2004.  inteff: Computing Interaction Effects and Standard Errors in Logit and Probit Models, Stata Code. 
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(france)
 mod <- glm(voteleft ~ age*lrself + retnat + male, data=france, family=binomial)

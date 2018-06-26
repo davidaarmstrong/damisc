@@ -2280,11 +2280,11 @@ if(plot){
 }
 }
 
-panel.transci <- function(x,y,groups,lower,upper,...){
+panel.transci <- function(x,y,groups,lower,upper, ca=.25, ...){
 	ungroup <- unique(groups)
 	sup.poly <- trellis.par.get("superpose.polygon")
 	sup.poly.rgb <- col2rgb(sup.poly$col)/255
-	sup.poly.rgb <- rbind(sup.poly.rgb, .25)
+	sup.poly.rgb <- rbind(sup.poly.rgb, ca)
 	rownames(sup.poly.rgb)[4] <- "alpha"
 	ap <- apply(sup.poly.rgb, 2, function(x)lapply(1:4, function(y)x[y]))
 	sup.poly$col <- sapply(ap, function(x)do.call(rgb, x))
@@ -2761,4 +2761,226 @@ inspect.data.frame <- function(data, x, ...){
   tab <- cbind(freq = table(data[[x]]), prop = round(table(data[[x]])/sum(table(data[[x]]), na.rm=T), 3))
   out <- list(variable_label = var.lab, value_labels=t(t(val.labs)), freq_dist = tab)
   return(out)
+}
+
+alsosDV <- function(form, data, maxit=30, level=2, process=1, starts=NULL,...){
+	# process: 1 = discrete, 2 = continuous
+	# level: 1 = nominal, 2 = ordinal
+	# maxit: maximum number of optimal scaling iterations
+	# source("http://www.quantoid.net/reg3/opscale_v14.R")
+
+	rownames(data) <- 1:nrow(data)
+	previous.rsquared <- niter <- 0
+	rsquared.differ <- 1.0
+	record <- c()
+	form <- as.formula(form)
+	mf <- model.frame(form, data)
+	tmpdata <- data[which(rownames(data) %in% rownames(mf)),]
+	dv <- form[[2]]
+	tmpdata$dvar.os <- model.response(mf)
+	if(!is.null(starts)){
+		tmpdata$dvar.os <- starts
+	}
+	tmpmod <- lm(form, tmpdata, ...)
+	while (rsquared.differ > .001 && niter <= maxit) {
+	niter <- niter + 1
+	reg.os <- update(tmpmod, dvar.os ~ .)
+	rsquared.differ <- summary(reg.os)$r.squared - previous.rsquared
+	previous.rsquared <- summary(reg.os)$r.squared
+	record <- c(record, niter, summary(reg.os)$r.squared, rsquared.differ)
+	   if (rsquared.differ > .001) {
+	   dvar.pred <- predict(reg.os)
+	   opscaled.dvar <- opscale(model.response(model.frame(form, data)), dvar.pred, level = level, process = process)
+	   tmpdata$dvar.os <- opscaled.dvar$os
+	   }
+	}
+	record <- matrix(round(record,4), ncol=3, byrow=T)
+	rownames(record) <- record[,1]
+	record <- record[,-1]
+	colnames(record) <- c("r-squared", "r-squared dif")
+	tmpdata[[paste(dv, "_os", sep="")]] <- NA
+	tmpdata[[paste(dv, "_os", sep="")]][match(rownames(tmpdata), rownames(mf))] <- tmpdata$dvar.os
+	invisible(list(result=opscaled.dvar, data=tmpdata, iterations=record, formula=form))
+}
+
+balsos <- function(formula, data, iter=2500, chains = 1, alg = c("NUTS", "HMC", "Fixed_param"), ...){
+alg <- match.arg(alg)
+stancode <- "data{
+  int N; //number of observations
+  int M; //number of DV categories
+  int k; //number of columns of model matrix
+  real ybar; //mean of y
+  real sy; //sd of y
+  int y[N]; //untransformed DV
+  matrix[N,k] X; //model matrix
+}
+parameters {
+  vector[k] beta; //regression coefficients
+  real<lower=0> sigma; //standard deviation
+  ordered[M] y_star; //transformed dependent variable
+}
+transformed parameters {
+  vector[N] linpred; //linear predictor
+  vector[N] y_new; //vector of transformed DV values
+  real sd_new; //sd of transformed y
+  real mean_new; //mean of transformed y
+  vector[N] y_new2; //rescaled y_new;
+  linpred = X*beta;
+  for(i in 1:N){
+    y_new[i] = y_star[y[i]]; //vector of transformed DV values
+  }
+  sd_new = sd(y_new);
+  mean_new = mean(y_new);
+  y_new2 = (y_new - mean_new)*(sy/sd_new) + ybar;
+}
+model{
+  beta[1] ~ cauchy(0,10); //prior on intercept
+  for(i in 2:k){
+    beta[i] ~ cauchy(0, 2.5); //prior on regression coefficients
+  }
+    target += normal_lpdf(y_new2 | linpred, sigma);
+}"
+
+X <- model.matrix(formula, data)
+y <- as.integer(model.response(model.frame(formula, dat)))
+y <- (y - min(y)) + 1L
+balsos.dat <- list(
+  M=max(y), N=length(y), k = ncol(X), ybar = mean(y), sy = sd(y),
+  y=y, X=X)
+fit <- stan(model_code=stancode, data = balsos.dat,
+            iter = iter, chains = chains, algorithm=alg, ...)
+return(list(fit = fit, y=y, X=X))
+}
+
+#figure out whether we need the col.alpha parameter in the panel.transci function. 
+plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE, col.alpha=.5){
+    require(DAMisc)
+    require(lattice)
+    alpha <- (1-level)/2
+    tmp <- data.frame(x=x$x, y=x$y)
+    xn <- as.character(formula(x$call)[[3]])
+    yn <- as.character(formula(x$call)[[2]])
+    names(tmp) <- c(xn, yn)
+#    plot(formula(x$call), data=tmp, ...)
+    xs <- seq(min(x$x), max(x$x), length=100)
+    tmp2 <- data.frame(x=xs, y=rep(0, length(xs)))
+    names(tmp2) <- names(tmp)
+    preds <- predict(x, newdata=tmp2, se=TRUE)
+    crit <- abs(qnorm(alpha))
+    plot.dat <- data.frame(fit=preds$fit, 
+        lower=preds$fit - crit*preds$se.fit, 
+        upper = preds$fit + crit*preds$se.fit, 
+        x = xs, 
+        g = "loess")
+    if(!linear){
+     p <-    xyplot(fit ~ x, data=plot.dat, groups=g, ...,
+            lower=plot.dat$lower, 
+            upper=plot.dat$upper, 
+            panel=panel.transci, 
+            prepanel=prepanel.ci)
+    }
+    if(linear){
+        mod <- lm(formula(x$call), data=tmp)
+        linpred <- predict(mod, newdata=tmp2, interval="confidence", level=level)
+        linpred <- as.data.frame(linpred)
+        names(linpred) <- c("fit", "lower", "upper")
+        linpred$x <- xs
+        linpred$g <- "linear"
+        plot.dat <- rbind(plot.dat, linpred)
+        p <- xyplot(fit ~ x, data=plot.dat, groups=g, ...,
+            lower=plot.dat$lower, 
+            upper=plot.dat$upper, 
+            panel=panel.transci, 
+            prepanel=prepanel.ci)
+
+    }
+    print(p)
+    if(addPoints){
+        trellis.focus("panel",1,1)
+        panel.points(x$x, x$y, col="black")
+        trellis.unfocus()
+    }
+}
+loessDeriv <- function(obj, delta=.00001){
+    newdf <- data.frame(y = obj$y)
+    newdf[[obj$xnames[1]]] <- obj$x
+    fit1 <- predict(obj, newdata=newdf, se=T)
+    newdf[[obj$xnames[1]]] <- obj$x + delta
+    fit2 <- predict(obj, newdata=newdf, se=T)
+    deriv <- (fit2$fit - fit1$fit)/delta
+    deriv
+}
+
+changeSig <- function(obj, vars, alpha=.05){
+    v1 <- which(names(obj$coef) == vars[1])
+    v2 <- which(names(obj$coef) == vars[2])
+    n12 <- ifelse(paste(vars, collapse=":") %in% names(coef(obj)), paste(vars, collapse=":"), paste(vars[2:1], collapse=":"))
+    v12 <- which(names(obj$coef) == n12)
+
+    B <- coef(obj)
+    B.star <- B/qt(1-(alpha/2), obj$df.residual)
+    V <- vcov(obj)
+
+    # calculate solution for var1
+    b <- 2*(V[v1,v12] - B.star[v1]*B.star[v12])
+    a <- V[v12,v12] - B.star[v12]^2
+    c <- V[v1,v1] - B.star[v1]^2
+
+    x <- (-b + sqrt(b^2 - 4*a*c))/(2*a)
+    x <- c(x, (-b - sqrt(b^2 - 4*a*c))/(2*a))
+    x1 <- x
+    est <- B[v1] + B[v12]*x
+    v <- V[v1,v1] + x^2*V[v12,v12] + 2*x*V[v1,v12]
+    s <- sqrt(v)
+    lb1 <- est-qt(.975, obj$df.residual)*s
+    ub1 <- est+qt(.975, obj$df.residual)*s
+
+
+    # calculate solution for var2
+    b <- 2*(V[v2,v12] - B.star[v2]*B.star[v12])
+    a <- V[v12,v12] - B.star[v12]^2
+    c <- V[v2,v2] - B.star[v2]^2
+
+    x <- (-b + sqrt(b^2 - 4*a*c))/(2*a)
+    x <- c(x, (-b - sqrt(b^2 - 4*a*c))/(2*a))
+    x2 <- x
+    est <- B[v2] + B[v12]*x
+    v <- V[v2,v2] + x^2*V[v12,v12] + 2*x*V[v2,v12]
+    s <- sqrt(v)
+    lb2 <- est-qt(.975, obj$df.residual)*s
+    ub2 <- est+qt(.975, obj$df.residual)*s
+
+    tp1 <- mean(model.matrix(obj)[,v2] < x1[which.min(abs(lb1))])*100
+    tp2 <- mean(model.matrix(obj)[,v2] < x1[which.min(abs(ub1))])*100
+    tp3 <- mean(model.matrix(obj)[,v1] < x2[which.min(abs(lb2))])*100
+    tp4 <- mean(model.matrix(obj)[,v1] < x2[which.min(abs(ub2))])*100
+    lpc0 <- "(< Minimum Value in Data)"
+    lpc100 <- "(> Maximum Value in Data)"
+    lpcmid <- "(%.0fth pctile)"
+
+    if(tp1 == 0){p1l <- lpc0}
+    if(tp1 == 100){p1l <- lpc100}
+    if(tp1 > 0 & tp1 < 100){p1l <- sprintf(lpcmid, tp1)}
+    if(tp2 == 0){p1u <- lpc0}
+    if(tp2 == 100){p1u <- lpc100}
+    if(tp2 > 0 & tp2 < 100){p1u <- sprintf(lpcmid, tp2)}
+    if(tp3 == 0){p2l <- lpc0}
+    if(tp3 == 100){p2l <- lpc100}
+    if(tp3 > 0 & tp3 < 100){p2l <- sprintf(lpcmid, tp3)}
+    if(tp4 == 0){p2u <- lpc0}
+    if(tp4 == 100){p2u <- lpc100}
+    if(tp4 > 0 & tp4 < 100){p2u <- sprintf(lpcmid, tp4)}
+
+    cat("LB for B(", vars[1], " | ", vars[2], ") = 0 when ", vars[2], "=", round(x1[which.min(abs(lb1))], 4), " ", p1l, "\n", sep="")
+    cat("UB for B(", vars[1], " | ", vars[2], ") = 0 when ", vars[2], "=", round(x1[which.min(abs(ub1))], 4), " ", p1u, "\n", sep="")
+    cat("LB for B(", vars[2], " | ", vars[1], ") = 0 when ", vars[1], "=", round(x2[which.min(abs(lb2))], 4), " ", p2l, "\n", sep="")
+    cat("UB for B(", vars[2], " | ", vars[1], ") = 0 when ", vars[1], "=", round(x2[which.min(abs(ub2))], 4), " ", p2u, "\n", sep="")
+    m1 <- round(rbind(x1, lb1, ub1), 5)
+    colnames(m1) <- rep(vars[2], 2)
+    m2 <- round(rbind(x2, lb2, ub2), 5)
+    colnames(m2) <- rep(vars[1], 2)
+    rownames(m1) <- rownames(m2) <- c("x", "Lower", "Upper")
+    res <- list(m1, m2)
+    names(res) <- vars
+    invisible(res)
 }

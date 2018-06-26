@@ -18,7 +18,7 @@ The function calculates the average effect discrete changes in the covariates, f
 \value{
 A vector of values giving the average and 95 percent confidence bounds
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(france)
 left.mod <- glm(voteleft ~ male + age + retnat + 

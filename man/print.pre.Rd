@@ -10,7 +10,7 @@
   \item{sim.ci}{Coverage for the simulated confidence interval, if \code{sim=TRUE} in the call to \code{pre}.}
   \item{...}{Other arguments passed to print, currently not implemented}
 }
-\author{Dave Armstrong (Department of Political Science, UW-Milwaukee)
+\author{Dave Armstrong
 }
 \seealso{\code{pre}
 }

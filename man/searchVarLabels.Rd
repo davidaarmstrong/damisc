@@ -17,4 +17,4 @@ For an imported Stata dataset, variable labels are in the \code{var.labels} attr
 \value{
 \item{matrix}{A matrix of dimensions n-matches x 2 is returned, where the first column is the column number of the matching variable and the second column is the variable label.  The row names of the matrix are the variable names.}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}

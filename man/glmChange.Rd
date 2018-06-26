@@ -22,7 +22,7 @@ A list with the following elements:
 	\item{diffs}{A matrix of calculated first differences}
 	\item{minmax}{A matrix of values that were used to calculate the predicted changes}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(france)
 left.mod <- glm(voteleft ~ male + age + retnat + 

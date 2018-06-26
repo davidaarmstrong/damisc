@@ -11,7 +11,7 @@
   \item{lower, upper}{95\% lower and upper bounds of \code{y}.}
   \item{zl}{Logical indicating whether or not a horizontal dotted line at zero is desired.}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 library(lattice)

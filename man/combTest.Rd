@@ -11,7 +11,7 @@
 \value{
 A matrix of test statistics and p-values. 
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(nnet)
 data(france)

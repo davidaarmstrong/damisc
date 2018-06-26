@@ -39,7 +39,7 @@ For \code{type} = \sQuote{slopes} and \code{plot} = \code{FALSE}, A character ma
 	\item{Pr(>|t|)}{The two-sided p-value.}
 For \code{type} = \sQuote{slopes} and \code{plot} = \code{TRUE}, a lattice display is returned
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 data(Prestige)

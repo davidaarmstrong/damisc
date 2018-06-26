@@ -28,7 +28,7 @@ this function plots \eqn{b_{1}x_{i1} + b_{2}x_{i2} + b_{3}x_{i1}\times x_{i2}}{b
 \item{pred}{The predictions based on the values \code{x1} and \code{x2}.}
 \item{graph}{A graph is produced, but no other information is returned.}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 data(InteractionEx)
 mod <- lm(y ~ x1*x2 + z, data=InteractionEx)

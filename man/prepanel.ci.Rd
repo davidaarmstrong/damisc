@@ -13,7 +13,7 @@
 \value{
 	A list giving the ranges and differences in ranges of x and the lower and upper bounds of y.
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 library(lattice)

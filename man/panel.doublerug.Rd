@@ -15,5 +15,5 @@
   \item{x.units}{Character vectors, replicated to be of length two. Specifies the (grid) units associated with start and end above. x.units are for the rug on the x-axis and y-axis respectively (and thus are associated with start and end values on the y and x scales respectively). See \code{panel.rug} for more details.}
   \item{lty, lwd}{Line type and width arguments (see \code{par} for more details).}
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 

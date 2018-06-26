@@ -13,4 +13,4 @@ simPredpolr(object, coefs, n.coef)
 \value{
 An n x m-category matrix of predicted probabilities
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}

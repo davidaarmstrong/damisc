@@ -11,4 +11,4 @@ scaleDataFrame(data)
 \value{
 A data frame with standardized quantitative variables
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}

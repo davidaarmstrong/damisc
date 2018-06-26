@@ -15,7 +15,7 @@ BGMtest(obj, vars, digits = 3, level = 0.05, two.sided=T)
 \value{
 A matrix giving five t-tests. 
 }
-\author{Dave Armstrong (UW-Milwaukee, Department of Political Science)}
+\author{Dave Armstrong}
 \examples{
 library(car)
 data(Duncan)
