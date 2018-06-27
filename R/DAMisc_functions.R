@@ -2374,7 +2374,7 @@ if(!span.as){
     lo.mods <- lapply(terms.list, function(z)loess(y ~ x, data=z,...))
 }
 if(span.as){
-    lo.mods <- lapply(terms.list, function(z)loess.as(x$x, x$y, ...))    
+    lo.mods <- lapply(terms.list, function(z)loess.as(z$x, z$y, ...))    
 }
 lin.mods <- lapply(terms.list, function(z)lm(y ~ x, data=z))
 n <- nrow(model.matrix(model))
