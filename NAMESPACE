@@ -10,6 +10,7 @@ importFrom("stats", "AIC", "BIC", "alias", "anova", "as.formula",
              "pnorm", "predict", "pt", "qt", "quantile", "relevel",
              "residuals", "residuals.glm", "sd", "terms", "update",
              "var", "vcov", "gaussian", "glm")
+importFrom("fANCOVA", "loess.as")
 importFrom("optiscale", "opscale")
 importFrom("utils", "combn")
 importFrom("boot", "cv.glm")
