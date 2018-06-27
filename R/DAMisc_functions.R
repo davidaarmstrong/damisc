@@ -2339,8 +2339,6 @@ panel.2cat <- function(x,y,subscripts,lower,upper, length=.2){
 	panel.arrows(x, lower[subscripts], x, upper[subscripts], code=3, angle=90, length=length)
 }
 crTest <- function(model, adjust.method="none", cat = 5, var=NULL, span.as = TRUE, ...){
-	if(span.as)lofun <- loess.as
-    else lofun <- loess
     cl <- attr(terms(model), "dataClasses")
 	cl <- cl[which(cl != "factor")]
     mf <- model.frame(model)
@@ -2372,7 +2370,12 @@ crTest <- function(model, adjust.method="none", cat = 5, var=NULL, span.as = TRU
     	terms.list[[i]] <- data.frame(x=tmp.x,
     		y = residuals.glm(model, "partial")[,terms[i]])
     }
-lo.mods <- lapply(terms.list, function(z)lofun(y ~ x, data=z,...))
+if(!span.as){
+    lo.mods <- lapply(terms.list, function(z)loess(y ~ x, data=z,...))
+}
+if(span.as){
+    lo.mods <- lapply(terms.list, function(z)loess.as(x$x, x$y, ...))    
+}
 lin.mods <- lapply(terms.list, function(z)lm(y ~ x, data=z))
 n <- nrow(model.matrix(model))
 lo.rss <- sapply(lo.mods, function(x)sum(residuals(x)^2))
