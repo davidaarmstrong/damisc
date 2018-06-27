@@ -2999,3 +2999,27 @@ test.balsos <- function(orig, chains, N=NULL){
     r2b <- sapply(1:N, function(i)cor(chains[,i], chains[,samps[i]])^2)
     mean(r2a < r2b)
 }
+
+yj_trans <- function(form, data, trans.vars, round.digits = 3, ...){
+optim_yj <- function(pars, form, data, trans.vars, ...){
+    form <- as.character(form)
+    for(i in 1:length(trans.vars)){
+        form <- gsub(trans.vars[i], paste("yeo.johnson(", trans.vars[i], ",", pars[i], ")", sep=""), form)
+    }
+    form <- as.formula(paste0(form[2], form[1], form[3]))
+    m <- lm(form, data=data)
+    ll <- logLik(m)   
+    -ll
+}
+    opt.pars <- nlminb(c(1,1), optim_yj, form=form, data=data, trans.vars = trans.vars, lower=0, upper=2)
+    if(!is.null(round.digits)){
+        opt.pars$par <- round(opt.pars$par, round.digits)
+    }
+    form <- as.character(form)
+    for(i in 1:length(trans.vars)){
+        form <- gsub(trans.vars[i], paste("yeo.johnson(", trans.vars[i], ",", opt.pars$par[i], ")", sep=""), form)
+    }
+    form <- as.formula(paste0(form[2], form[1], form[3]))
+    out <- lm(form, data=data, ...)
+    return(out)
+}
