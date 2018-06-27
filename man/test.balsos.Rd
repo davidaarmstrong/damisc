@@ -7,7 +7,7 @@ test.balsos(orig, chains, N=NULL)
 }
 \arguments{
   \item{orig}{Original dependent variable. }
-  \item{chains}{N (obs) X K (iterations) matrix of optimally scaled points, 
+  \item{chains}{N (obs) X K (iterations) matrix of optimally scaled points}
   \item{N}{Number of draws from sampler to use.  If \code{NULL}, all draws are used. }
 }
 \value{
