@@ -3023,3 +3023,37 @@ optim_yj <- function(pars, form, data, trans.vars, ...){
     out <- lm(form, data=data, ...)
     return(out)
 }
+
+cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=T), 
+    K = n, numiter = 100, which=c("corrected", "raw")) {
+    w <- match.arg(which)
+	require(boot)
+    n <- nrow(data)
+    f <- ceiling(n/K)
+    tmp.y <- model.response(model.frame(as.formula(form), data=data))
+	out.cv <- out.cost0 <- rep(NA, numiter)
+	for(l in 1:numiter){
+        s <- boot:::sample0(rep(1:K, f), n)
+    	samps <- by(1:n, s, function(x)x)
+        n.s <- sapply(samps, length)
+        ms <- max(s)
+        mod <- loess(formula=as.formula(form), data=data, span=span)
+        cost.0 <- cost(tmp.y, fitted(mod))
+        CV <- 0
+        for (i in 1:length(samps)) {
+            j.out <- samps[[i]]
+            j.in <- setdiff(1:n, samps[[i]])
+            d.mod <- loess(as.formula(form), data=data[j.in, ], span=span)
+            p.alpha <- n.s[i]/n
+            cost.i <-  cost(tmp.y[j.out], predict(d.mod, data[j.out, 
+                , drop = FALSE]))
+            CV <- CV + p.alpha * cost.i
+            cost.0 <- cost.0 - p.alpha * cost(tmp.y, predict(d.mod, data))
+        }
+	out.cv[l] <- CV
+	out.cost0[l] <- cost.0
+	names(out.cv) <- names(out.cost0) <- NULL
+}
+    return(switch(w, raw=mean(out.cv), corrected=mean(out.cv+out.cost0)))
+}
+
