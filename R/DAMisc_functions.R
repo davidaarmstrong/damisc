@@ -2854,7 +2854,9 @@ balsos.dat <- list(
   y=y, X=X)
 fit <- stan(model_code=stancode, data = balsos.dat,
             iter = iter, chains = chains, algorithm=alg, ...)
-return(list(fit = fit, y=y, X=X))
+ret <- list(fit = fit, y=y, X=X, form=formula)
+class(ret) <- "balsos"
+return(ret)
 }
 
 #figure out whether we need the col.alpha parameter in the panel.transci function. 
@@ -2990,14 +2992,17 @@ changeSig <- function(obj, vars, alpha=.05){
     invisible(res)
 }
 
-test.balsos <- function(orig, chains, N=NULL){
+test.balsos <- function(obj, N=NULL){
+    chains <- as.matrix(obj$fit)
+    chains <- t(chains[,grep("y_new2", colnames(chains))])
     if(is.null(N))N <- nrow(chains)
-    f1 <- fitted(lm(chains[,1:N] ~ orig))
-    f2 <- apply(chains[,1:N], 2, function(x)fitted(loess(x ~ orig)))
+    f1 <- fitted(lm(chains[,1:N] ~ obj$y))
+    f2 <- apply(chains[,1:N], 2, function(x)fitted(loess(x ~ obj$y)))
     r2a <- sapply(1:ncol(f1), function(i)cor(f1[,i], f2[,i], use="pair")^2)
     samps <- sapply(1:N, function(i)sample((1:ncol(chains))[-i], 1, replace=T))
     r2b <- sapply(1:N, function(i)cor(chains[,i], chains[,samps[i]])^2)
-    mean(r2a < r2b)
+    cat("Test of Linearity (higher values indicate higher probability of linearity)\n")
+    sprintf("%.3f", mean(r2a > r2b))
 }
 
 yj_trans <- function(form, data, trans.vars, round.digits = 3, ...){
@@ -3057,3 +3062,56 @@ cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2
     return(switch(w, raw=mean(out.cv), corrected=mean(out.cv+out.cost0)))
 }
 
+
+
+plot.balsos <- function(x, ..., freq=TRUE, offset=.1){
+if(freq){
+    Xdat <- as.data.frame(x$X[,-1])
+    names(Xdat) <- paste("var", 1:ncol(Xdat), sep="")
+    Xdat$y <- x$y
+
+    a1 <- alsosDV(y ~ ., data=Xdat)
+}
+
+mins <- aggregate(1:length(x$y), list(x$y), min)
+chains <- as.matrix(x$fit)
+chains <- chains[,grep("y_new2", colnames(chains))]
+os <- chains[, mins[,2]]
+
+s<- summary(as.mcmc(os))
+
+newdf <- data.frame(
+    os = s$statistics[,1], 
+    lower = s$quantiles[,1], 
+    upper = s$quantiles[,5], 
+    orig = 1:11
+)
+tp <- trellis.par.get()$superpose.symbol
+if(!freq){
+library(lattice)
+xyplot(os ~ orig, data=newdf,
+    panel = function(x,y, ...){
+        panel.points(x,y, cex=.6, col=tp$col[1], pch=tp$pch[1])
+        panel.segments(x, newdf$lower, x, newdf$upper, col="black", cols=tp$col[1])
+    })
+}
+else{
+    newdf$freq <- a1$result$os[mins[,2]]
+    xyplot(os ~ orig, data=newdf,
+        panel = function(x,y, ...){
+            panel.points(x-offset,y, cex=.6, col=tp$col[1], pch=tp$pch[1])
+            panel.segments(x-offset, newdf$lower, x-offset, newdf$upper, col=tp$col[1])
+            panel.points(x+offset, newdf$freq, col=tp$col[2], pch=tp$pch[2])
+        })
+    }
+    
+}
+
+summary.balsos <- function(x, ...){
+    coef.inds <- grep("^b", names(x$fit))
+    mins <- aggregate(1:length(x$y), list(x$y), min)
+    os.inds <- sapply(paste("y_new2[", mins[,2], "]", sep=""), function(z)grep(z, names(x$fit), fixed=T))
+    names(x$fit)[c(coef.inds, os.inds)] <- c(colnames(x$X), 
+        paste0("y_", sort(unique(x$y))))
+    summary(x$fit, pars=c(colnames(x$X), paste0("y_", sort(unique(x$y)))))
+}

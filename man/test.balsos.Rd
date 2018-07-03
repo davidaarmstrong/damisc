@@ -3,11 +3,10 @@
 \title{Testing Measurement Level Assumptions.}
 \description{Uses the algorithm discussed in Armstrong and Jacoby 2018) to test the intervality of a variable scaled by the Bayesian ALSOS method. }
 \usage{
-test.balsos(orig, chains, N=NULL)
+test.balsos(obj, N=NULL)
 }
 \arguments{
-  \item{orig}{Original dependent variable. }
-  \item{chains}{N (obs) X K (iterations) matrix of optimally scaled points}
+  \item{obj}{An object of class \code{balsos}.}
   \item{N}{Number of draws from sampler to use.  If \code{NULL}, all draws are used. }
 }
 \value{
