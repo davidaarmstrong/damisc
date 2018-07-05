@@ -1,7 +1,7 @@
 \name{glmChange2}
 \alias{glmChange2}
 \title{Maximal First Differences for Generalized Linear Models}
-\description{For objects of class \code{glm}, it calculates the change in predicted responses, for maximal discrete changes in all covariates holding all other variables constant at typical values.}
+\description{For objects of class \code{glm}, it calculates the change in predicted responses, for discrete changes in a covariate holding all other variables at their observed values.}
 \usage{
 glmChange2(obj, varname, data, change=c("unit", "sd"), R=1500)
 }
@@ -13,19 +13,17 @@ glmChange2(obj, varname, data, change=c("unit", "sd"), R=1500)
   \item{R}{Number of simulations to perform.}
 }
 \details{
-The function calculates the average effect discrete changes in the covariates, for objects of class \code{glm}.  This function works with polynomials specified with the \code{poly} function.  
+The function calculates the average change in predicted probabiliy for a discrete change in a single covariate with all other variables at their observed values, for objects of class \code{glm}.  This function works with polynomials specified with the \code{poly} function.  
 }
 \value{
-A vector of values giving the average and 95 percent confidence bounds
+\item{res}{A vector of values giving the average and 95 percent confidence bounds}
+\item{ames}{The average change in predicted probability (across all N observations) for each of the R simulations.}
+\item{avesamp}{The average change in predicted probability for each of the N observation (across all of the R simulations). }
 }
 \author{Dave Armstrong}
 \examples{
 data(france)
 left.mod <- glm(voteleft ~ male + age + retnat + 
 	poly(lrself, 2), data=france, family=binomial)
-typical.france <- data.frame(
-	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
-	age = 35
-	)
 glmChange2(left.mod, "age", data=france, "sd")
 }
