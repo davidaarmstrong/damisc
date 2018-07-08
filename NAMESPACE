@@ -27,6 +27,8 @@ import(splines)
 import(pscl)
 import(gdata)
 import(xtable)
+S3method(plot, diffci)
+S3method(print, diffci)
 S3method(plot, balsos)
 S3method(summary, balsos)
 S3method(print, pre)
@@ -39,6 +41,7 @@ S3method(searchVarLabels, tbl_df)
 S3method(inspect, data.frame)
 S3method(inspect, tbl_df)
 export(
+    probci,
     cv.lo2,
     yj_trans, 
     alsosDV,

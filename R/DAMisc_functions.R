@@ -3127,3 +3127,246 @@ summary.balsos <- function(x, ...){
         paste0("y_", sort(unique(x$y))))
     summary(x$fit, pars=c(colnames(x$X), paste0("y_", sort(unique(x$y)))))
 }
+
+central <- function(x){
+    if(is.factor(x)){
+        tab <- table(x)
+        m <- which.max(tab)
+        cent <- factor(m, levels=1:length(levels(x)), labels=levels(x))
+    }
+    if(!is.factor(x) & length(unique(na.omit(x))) <= 10){
+        tab <- table(x)
+        cent <- as.numeric(names(tab)[which.max(tab)])
+    }
+    if(!is.factor(x) & length(unique(na.omit(x))) > 10){
+        cent <- median(x, na.rm=TRUE)
+    }
+    return(cent)
+}
+
+print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FALSE){
+    D <- x[[2]]
+    if(!is.null(filter)){
+        vn <- names(filter)
+        w <- array(dim=c(nrow(D), length(vn)))
+        for(i in 1:length(filter)){
+            w[,i] <- apply(D[,grep(paste("^", vn[i], "[1-2]", sep=""), names(D))], 1,
+                function(x)(x[1] %in% filter[[i]] & x[2] %in% filter[[i]]))
+        }
+        w <- which(apply(w, 1, prod) == 1)
+        if(length(w) == 0){
+            stop("No observations matching filter conditions")
+        }
+        else{
+            D <- D[w, ]
+        }
+    }
+    if(onlySig){
+        sig <- which(sign(D$lower) == sign(D$upper))
+        if(length(sig) == 0){
+            stop("No observations matching filter conditions that are also significant")
+        }
+        else{
+            D <- D[sig, ]
+        }
+      }
+    if(!is.null(const)){
+      D <- D[which(D[[paste0(const, "1")]] == D[[paste0(const, "2")]]), ]
+    }
+    cnd <- colnames(D)
+    D2 <- array(dim=dim(D))
+    fmts <- c(paste0("%.", digits, "f"), "%.1i")
+    for(i in 1:ncol(D)){
+        if(is.numeric(D[[i]])){
+            D2[,i] <- sprintf(ifelse(is.integer(D[[i]]) | 
+                all(round(D[[i]], 5) == as.integer(D[[i]])), 
+                fmts[2], fmts[1]), D[[i]])
+        }
+        if(is.factor(D[[i]]) | is.character(D[[i]])){
+            D2[,i] <- as.character(D[[i]])
+        }
+    }
+    colnames(D2) <- cnd
+    rownames(D2) <- 1:nrow(D2)
+    print.data.frame(as.data.frame(D2))
+}
+
+
+probci <- function(obj, data, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase")){
+    type <- match.arg(type)
+    vn <- changeX
+    if(length(vn) == 0){stop("Need at least one variable to change")}
+    vals <- vector(length=length(vn), mode="list")
+    names(vals) <- vn
+    for(i in 1:length(vn)){
+        if(is.factor(data[[vn[i]]])){
+            vals[[i]] <- factor(1:length(levels(data[[vn[i]]])), labels=levels(data[[vn[i]]]))
+        }
+        if(!is.null(xvals[[vn[i]]])){
+          vals[[i]] <- xvals[[vn[i]]]
+        }
+        else{
+        if(!is.factor(data[[vn[i]]]) & length(unique(na.omit(data[[vn[i]]]))) <= numQuantVals){
+            vals[[i]] <- sort(unique(na.omit(data[[vn[i]]])))
+        }
+        if(!is.factor(data[[vn[i]]]) & length(unique(na.omit(data[[vn[i]]]))) > numQuantVals){
+                vals[[i]] <- seq(min(data[[vn[i]]], na.rm=TRUE), max(data[[vn[i]]], na.rm=TRUE), length = numQuantVals)
+        }
+    }
+}
+    egvals <- do.call(expand.grid, vals)
+    b <- coef(obj)
+    if(is.null(.vcov)){
+        v <- vcov(obj)
+    }
+    else{
+        v <- .vcov
+    }
+    require(MASS)
+    bmat <- t(mvrnorm(2500, b, v, empirical=TRUE))
+    if(type == "aveCase"){
+        av <- all.vars(obj$formula)
+        others <- av[-which(av %in% vn)]
+        othervals <- lapply(1:length(others), function(i)central(data[[others[i]]]))
+        names(othervals) <- others
+        otherdat <- do.call(data.frame, othervals)
+        alldat <- do.call(expand.grid, c(vals, otherdat))
+        X <- model.matrix(formula(obj), data=alldat)
+        probs <- t(family(obj)$linkinv(X %*% bmat))
+        probci <- t(apply(probs, 2, quantile, c(.5,.025,.975)))[,,drop=FALSE]
+        dc <- combn(nrow(X), 2)
+        D <- matrix(0, nrow=nrow(X), ncol=ncol(dc))
+        D[cbind(dc[1,], 1:ncol(dc))] <- -1
+        D[cbind(dc[2,], 1:ncol(dc))] <- 1
+        diffprobs <- probs %*% D
+        ev <- sapply(1:ncol(egvals), function(i)paste(colnames(egvals)[i], "=", egvals[,i], sep=""))[,,drop=FALSE]
+        probn <- apply(ev, 1, paste, collapse=", ")
+        rownames(probci) <- probn
+        ev2 <- egvals[dc[2,], , drop=FALSE]
+        ev2 <- as.matrix(sapply(1:ncol(ev2), function(i)paste(colnames(ev2)[i], "=", ev2[,i], sep="")))
+        n1 <- apply(ev2, 1, paste, collapse=", ")
+
+        ev1 <- egvals[dc[1,], , drop=FALSE]
+        ev1 <- as.matrix(sapply(1:ncol(ev1), function(i)paste(colnames(ev1)[i], "=", ev1[,i], sep="")))
+        n2 <- apply(ev1, 1, paste, collapse=", ")
+        n <- paste("(", n1,  ") - (", n2, ")", sep="")
+        diffci <- t(apply(diffprobs, 2, quantile, c(.5,.025,.975)))[,,drop=FALSE]
+        rownames(diffci) <- n
+        colnames(diffci) <- colnames(probci) <- c("pred_prob", "lower", "upper")
+        tmp1 <- egvals[dc[1,], ]
+        tmp2 <- egvals[dc[2,], ]
+        names(tmp1) <- paste(names(tmp1), "1", sep="")
+        names(tmp2) <- paste(names(tmp2), "2", sep="")
+        diffci <- cbind(tmp1, tmp2, as.data.frame(diffci))[,,drop=FALSE]
+        probci <- as.data.frame(probci)
+    }
+    if(type == "aveEff"){
+        probs <- vector(mode="list", length=nrow(egvals))
+        for(i in 1:nrow(egvals)){
+            tmp <- data
+            for(j in 1:ncol(egvals)){
+                tmp[, names(egvals)[j]] <- egvals[i,j]
+            }
+            X <- model.matrix(formula(obj), data=tmp)
+            probs[[i]] <- family(obj)$linkinv(X %*% bmat)
+        }
+        probci <- t(apply(sapply(probs, colMeans), 2, quantile, c(.5,.025, .975)))[,,drop=FALSE]
+        ev <- sapply(1:ncol(egvals), function(i)paste(colnames(egvals)[i], "=", egvals[,i], sep=""))[,,drop=FALSE]
+        probn <- apply(ev, 1, paste, collapse=", ")
+        rownames(probci) <- probn
+        dc <- combn(nrow(egvals), 2)
+        diffprobs <- matrix(NA, nrow=2500, ncol=ncol(dc))
+        for(i in 1:ncol(dc)){
+            diffprobs[,i] <- colMeans(probs[[dc[2,i]]] - probs[[dc[1,i]]])
+        }
+        ev2 <- egvals[dc[2,], , drop=FALSE]
+        ev2 <- as.matrix(sapply(1:ncol(ev2), function(i)paste(colnames(ev2)[i], "=", ev2[,i], sep="")))
+        n1 <- apply(ev2, 1, paste, collapse=", ")
+
+        ev1 <- egvals[dc[1,], , drop=FALSE]
+        ev1 <- as.matrix(sapply(1:ncol(ev1), function(i)paste(colnames(ev1)[i], "=", ev1[,i], sep="")))
+        n2 <- apply(ev1, 1, paste, collapse=", ")
+        n <- paste("(", n1,  ") - (", n2, ")", sep="")
+        diffci <- t(apply(diffprobs, 2, quantile, c(.5,.025,.975)))[,,drop=FALSE]
+        rownames(diffci) <- n
+        colnames(diffci) <- colnames(probci) <- c("pred_prob", "lower", "upper")
+        tmp1 <- egvals[dc[1,], ]
+        tmp2 <- egvals[dc[2,], ]
+        names(tmp1) <- paste(names(tmp1), "1", sep="")
+        names(tmp2) <- paste(names(tmp2), "2", sep="")
+        diffci <- cbind(tmp1, tmp2, as.data.frame(diffci))[,,drop=FALSE]
+        probci <- as.data.frame(probci)
+    }
+    g <- grep("^tmp[1-2]", names(diffci))
+    if(length(g) == 2 & length(changeX) == 1){
+        names(diffci) <- gsub("tmp", changeX, names(diffci))
+    }
+    rownames(diffci) <- NULL
+    res <- list("Predicted Probabilities"=probci, "Difference in Predicted Probabilities"=diffci, plot.data = cbind(egvals, probci))
+    class(res) <- "diffci"
+    return(res)
+}
+
+
+
+plot.diffci <- function(obj, xvar = NULL, condvars = NULL,...){
+    D <- obj$plot.data
+    rg <- range(D[,c("lower", "upper")])
+    yl <- rg +abs(diff(rg))*.1 %o% c(-1,1)
+    Dnp <- names(D)[which(!(names(D) %in% c("pred_prob", "lower", "upper")))]
+    if(is.null(xvar)){
+        if(length(Dnp) == 1){
+            xvar <- Dnp
+        }
+        if(length(Dnp) > 1){
+            lens <- apply(D[,Dnp, drop=F], 2, function(x)length(unique(x)))
+            xvar <- Dnp[which.max(lens)]
+        }
+    }
+    if(is.null(condvars)){
+        if(length(Dnp) > 1){
+            condvars <- Dnp[-which(Dnp == xvar)]
+        }
+    }
+    if(!is.null(condvars)){
+        for(i in 1:length(condvars)){
+            levels(D[[condvars[i]]]) <- paste(condvars[i], levels(D[[condvars[i]]]), sep=": ")
+        }
+        ncondvars <- length(condvars)
+        condvars <- paste(condvars, collapse="+")
+    }
+    l.arrow <- 1/(2*length(unique(D[[xvar]])))
+    form <- as.formula(paste("pred_prob ~ ", xvar,  ifelse(is.null(condvars), "", paste("|", condvars))))
+    plotargs <- list(x = form, data=D, lower=D$lower, upper=D$upper,
+        par.settings = list(strip.background = list(col="gray80")))
+    pa2 <- list(...)
+    if("length" %in% names(pa2)){
+        l.arrow <- pa2[["length"]]
+        pa2[[which(names(pa2) == "length")]] <- NULL
+    }
+    plotargs <- c(plotargs, pa2)
+    if(!("zl" %in% names(plotargs))){
+        plotargs$zl <- TRUE
+    }
+    if(!("ylim" %in% names(plotargs))){
+        plotargs$ylim <- c(yl)
+    }
+    if(!("panel" %in% names(plotargs))){
+        plotargs$panel <- function (x, y, subscripts, lower, upper, length=l.arrow){
+        panel.points(x, y, pch = 16, col = "black")
+        panel.arrows(x, lower[subscripts], x, upper[subscripts],
+            code = 3, angle = 90, length = length)
+}
+    }
+
+    p <- do.call(xyplot, plotargs)
+    if(!is.null(condvars)){
+        if(ncondvars >= 2){
+            require(latticeExtra)
+            return(useOuterStrips(p))
+        }
+     }
+     else{
+         return(p)
+     }
+}
