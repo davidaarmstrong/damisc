@@ -22,7 +22,7 @@ An data frame with the following variables:
   \item{pred_prob}{The difference in predicted probability given the following change in \code{X}: \code{tmp2}-\code{tmp1}.}
   \item{lower, upper}{The lower and upper 95\% confidence bounds.}
 }
-}
+
 \author{Dave Armstrong}
 \examples{
 data(france)
