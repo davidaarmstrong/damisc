@@ -2566,7 +2566,7 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
     invisible(outres)
 
 }
-aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
+aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnSim=FALSE, ...)
 {
     vars <- all.vars(formula(obj))[-1]
     if(any(!(vars %in% names(data)))){
@@ -2601,8 +2601,15 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
 			return(pl)
 		}
 		else{
-			return(tmp)
-		}
+            if(returnSim){
+                class(cmprobs) <- "sims"
+                out <- list(cis = tmp, probs=cmprobs)
+                return(out)
+            }
+            else{
+		    	return(tmp)
+            }
+        }
 	}
 	if(!is.numeric(data[[varname]])){
 		l <- obj$xlevels[[varname]]
@@ -2630,8 +2637,15 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
 			return(pl)
 		}
 		else{
-			return(tmp)
-		}
+            if(returnSim){
+                class(cmprobs) <- "sims"
+                out <- list(cis = tmp, probs=cmprobs)
+                return(out)
+            }
+            else{
+		    	return(tmp)
+            }
+        }
 	}
 }
 
