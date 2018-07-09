@@ -2602,6 +2602,7 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnS
 		}
 		else{
             if(returnSim){
+                colnames(cmprobs) <- s
                 class(cmprobs) <- "sims"
                 out <- list(cis = tmp, probs=cmprobs)
                 return(out)
@@ -2638,6 +2639,7 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnS
 		}
 		else{
             if(returnSim){
+                colnames(cmprobs) <- l
                 class(cmprobs) <- "sims"
                 out <- list(cis = tmp, probs=cmprobs)
                 return(out)
