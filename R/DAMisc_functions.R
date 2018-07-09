@@ -2521,9 +2521,11 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
     if (!is.numeric(data[[varname]]) & length(unique(na.omit(data[[varname]]))) == 
         2) {
         l <- obj$xlevels[[varname]]
-        X0 <- X1 <- model.matrix(obj)
-        X0[, grep(paste(varname, l[2], sep = ""), colnames(X0))] <- 0
-        X1[, grep(paste(varname, l[2], sep = ""), colnames(X0))] <- 1
+        D0 <- D1 <- data
+        D0[[varname]] <- factor(1, levels=1:2, labels=l)
+        D1[[varname]] <- factor(2, levels=1:2, labels=l)
+        X0 <- model.matrix(formula(obj), data=D0)
+        X1 <- model.matrix(formula(obj), data=D1)
         p0 <- family(obj)$linkinv(X0 %*% t(b))
         p1 <- family(obj)$linkinv(X1 %*% t(b))
         diff <- p1 - p0
@@ -2540,12 +2542,9 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
         l <- obj$xlevels[[varname]]
         X.list <- list()
         for (j in 1:length(l)) {
-            X.list[[j]] <- model.matrix(obj)
-        }
-        l1 <- paste(varname, l, sep = "")
-        X.list[[1]][, which(colnames(X.list[[1]]) %in% l1)] <- 0
-        for (j in 2:length(l1)) {
-            X.list[[j]][, which(colnames(X.list[[1]]) == l1[j])] <- 1
+            tmp <- data
+            tmp[[varname]] <- factor(j, levels=1:length(l), labels=l)
+            X.list[[j]] <- model.matrix(formula(obj), data=tmp)
         }
         combs <- combn(length(X.list), 2)
         d.list <- list()
@@ -2575,7 +2574,7 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
     }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
-	b <- mvrnorm(R, coef(obj), vcov(obj))
+	b <- mvrnorm(R, coef(obj), vcov(obj), empirical=T)
 	if(is.numeric(data[[varname]])){
 		s <- seq(min(data[[varname]], na.rm=T), max(data[[varname]], na.rm=T), length=nvals)
 		dat.list <- list()
@@ -2609,12 +2608,9 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE,...)
 		l <- obj$xlevels[[varname]]
 		dat.list <- list()
 		for(j in 1:length(l)){
-			dat.list[[j]] <- model.matrix(obj)
-		}
-		l1 <- paste(varname, l, sep="")
-		dat.list[[1]][,which(colnames(dat.list[[1]]) %in% l1)] <- 0
-		for(j in 2:length(l1)){
-			dat.list[[j]][, which(colnames(dat.list[[1]]) == l1[j])] <- 1
+            dat.list[[j]] <- data
+            dat.list[[j]][[varname]] <- factor(rep(j, nrow(data)), levels=1:length(l), labels=l)
+			dat.list[[j]] <- model.matrix(formula(obj), data=dat.list[[j]])
 		}
 		probs <- lapply(dat.list, function(x)family(obj)$linkinv(x %*% t(b)))
 		cmprobs <- sapply(probs, colMeans)
