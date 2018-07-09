@@ -33,12 +33,4 @@ this function plots \eqn{b_{1}x_{i1} + b_{2}x_{i2} + b_{3}x_{i1}\times x_{i2}}{b
 data(InteractionEx)
 mod <- lm(y ~ x1*x2 + z, data=InteractionEx)
 DAintfun(mod, c("x1", "x2"))
-
-## Make interactive with:
-# mypanel <- function(panel){
-# 	DAintfun(mod, c("x1", "x2"), theta=panel$theta, phi=panel$phi)
-# 	panel}
-# panel <- rp.control(theta=0, phi=25)
-# rp.slider(panel, theta, -360, 360, mypanel, showvalue=TRUE)
-# rp.slider(panel, phi, 0, 90, mypanel, showvalue=TRUE)
 }
