@@ -2722,27 +2722,46 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
    cand.mods <- mods
    cand.mods[[which(mods.df == targetdf)]] <- NULL
    tests <- lapply(cand.mods, function(x)as.matrix(anova(target.mod, x)))
+   tests2 <- lapply(cand.mods, function(x)clarke(target.mod, x))
    num.df <- sapply(tests, function(x)abs(diff(x[,1])))
    denom.df <- sapply(tests, function(x)min(x[,1]))
    Fstats <- sapply(tests, function(x)x[2,5])
    pval <- p.adjust(sapply(tests, function(x)x[2,6]), method=adjust)
-   res <- cbind(Fstats, num.df, denom.df, pval)
+   cstats <- sapply(tests2, function(x)x$stat)
+   cprobs <- sapply(tests2, function(x)x$stat/x$nobs)
+   cminstat <- sapply(tests2, function(x)min(x$stat, x$nobs - x$stat))
+   cbetter <- 
+   cp <- 2 * pbinom(cminstat, sapply(tests2, function(x)x$nobs), 0.5)
+   pref <- sapply(tests2, function(x)ifelse(x$stat > x$nobs - x$stat,  "(T)", "(C)")) 
+   pref <- ifelse(cp > .05, "", pref)
+   delta.aic <- sapply(cand.mods, AIC) - AIC(target.mod)
+   delta.aicc <- sapply(cand.mods, AICc) - AICc(target.mod)
+   delta.bic <- sapply(cand.mods, BIC) - BIC(target.mod)   
+   res <- cbind(Fstats, num.df, denom.df, pval, cstats, cprobs, cp, delta.aic, delta.aicc, delta.bic)
    sigchar <- ifelse(res[,4] < .05, "*", " ")
+   sigchar2 <- ifelse(res[,7] < .05, "*", " ")
    strres <- NULL
-   digs <- c(3,0,0,3)
-   for(i in 1:4){
+   digs <- c(3,0,0,3, 0, 3, 3, 3, 3, 3)
+   for(i in 1:10){
       tmp <- sprintf(paste("%.", digs[i], "f", sep=""), res[,i])
       if(i == 1){
          tmp <- paste(tmp, sigchar, sep="")
       }
+      if(i == 5){
+         tmp <- paste(tmp, sigchar2, sep="")
+      }
+      if(i == 7){
+          tmp <- paste(tmp, pref,  sep=" ")
+      }
+      
       strres <- cbind(strres,tmp )
    }
-   colnames(strres) <- c("F", "DF1", "DF2", "p-value")
+   colnames(strres) <- c("F", "DF1", "DF2", "p(F)", "Clarke", "Pr(Better)", "p(Clarke)", "Delta_AIC", "Delta_AICc", "Delta_BIC")
    rownames(strres) <- paste("DF=", targetdf, " vs. DF=", mods.df[-targetdf], sep="")
    if(targetdf > 1){
       below <- strres[1:(targetdf-1), , drop=F]
       above <- strres[targetdf:nrow(strres),, drop=F]
-      strres <- rbind(below, c("", "", "", ""), above)
+      strres <- rbind(below, rep("", 10), above)
       rownames(strres)[targetdf] <- "   Target"
    }
    return(noquote(strres))

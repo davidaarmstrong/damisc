@@ -17,7 +17,17 @@
   \item{adjust}{Method by which p-values will be adjusted (see \code{\link{p.adjust}})}
 }
 \value{
-    A matrix with F statistics, numerator and denominator DF and p-values for all required tests.
+    A matrix with the following columns: 
+    \item{F}{F statistics of test of candidate models against target model}
+    \item{DF1}{Numerator DF from F-test}
+    \item{DF2}{Denominator DF from F-test}
+    \item{p(F)}{p-value from the F-test}
+    \item{Clarke}{Test statistic from the Clarke test}
+    \item{Pr(Better)}{The Clarke statistic divided by the number of observations}
+    \item{p(Clarke)}{p-value from the Clarke test.  (T) means that the significant p-value is in favor of the Target model and (C) means the significant p-value is in favor of the candidate (alternative) model.}
+    \item{Delta_AIC}{AIC(candidate model) - AIC(target model)}
+    \item{Delta_AICc}{AICc(candidate model) - AICc(target model)}
+    \item{Delta_BIC}{BIC(candidate model) - BIC(target model)}
 }
 \author{Dave Armstrong}
 \examples{
