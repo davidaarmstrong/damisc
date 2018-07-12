@@ -3401,3 +3401,37 @@ plot.diffci <- function(obj, xvar = NULL, condvars = NULL,...){
          return(p)
      }
 }
+
+testGAMint <- function(m1, m2, data, R=1000, ranCoef=FALSE){
+    v1 <- all.vars(formula(m1))
+    v2 <- all.vars(formula(m2))
+    av <- union(v1, v2)
+    tmp <- data[,av]
+    tmp <- na.omit(tmp)
+    b1 <- coef(m1)
+    X <- model.matrix(m1)
+    obsF <- anova(m1, m2, test="F")[2,5]
+    Fstat <- rep(NA, R)
+    i <- 1
+    while(i <= R){
+        if(ranCoef){
+            b1 <- MASS:::mvrnorm(1, coef(m1), vcov(m1))
+        }
+        if(all(class(m1) == "lm")){
+            sig <- summary(m1)$sigma
+        }
+        if("gam" %in% class(m1)){
+            sig <- sqrt(summary(m1)$scale)
+        }
+        e <- rnorm(nrow(X), 0, sig)
+        tmp$ynew <- X %*% b1 + e
+        m2a <- update(m2, ynew ~ ., data=tmp)
+        m1a <- update(m1, ynew ~ ., data=tmp)
+        tmpF <- anova(m1a, m2a, test="F")[2,5]
+        if(!is.na(tmpF)){
+            Fstat[i] <- tmpF
+            i <- i+1
+        }
+    }
+    return(list(obsF = obsF, Fdist = Fstat))
+}

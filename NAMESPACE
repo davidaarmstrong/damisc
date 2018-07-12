@@ -43,6 +43,7 @@ S3method(searchVarLabels, tbl_df)
 S3method(inspect, data.frame)
 S3method(inspect, tbl_df)
 export(
+    testGAMint,
     probci,
     cv.lo2,
     yj_trans, 
