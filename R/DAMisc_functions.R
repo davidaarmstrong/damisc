@@ -2890,7 +2890,7 @@ model{
 }"
 
 X <- model.matrix(formula, data)
-y <- as.integer(model.response(model.frame(formula, dat)))
+y <- as.integer(model.response(model.frame(formula, data)))
 y <- (y - min(y)) + 1L
 balsos.dat <- list(
   M=max(y), N=length(y), k = ncol(X), ybar = mean(y), sy = sd(y),
