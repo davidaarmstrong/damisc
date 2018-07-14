@@ -3127,7 +3127,7 @@ newdf <- data.frame(
     os = s$statistics[,1], 
     lower = s$quantiles[,1], 
     upper = s$quantiles[,5], 
-    orig = 1:11
+    orig = sort(unique(m2$y))
 )
 tp <- trellis.par.get()$superpose.symbol
 if(!freq){
