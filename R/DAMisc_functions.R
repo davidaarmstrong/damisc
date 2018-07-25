@@ -3435,3 +3435,107 @@ testGAMint <- function(m1, m2, data, R=1000, ranCoef=FALSE){
     }
     return(list(obsF = obsF, Fdist = Fstat))
 }
+
+DAintfun3 <-
+function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
+	xlab = NULL, ylab=NULL, plot.type = "screen")
+{
+    rseq <- function(x) {
+        rx <- range(x, na.rm = TRUE)
+        seq(rx[1], rx[2], length = 25)
+    }
+    MM <- model.matrix(obj)
+    v1 <- varnames[1]
+    v2 <- varnames[2]
+    ind1 <- grep(paste0("^",v1,"$"), names(obj$coef))
+    ind2 <- grep(paste0("^",v2,"$"), names(obj$coef))
+    indboth <- which(names(obj$coef) %in% c(paste0(v1,":",v2),paste0(v2,":",v1)))
+    ind1 <- c(ind1, indboth)
+    ind2 <- c(ind2, indboth)
+    s1 <- c(mean(MM[,v1]) - sd(MM[,v1]), mean(MM[,v1]), mean(MM[,v1]) + sd(MM[,v1])) 
+    s2 <- c(mean(MM[,v2]) - sd(MM[,v2]), mean(MM[,v2]), mean(MM[,v2]) + sd(MM[,v2])) 
+    a1 <- a2 <- matrix(0, nrow = 3, ncol = ncol(MM))
+    a1[, ind1[1]] <- 1
+    a1[, ind1[2]] <- s2
+    a2[, ind2[1]] <- 1
+    a2[, ind2[2]] <- s1
+    eff1 <- a1 %*% obj$coef
+    if(is.null(varcov)){
+        varcov <- vcov(obj)
+    }
+    se.eff1 <- sqrt(diag(a1 %*% varcov %*% t(a1)))
+    low1 <- eff1 - qt(0.975, obj$df.residual) * se.eff1
+    up1 <- eff1 + qt(0.975, obj$df.residual) * se.eff1
+    eff2 <- a2 %*% obj$coef
+    se.eff2 <- sqrt(diag(a2 %*% varcov %*% t(a2)))
+    low2 <- eff2 - qt(0.975, obj$df.residual) * se.eff2
+    up2 <- eff2 + qt(0.975, obj$df.residual) * se.eff2
+    if (!plot.type %in% c("pdf", "png", "eps", "screen")) {
+        print("plot type must be one of - pdf, png or eps")
+    }
+    else {
+        if (plot.type == "pdf") {
+            pdf(paste(name.stem, "_", v1, ".pdf", sep = ""),
+                height = 6, width = 6)
+        }
+        if (plot.type == "png") {
+            png(paste(name.stem, "_", v1, ".png", sep = ""))
+        }
+        if (plot.type == "eps") {
+            old.psopts <- ps.options()
+            setEPS()
+            postscript(paste(name.stem, "_", v1, ".eps", sep = ""))
+        }
+        if (plot.type == "screen") {
+            oldpar <- par()
+            par(mfrow = c(1, 2))
+        }
+        plot(s2, eff1, type = "n", ylim = range(c(low1, up1)), axes=F, 
+            xlab = ifelse(is.null(xlab), toupper(v2), xlab[1]), ylab = ifelse(is.null(ylab), paste("Conditional Effect of ",
+                toupper(v1), " | ", toupper(v2), sep = ""), ylab[1]))
+            axis(1, at=s2, labels=c("Mean-SD", "Mean", "Mean+SD"))
+            axis(2)
+            box()
+
+        if (par()$usr[3] < 0 & par()$usr[4] > 0) {
+            abline(h = 0, col = "gray50")
+        }
+        points(s2, eff1, pch=16)
+        segments(s2, low1, s2, up1)
+        if (plot.type != "screen") {
+            dev.off()
+        }
+        if (plot.type == "pdf") {
+            pdf(paste(name.stem, "_", v2, ".pdf", sep = ""),
+                height = 6, width = 6)
+        }
+        if (plot.type == "png") {
+            png(paste(name.stem, "_", v2, ".png", sep = ""))
+        }
+        if (plot.type == "eps") {
+            postscript(paste(name.stem, "_", v2, ".eps", sep = ""))
+        }
+        plot(s1, eff2, type = "n", ylim = range(c(low2, up2)), 
+            axes=F, 
+            xlab = ifelse(is.null(xlab), toupper(v1), xlab[2]),
+			ylab = ifelse(is.null(ylab), paste("Conditional Effect of ",
+                toupper(v2), " | ", toupper(v1), sep = ""), ylab[2]))
+            axis(1, at=s1, labels=c("Mean-SD", "Mean", "Mean+SD"))
+            axis(2)
+            box()
+        if (par()$usr[3] < 0 & par()$usr[4] > 0) {
+            abline(h = 0, col = "gray50")
+        }
+        points(s1, eff2, pch=16)
+        segments(s1, low2, s1, up2)
+        if (plot.type != "screen") {
+            dev.off()
+        }
+        if (plot.type == "eps") {
+            ps.options <- old.psopts
+        }
+        if (plot.type == "screen") {
+            par <- oldpar
+        }
+    }
+}
