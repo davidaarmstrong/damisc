@@ -3059,7 +3059,7 @@ optim_yj <- function(pars, form, data, trans.vars, ...){
     ll <- logLik(m)   
     -ll
 }
-    opt.pars <- nlminb(rep(1, length(transvars)), optim_yj, form=form, data=data, trans.vars = trans.vars, lower=0, upper=2)
+    opt.pars <- nlminb(rep(1, length(trans.vars)), optim_yj, form=form, data=data, trans.vars = trans.vars, lower=0, upper=2)
     if(!is.null(round.digits)){
         opt.pars$par <- round(opt.pars$par, round.digits)
     }
