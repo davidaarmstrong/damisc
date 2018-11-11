@@ -3223,7 +3223,7 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
 }
 
 
-probci <- function(obj, data, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase")){
+probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase")){
     type <- match.arg(type)
     vn <- changeX
     if(length(vn) == 0){stop("Need at least one variable to change")}
@@ -3246,7 +3246,12 @@ probci <- function(obj, data, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = 
     }
 }
     egvals <- do.call(expand.grid, vals)
-    b <- coef(obj)
+    if(is.null(.b)){
+        b <- coef(obj)
+    }
+    else{
+        b <- .b
+    }
     if(is.null(.vcov)){
         v <- vcov(obj)
     }
