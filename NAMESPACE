@@ -36,8 +36,12 @@ S3method(summary, balsos)
 S3method(print, pre)
 S3method(plot, loess)
 S3method(print, mnlfit)
+S3method(print, glmc2)
+S3method(print, iqq)
 S3method(print, ordfit)
 S3method(print, ordChange)
+S3method(central, factor)
+S3method(central, numeric)
 S3method(searchVarLabels, data.frame)
 S3method(searchVarLabels, tbl_df)
 S3method(inspect, data.frame)
@@ -95,4 +99,6 @@ export(
     aveEffPlot,
     NKnots,
     NKnotsTest,
-    testLoess)
+    testLoess, 
+    secondDiff, 
+    outEff)

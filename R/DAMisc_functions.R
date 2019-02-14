@@ -2176,7 +2176,9 @@ if(onlySig){
 
 if(type == "facs"){
 	if(!plot){
-        return(res)
+        res <- list(out = res, mainvar = facvar, givenvar = quantvar)
+        class(res) <- "iqq"
+        print(res)
 	}
 	if(plot){
 		rl <- range(c(res[, c("lower", "upper")]))
@@ -2225,10 +2227,9 @@ if(type == "slopes"){
 	colnames(qres) <- c("B", "SE(B)", "t-stat", "Pr(>|t|)")
 	rownames(qres) <- faclevs
 	names(qeff) <- faclevs
-	cat("Conditional effects of ", quantvar, ":\n")
-	print(noquote((qres)))
-	res <- list(out = data.frame(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv), varcor = qvar)
-	return(res)
+	res <- list(out = data.frame(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv), varcor = qvar, mainvar = quantvar, givenvar = facvar)
+    class(res) <- "iqq"
+	print(res)
 }
 if(plot){
 	intterm <- NULL
@@ -2562,9 +2563,8 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
         res <- t(res)
         outres = list(res = res, ames=eff, avesamp = sapply(d.list, rowMeans))
     }
-    print(noquote(res))
-    invisible(outres)
-
+    class(outres) <- "glmc2"
+    print(outres)
 }
 aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnSim=FALSE, ...)
 {
@@ -3539,3 +3539,198 @@ function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
         }
     }
 }
+print.glmc2 <- function(x, ...){
+    print.default(x$res)
+    invisible(x)
+}
+
+print.iqq <- function(x, ...){
+    cat("Conditional Effect of ", x$mainvar, " given ", x$givenvar, "\n")
+    print.data.frame(round(x$out, 4))
+    cat("\n")
+    invisible(x)
+}
+
+central <- function(x, ...){
+    UseMethod("central")
+}
+central.factor  <- function(x, ...){
+    tab <- table(droplevels(x))
+    res <- x[1]
+    res[1] <- names(tab)[which.max(tab)]
+    return(res)
+}
+central.numeric <- function(x, type=c("median", "mean"), ...){
+    type <- match.arg(type)
+    if(type == "median"){
+        res <- median(x, na.rm=T, ...)
+    }
+    else{
+        res <- mean(x, na.rm=T, ...)
+    }
+    return(res)
+}
+secondDiff <- function(obj, vars, data, method=c("AME", "MER"), typical = NULL){
+    require(MASS)
+    disc <- sapply(vars, function(x)is.factor(data[[x]]))
+    meth <- match.arg(method)
+    mf <- model.frame(obj)
+    b <- coef(obj)
+    if(!disc[1]){
+        min1 <- min(data[[vars[1]]], na.rm=T)
+        max1 <- max(data[[vars[1]]], na.rm=T)
+    }
+    if(disc[1]){
+        cn1 <- paste(vars[1], levels(droplevels(mf[, vars[1]])), sep="")
+        b1 <- b[cn1]
+        b1 <- ifelse(is.na(b1), 0, b1)
+        names(b1) <- levels(droplevels(mf[, vars[1]]))
+        min1 <- max1 <- mf[1,vars[1]]
+        min1[1] <- names(b1)[which.min(b1)]
+        max1[1] <- names(b1)[which.max(b1)]
+    }
+    if(!disc[2]){
+        min2 <- min(data[[vars[2]]], na.rm=T)
+        max2 <- max(data[[vars[2]]], na.rm=T)
+    }
+    if(disc[2]){
+        cn2 <- paste(vars[2], levels(droplevels(mf[, vars[2]])), sep="")
+        b2 <- b[cn2]
+        b2 <- ifelse(is.na(b2), 0, b2)
+        names(b2) <- levels(droplevels(mf[, vars[2]]))
+        min2 <- max2 <- mf[1,vars[2]]
+        min2[1] <- names(b2)[which.min(b2)]
+        max2[1] <- names(b2)[which.max(b2)]
+    }
+    b <- mvrnorm(1500, coef(obj), vcov(obj))
+
+    if(meth == "AME"){
+        dat1 <- dat2 <- dat3 <- dat4 <- data
+        # dat1 = (L, L)
+        # dat2 = (H, L)
+        # dat3 = (L, H)
+        # dat4 = (H, H)
+        dat1[[vars[1]]] <- min1
+        dat1[[vars[2]]] <- min2
+        dat2[[vars[1]]] <- max1
+        dat2[[vars[2]]] <- min2
+        dat3[[vars[1]]] <- min1
+        dat3[[vars[2]]] <- max2
+        dat4[[vars[1]]] <- max1
+        dat4[[vars[2]]] <- max2
+    modmats <- list()
+    modmats[[1]] <- model.matrix(formula(obj), dat1)
+    modmats[[2]] <- model.matrix(formula(obj), dat2)
+    modmats[[3]] <- model.matrix(formula(obj), dat3)
+    modmats[[4]] <- model.matrix(formula(obj), dat4)
+    probs <- lapply(modmats, function(x)family(obj)$linkinv(x%*%t(b)))
+    D <- c(-1,1,1,-1)
+    secdiff <- sapply(1:1500, function(x)(cbind(probs[[1]][,x], probs[[2]][,x], probs[[3]][,x], probs[[4]][,x]) %*%D))
+    avesecdiff <- colMeans(secdiff)
+    indsecdiff <- rowMeans(secdiff)
+    indp <- apply(secdiff, 1, function(x)mean(x > 0))
+    indp <- ifelse(indp > .5, 1-indp, indp)
+    indci <- t(apply(secdiff, 1, quantile, c(.025,.975)))
+    ret <- list(ave = avesecdiff, ind=data.frame(secddiff = indsecdiff, pval = indp, lower=indci[,1], upper=indci[,2]))
+  }
+  else{
+    v <- all.vars(formula(obj))[-1]
+    rn <- v
+    tmp.df <- do.call(data.frame, lapply(v, function(x)central(data[[x]])))
+    names(tmp.df) <- v
+    if(!is.null(typical)){
+        for(i in 1:length(typical)){
+            tmp.df[[names(typical)[[i]]]] <- typical[[i]]
+        }
+    }
+    tmp.df <- tmp.df[c(1,1,1,1), ]  
+    tmp.df[[vars[1]]][1] <- min1
+    tmp.df[[vars[1]]][2] <- max1
+    tmp.df[[vars[1]]][3] <- min1
+    tmp.df[[vars[1]]][4] <- max1
+    tmp.df[[vars[2]]][1] <- min2
+    tmp.df[[vars[2]]][2] <- min2
+    tmp.df[[vars[2]]][3] <- max2
+    tmp.df[[vars[2]]][4] <- max2
+    f <- formula(obj)
+    f[[2]] <- NULL
+    modmat <- model.matrix(f, data=tmp.df)
+    preds <- t(family(obj)$linkinv(modmat%*%t(b)))
+    D <- c(-1,1,1,-1)
+    secdiff <- (preds %*% D)
+    ret <- list(ave = secdiff, probs=preds)
+
+  }
+
+  return(ret)
+}
+outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson"), nOut = 10, whichOut=NULL, cumulative=FALSE){
+    require(car)
+    stat <- match.arg(stat)
+    if(is.null(whichOut)){
+        vec <- switch(stat,
+            cooksD = cooks.distance(obj),
+            hat = hatvalues(obj),
+            deviance = residuals(obj, type="deviance"),
+            pearson = residuals(obj, type="pearson"))
+        tmp <- abs(vec)
+        rnk <- rank(-tmp)
+        w <- which(rnk %in% 1:nOut)
+    }
+    else{
+        w <- whichOut
+        nOut <- length(w)
+    }
+    mf <- model.frame(obj)
+    eff.list <- fits <- list()
+    eff.list[[1]] <- effect(var, obj, xlevels=25)
+    sigs <- rep(0, nOut)
+    k <- 2
+    for(i in 1:nOut){
+        if(cumulative){
+            outs <- w[1:i]
+        }
+        else{
+            outs <- w[i]
+        }
+        tmp <- data[-outs, ]
+        tmpObj <- update(obj, data=tmp)
+        s <- Anova(tmpObj)
+        pval <- s[which(rownames(s) == var), 3]
+        sigs[i] <- ifelse(pval < 0.05, 1, 0)
+        eff.list[[k]] <- effect(var, tmpObj, xlevels=25)
+        fits[[k]] <- eff.list[[k]]$transformation$inverse(eff.list[[k]]$fit)
+        k <- k+1
+    }
+    fits <- do.call(cbind, fits)
+    yrg <- c(min(c(fits)), max(c(fits)))
+    if(is.numeric(mf[[var]]) & length(unique(mf[[var]])) > 2){
+        plot(eff.list[[1]]$x[[var]], fits[,1], type="n", ylim=yrg,
+            xlab = var, ylab = "Fitted Values")
+        cols <- c("gray65", "red")
+        for(i in 2:ncol(fits)){
+            lines(eff.list[[1]]$x[[var]], fits[,i], col=cols[(sigs[i]+1)])
+        }
+        lines(eff.list[[1]]$x[[var]], fits[,1], col="black", lwd=1.5)
+    }
+    else{
+        ins <- strwidth(eff.list[[1]]$x[[var]], units="inches")
+        ins <- max(ins)
+        pmai <- par()$mai
+        pmai[1] <- .25+ins
+        par(mai = pmai)
+        plot(1:length(eff.list[[1]]$x[[var]]), fits[,1], type="n", ylim=yrg,
+            xlab = "", ylab = "Fitted Values", axes=F)
+        axis(2)
+        axis(1, at=1:length(eff.list[[1]]$x[[var]]), labels=eff.list[[1]]$x[[var]], las=2)
+        box()
+                cols <- c("gray65", "red")
+                for(i in 2:ncol(fits)){
+                    points(jitter(1:length(eff.list[[1]]$x[[var]]), 1), fits[,i], col=cols[(sigs[i]+1)])
+                }
+                points(1:length(eff.list[[1]]$x[[var]]), fits[,1], col="black", pch=16)
+            }
+
+
+
+    }

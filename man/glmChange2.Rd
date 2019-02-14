@@ -1,5 +1,6 @@
 \name{glmChange2}
 \alias{glmChange2}
+\alias{print.glmc2}
 \title{Maximal First Differences for Generalized Linear Models}
 \description{For objects of class \code{glm}, it calculates the change in predicted responses, for discrete changes in a covariate holding all other variables at their observed values.}
 \usage{

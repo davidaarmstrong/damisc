@@ -1,5 +1,6 @@
 \name{intQualQuant}
 \alias{intQualQuant}
+\alias{print.iqq}
 \title{Predictions for Factor-Numeric Interactions in Linear Models}
 \description{This function works on linear models with a single interaction between a continuous (numeric) variable and a factor.  The output is a data frame that gives the predicted effect of moving from each category to each other category of the factor over the range of values of the continuous conditioning variable.}
 \usage{
