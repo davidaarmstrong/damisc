@@ -3059,7 +3059,7 @@ optim_yj <- function(pars, form, data, trans.vars, ...){
     ll <- logLik(m)   
     -ll
 }
-    opt.pars <- nlminb(rep(1, length(transvars)), optim_yj, form=form, data=data, trans.vars = trans.vars, lower=0, upper=2)
+    opt.pars <- nlminb(rep(1, length(trans.vars)), optim_yj, form=form, data=data, trans.vars = trans.vars, lower=0, upper=2)
     if(!is.null(round.digits)){
         opt.pars$par <- round(opt.pars$par, round.digits)
     }
@@ -3223,7 +3223,7 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
 }
 
 
-probci <- function(obj, data, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase")){
+probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase")){
     type <- match.arg(type)
     vn <- changeX
     if(length(vn) == 0){stop("Need at least one variable to change")}
@@ -3246,7 +3246,12 @@ probci <- function(obj, data, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = 
     }
 }
     egvals <- do.call(expand.grid, vals)
-    b <- coef(obj)
+    if(is.null(.b)){
+        b <- coef(obj)
+    }
+    else{
+        b <- .b
+    }
     if(is.null(.vcov)){
         v <- vcov(obj)
     }
