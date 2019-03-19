@@ -46,7 +46,17 @@ S3method(searchVarLabels, data.frame)
 S3method(searchVarLabels, tbl_df)
 S3method(inspect, data.frame)
 S3method(inspect, tbl_df)
+S3method(probgroup, polr)
+S3method(probgroup, multinom)
+S3method(summary, polr)
+S3method(print, summary.polr)
 export(
+    probgroup, 
+    probgroup.polr, 
+    probgroup.multinom, 
+    oc2plot, 
+    print.summary.polr, 
+    summary.polr,
     DAintfun3,
     testGAMint,
     probci,

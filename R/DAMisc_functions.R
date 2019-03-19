@@ -1400,7 +1400,7 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, retur
     		d0[[varname]] <- s[i]
         }
         else{
-            d0[[varname]] <- factor(j, levels=1:length(s), labels=s)
+            d0[[varname]] <- factor(i, levels=1:length(s), labels=s)
         }
        X <- model.matrix(formula(obj), data=d0)[,-1]
        XB <- X %*% t(b[,1:length(obj$coef)])
@@ -3735,7 +3735,107 @@ outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson
                 }
                 points(1:length(eff.list[[1]]$x[[var]]), fits[,1], col="black", pch=16)
             }
-
-
-
     }
+
+oc2plot <- function(ordc, plot=TRUE){
+    tmpdat <- data.frame(
+        var = rep(rownames(ordc$diffs$mean), ncol(ordc$diffs$mean)), 
+        lev = rep(colnames(ordc$diffs$mean), each = nrow(ordc$diffs$mean)), 
+        mean = c(ordc$diffs$mean), 
+        lower=c(ordc$diffs$lower), 
+        upper = c(ordc$diffs$upper))
+    p1 <- xyplot(mean ~ lev | var, data=tmpdat, 
+        xlab = "", ylab = "Predicted Change in Pr(y=m)", 
+        lower = tmpdat$lower, upper=tmpdat$upper, 
+        panel = function(x,y,subscripts, lower, upper,...){
+            panel.abline(h=0, lty=2)
+            panel.arrows(x, lower[subscripts], x, upper[subscripts], angle=90, length=.05, code=3)
+            panel.points(x,y,pch=16, cex=.75, col="black")
+        }, prepanel=prepanel.ci)
+    if(plot){
+        return(p1)
+    }
+    else{
+        return(tmpdat)
+    }
+}
+
+summary.polr <- function (object, digits = max(3, .Options$digits - 3), correlation = FALSE, ...){
+    cc <- c(coef(object), object$zeta)
+    pc <- length(coef(object))
+    q <- length(object$zeta)
+    coef <- matrix(0, pc + q, 4L, dimnames = list(names(cc), 
+        c("Value", "Std. Error", "z value", "Pr(>|z|)")))
+    coef[, 1L] <- cc
+    vc <- vcov(object)
+    coef[, 2L] <- sd <- sqrt(diag(vc))
+    coef[, 3L] <- coef[, 1L]/coef[, 2L]
+    coef[, 4L] <- 2*pnorm(abs(coef[, 3L]), lower.tail=F)
+    object$coefficients <- coef
+    object$pc <- pc
+    object$digits <- digits
+    if (correlation) 
+        object$correlation <- (vc/sd)/rep(sd, rep(pc + q, pc + 
+            q))
+    class(object) <- "summary.polr"
+    return(object)
+}
+print.summary.polr <- function (x, digits = x$digits, ...){
+    if (!is.null(cl <- x$call)) {
+        cat("Call:\n")
+        dput(cl, control = NULL)
+    }
+    pc <- x$pc
+    if (pc > 0) {
+        cat("\nCoefficients:\n")
+        printCoefmat(x$coefficients[seq_len(pc), , drop = FALSE], digits = digits, ...)
+    }
+    else {
+        cat("\nNo coefficients\n")
+    }
+    cat("\nIntercepts:\n")
+    printCoefmat(x$coefficients[(pc + 1L):nrow(x$coefficients), , drop = FALSE], digits = digits, ...)
+    cat("\nResidual Deviance:", format(x$deviance, nsmall = 2L), 
+        "\n")
+    cat("AIC:", format(x$deviance + 2 * x$edf, nsmall = 2L), 
+        "\n")
+    if (nzchar(mess <- naprint(x$na.action))) 
+        cat("(", mess, ")\n", sep = "")
+    if (!is.null(correl <- x$correlation)) {
+        cat("\nCorrelation of Coefficients:\n")
+        ll <- lower.tri(correl)
+        correl[ll] <- format(round(correl[ll], digits))
+        correl[!ll] <- ""
+        print(correl[-1L, -ncol(correl)], quote = FALSE, ...)
+    }
+    invisible(x)
+}
+probgroup <- function(obj, ...){
+    UseMethod("probgroup")
+}
+
+probgroup.polr <- function(obj, ...){
+    require(lattice)
+    pr <- predict(obj, type="probs")
+    y <- model.response(model.frame(obj))
+    pr2 <- pr[cbind(1:nrow(pr), as.numeric(y))]
+    tmpdat <- data.frame(probs=c(pr2), 
+        y = factor(as.numeric(y), labels=mod$lev))
+    ly <- length(table(y))
+    return(histogram(~probs | y, data=tmpdat, col="gray75", ylim = c(0, 100), 
+        layout=c(ly,1), xlab="Predicted Probabilities", 
+        par.settings=list(strip.background=list(col="white"))))
+}
+probgroup.multinom <- function(obj, ...){
+    require(lattice)
+    pr <- predict(obj, type="probs")
+    y <- model.response(model.frame(obj))
+    pr2 <- pr[cbind(1:nrow(pr), as.numeric(y))]
+
+    tmpdat <- data.frame(probs=c(pr2), 
+        y = y)
+    ly <- length(table(y))
+    return(histogram(~probs | y, data=tmpdat, col="gray75", ylim = c(0, 100), 
+        layout=c(ly,1), xlab="Predicted Probabilities", 
+        par.settings=list(strip.background=list(col="white"))))
+}
