@@ -1392,6 +1392,7 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, retur
 	}
     else{
         s <- obj$xlevels[[varname]]
+        nvals <- length(s)
     }
     d0 <- data
     m <- l <- u <- matrix(NA, nrow=nvals, ncol=length(obj$lev))
