@@ -375,18 +375,20 @@ function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), 
         }
     }
     vars <- vars[sapply(minmax, function(x) is.na(x[1]))]
-	mmc <- match.arg(diffchange)
-    for (i in 1:length(vars)) {
-		if(mmc == "range"){
-        minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = T)
-		}
-		if(mmc == "sd"){
-        minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = T) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=T)
-		}
-		if(mmc == "unit"){
-        minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = T) + c(-.5,.5)
-		}
-        meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = T)
+	if(length(vars) > 0){
+        mmc <- match.arg(diffchange)
+        for (i in 1:length(vars)) {
+            if(mmc == "range"){
+            minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = T)
+            }
+            if(mmc == "sd"){
+            minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = T) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=T)
+            }
+            if(mmc == "unit"){
+            minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = T) + c(-.5,.5)
+            }
+            meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = T)
+        }
     }
     tmp.df <- do.call(data.frame, lapply(meds, function(x) rep(x,
         length(meds) * 2)))
@@ -413,8 +415,8 @@ function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), 
     diffs <- cbind(preds, apply(preds, 1, diff))
     colnames(diffs) <- c("min", "max", "diff")
     rownames(diffs) <- rn
-    minmax.mat <- do.call(cbind, minmax)
-    minmax.mat <- rbind(c(unlist(meds)), minmax.mat)
+    minmax.mat <- do.call(data.frame, minmax)
+    minmax.mat <- rbind(do.call(data.frame, meds), minmax.mat)
     rownames(minmax.mat) <- c("typical", "min", "max")
 	if(sim){
     preds <- predict(obj, newdata = tmp.df, type = "link", se.fit=TRUE)
