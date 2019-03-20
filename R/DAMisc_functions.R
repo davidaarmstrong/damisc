@@ -3879,3 +3879,13 @@ makeHypSurv <- function(l,obj, ...){
     rownames(plot.data) <- NULL
     return(plot.data)
 }
+
+tscslag <- function(dat, x, id, time, lagLength=1){
+	obs <- apply(dat[, c(id, time)], 1, 
+	    paste, collapse=".")
+	tm1 <- dat[[time]] - lagLength
+	lagobs <- apply(cbind(dat[[id]], tm1), 
+	    1, paste, collapse=".")
+	lagx <- dat[match(lagobs, obs), x]
+	lagx
+}
