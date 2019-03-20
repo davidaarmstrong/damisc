@@ -3842,3 +3842,28 @@ probgroup.multinom <- function(obj, ...){
         layout=c(ly,1), xlab="Predicted Probabilities", 
         par.settings=list(strip.background=list(col="white"))))
 }
+
+poisfit <- function(obj){
+	y <<- model.response(model.frame(obj))
+	r2_mcf <- 1-(logLik(obj)/logLik(update(obj, y~1)))
+	r2_mcfa <- 1-((logLik(obj) - obj$rank)/logLik(update(obj, y~1)))
+	g2 <- -2*(logLik(update(obj, y~1)) - logLik(obj))
+	r2_ml <- 1-exp(-g2/length(y))
+    r2cu <- (r2_ml)/(1-exp(2*logLik(update(obj, y~1))/length(y)))
+	res <- matrix(nrow=6, ncol=2)
+	colnames(res) <- c("Estimate", "p-value")
+	rownames(res) <- c("GOF (Pearson)", "GOF (Deviance)", "ML R2", "McFadden R2", "McFadden R2 (Adj)", "Cragg-Uhler(Nagelkerke) R2")
+	gof <- poisGOF(obj)
+	res[1:2,1] <- as.numeric(as.character(gof[,1]))
+	res[1:2,2] <- as.numeric(as.character(gof[,2]))
+	res[3,1] <- r2_ml
+	res[4,1] <- r2_mcf
+	res[5,1] <- r2_mcfa
+	res[6,1] <- r2cu
+	if("negbin" %in% class(obj)){res <- res[-(1:2), ]}
+	pres <- matrix(apply(res, 2, function(x)sprintf("%.3f", x)), ncol=2)
+	dimnames(pres) <- dimnames(res)
+	print(noquote(pres))
+	invisible(res)
+}
+
