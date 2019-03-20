@@ -51,6 +51,7 @@ S3method(probgroup, multinom)
 S3method(summary, polr)
 S3method(print, summary.polr)
 export(
+    makeHypSurv,
     poisfit,
     probgroup, 
     probgroup.polr, 

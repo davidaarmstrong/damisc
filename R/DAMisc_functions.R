@@ -3867,3 +3867,15 @@ poisfit <- function(obj){
 	invisible(res)
 }
 
+makeHypSurv <- function(l,obj, ...){
+    tmp <- do.call(expand.grid, l)
+    p <- seq(.99,0,by=-.01)
+    preds <- predict(obj, newdata=tmp, 
+    type="quantile", p=p)
+    plot.data <- data.frame(
+        p.fail = rep(p, each=nrow(preds)), 
+        time = c(preds))
+    plot.data <- cbind(plot.data, tmp[rep(1:3, nrow(plot.data)/3), ])
+    rownames(plot.data) <- NULL
+    return(plot.data)
+}
