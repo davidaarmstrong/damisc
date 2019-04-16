@@ -1158,16 +1158,22 @@ mnlfit <- function(obj, permute=FALSE){
 	y <- model.response(model.frame(obj))
 	pp <- predict(obj, type="probs")
 	s <- 1-pp[,1]
-	g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=FALSE, include.lowest=FALSE)
-	w <- lapply(1:length(levels(g_fac)), function(x)which(g_fac == levels(g_fac)[x]))
-	obs <- sapply(w, function(x)table(factor(as.numeric(y[x]), levels=1:length(levels(y)), labels=levels(y))))
-	exp <- sapply(w, function(x)colSums(pp[x, ]))
-	lt5 <- mean(exp < 5)
-	if(lt5 != 0 ){warning(paste(round(lt5*100), "% of expected counts < 5", sep=""))}
-	Cg <- sum(c((obs-exp)^2/exp))
-	Cgrefdf <- (nlevels(g_fac)-2)*(ncol(pp)-1)
-	Cg_p <- pchisq(Cg, Cgrefdf, lower.tail=F)
-	predcat <- predict(obj, type="class")
+    qtile <- quantile(s, seq(0,1,by=.1))
+    if(length(qtile) == 11){
+        g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=FALSE, include.lowest=FALSE)
+        w <- lapply(1:length(levels(g_fac)), function(x)which(g_fac == levels(g_fac)[x]))
+        obs <- sapply(w, function(x)table(factor(as.numeric(y[x]), levels=1:length(levels(y)), labels=levels(y))))
+        exp <- sapply(w, function(x)colSums(pp[x, ]))
+        lt5 <- mean(exp < 5)
+        if(lt5 != 0 ){warning(paste(round(lt5*100), "% of expected counts < 5", sep=""))}
+        Cg <- sum(c((obs-exp)^2/exp))
+        Cgrefdf <- (nlevels(g_fac)-2)*(ncol(pp)-1)
+        Cg_p <- pchisq(Cg, Cgrefdf, lower.tail=F)
+    }
+    else{
+        Cg <- Cgrefdf <- Cg_p <- NA
+    }
+    predcat <- predict(obj, type="class")
 	r2_count <- mean(predcat == y)
 	modal <- max(table(y))
 	r2_counta <- (sum(y == predcat) - modal)/(length(y) - modal)
@@ -1190,7 +1196,7 @@ mnlfit <- function(obj, permute=FALSE){
 	res[7,1] <- r2cu
 
 	permres <- NULL
-	if(permute){
+	if(permute & length(qtile == 11)){
 		X <- model.matrix(obj)
 		l <- levels(y)
 		for(i in 1:length(l)){
