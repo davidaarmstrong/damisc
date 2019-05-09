@@ -1411,6 +1411,7 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, retur
         else{
             d0[[varname]] <- factor(i, levels=1:length(s), labels=s)
         }
+       d0[[varname]][which(is.na(data[[varname]]))] <- NA
        X <- model.matrix(formula(obj), data=d0)[,-1]
        XB <- X %*% t(b[,1:length(obj$coef)])
        Q <- lapply(ints, function(x)pfun(x-XB))
