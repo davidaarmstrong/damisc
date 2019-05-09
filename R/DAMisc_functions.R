@@ -1158,7 +1158,7 @@ mnlfit <- function(obj, permute=FALSE){
 	y <- model.response(model.frame(obj))
 	pp <- predict(obj, type="probs")
 	s <- 1-pp[,1]
-    qtile <- quantile(s, seq(0,1,by=.1))
+    qtile <- unique(quantile(s, seq(0,1,by=.1)))
     if(length(qtile) == 11){
         g_fac <- cut(s, breaks=quantile(s, seq(0,1,by=.1)), right=FALSE, include.lowest=FALSE)
         w <- lapply(1:length(levels(g_fac)), function(x)which(g_fac == levels(g_fac)[x]))
