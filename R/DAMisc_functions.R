@@ -3561,7 +3561,7 @@ print.glmc2 <- function(x, ...){
 
 print.iqq <- function(x, ...){
     cat("Conditional Effect of ", x$mainvar, " given ", x$givenvar, "\n")
-    print.data.frame(round(x$out, 4))
+    print.data.frame(x$out, digits=4)
     cat("\n")
     invisible(x)
 }
