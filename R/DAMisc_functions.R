@@ -3045,17 +3045,17 @@ changeSig <- function(obj, vars, alpha=.05){
     invisible(res)
 }
 
-test.balsos <- function(obj, N=NULL){
+test.balsos <- function(obj, cor.type=c("pearson", "spearman")){
+    cor.type <- match.arg(cor.type)
     chains <- as.matrix(obj$fit)
     chains <- t(chains[,grep("y_new2", colnames(chains))])
-    if(is.null(N))N <- nrow(chains)
-    f1 <- fitted(lm(chains[,1:N] ~ obj$y))
-    f2 <- apply(chains[,1:N], 2, function(x)fitted(loess(x ~ obj$y)))
-    r2a <- sapply(1:ncol(f1), function(i)cor(f1[,i], f2[,i], use="pair")^2)
-    samps <- sapply(1:N, function(i)sample((1:ncol(chains))[-i], 1, replace=T))
-    r2b <- sapply(1:N, function(i)cor(chains[,i], chains[,samps[i]])^2)
+    yvals <- aggregate(1:length(obj$y), list(obj$y), min)
+    chains <- chains[yvals[,2], ]
+    r1 <- c(cor(chains, yvals[,1], method=cor.type)^2)
+    refs <- sample(1:ncol(chains), ncol(chains), replace=F)
+    r0 <- diag(cor(chains, chains[,refs])^2)
     cat("Test of Linearity (higher values indicate higher probability of linearity)\n")
-    sprintf("%.3f", mean(r2a > r2b))
+    sprintf("%.3f", mean(r1 >= r0))
 }
 
 yj_trans <- function(form, data, trans.vars, round.digits = 3, ...){
