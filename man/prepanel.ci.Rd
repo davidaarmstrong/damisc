@@ -14,16 +14,3 @@
 	A list giving the ranges and differences in ranges of x and the lower and upper bounds of y.
 }
 \author{Dave Armstrong}
-\examples{
-library(car)
-library(lattice)
-data(Ornstein)
-mod <- lm(interlocks ~ log(assets)*nation, data=Ornstein)
-mod.out <- intQualQuant(mod, c("log(assets)", "nation"), 
-	n=25, plot=FALSE, type="facs")
-xyplot(fit ~ x | contrast, data=mod.out, 
-	xlab = "Assets", ylab = "Difference In Fitted Values", 
-	lower=mod.out$lower, upper=mod.out$upper, zl=TRUE, 
-	prepanel=prepanel.ci, panel=panel.ci)
-}
-

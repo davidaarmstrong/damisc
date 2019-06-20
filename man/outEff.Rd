@@ -3,7 +3,8 @@
 \title{Plot Effects of Removing Outliers}
 \description{Plots the effect of a variable sequentially removing outlying observations.}
 \usage{
-outEff(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson"), nOut = 10, whichOut=NULL, cumulative=FALSE)
+outEff(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson"), 
+  nOut = 10, whichOut=NULL, cumulative=FALSE)
 }
 \arguments{
   \item{obj}{An object of class \code{glm} that will be used to plot the outlier removed lines. }

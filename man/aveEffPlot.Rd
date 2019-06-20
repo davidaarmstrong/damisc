@@ -3,7 +3,7 @@
 \title{Average Effect Plot for Generalized Linear Models}
 \description{For objects of class \code{glm}, it calculates the change the average predicted probability (like the one calculated by \code{glmChange2}) for a hypothetical candidate set of values of a covariate.}
 \usage{
-aveEffPlot(obj, varname, data, R=1500, nvals=25, plot=TRUE, returnsSim=FALSE, ...) 
+aveEffPlot(obj, varname, data, R=1500, nvals=25, plot=TRUE, returnSim=FALSE, ...) 
 }
 \arguments{
   \item{obj}{A model object of class \code{glm}.}

@@ -3,7 +3,7 @@
 \title{Cross-validating Loess curve}
 \description{Function provides the cross-validation error for the loess curve in a manner that is amenable to optimization of the span. }
 \usage{
-cv.lo2(span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=T), 
+cv.lo2(span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=TRUE), 
     K = n, numiter = 100, which=c("corrected", "raw"))
 }
 \arguments{

@@ -1,7 +1,7 @@
 importFrom("grDevices", "col2rgb", "dev.off", "pdf", "png",
              "postscript", "rgb", "setEPS")
 importFrom("graphics", "abline", "axis", "lines", "par", "persp",
-             "plot", "points", "polygon")
+             "plot", "points", "polygon", "box", "segments", "strwidth")
 importFrom("stats", "AIC", "BIC", "alias", "anova", "as.formula",
              "coef", "coefficients", "contrasts", "deviance", "dnorm",
              "family", "fitted", "formula", "lm", "loess", "logLik",
@@ -9,18 +9,23 @@ importFrom("stats", "AIC", "BIC", "alias", "anova", "as.formula",
              "na.omit", "p.adjust", "pcauchy", "pchisq", "pf", "plogis",
              "pnorm", "predict", "pt", "qt", "quantile", "relevel",
              "residuals", "residuals.glm", "sd", "terms", "update",
-             "var", "vcov", "gaussian", "glm")
+             "var", "vcov", "gaussian", "glm", "aggregate", "cooks.distance", 
+             "cor", "hatvalues", "naprint", "nlminb", "pbinom", "printCoefmat",
+            "qnorm","rnorm")
+importFrom("boot", "cv.glm")
+importFrom("coda", "as.mcmc")
+importFrom("latticeExtra", "useOuterStrips")
 importFrom("games", "clarke")
 importFrom("AICcmodavg", "AICc")
 importFrom("fANCOVA", "loess.as")
 importFrom("VGAM", "yeo.johnson")
 importFrom("optiscale", "opscale")
 importFrom("utils", "combn")
-importFrom("boot", "cv.glm")
 importFrom("VGAM", "pgumbel")
 importFrom("QRM", "pGumbel")
-import(car)
 import(effects)
+import(car)
+import(rstan)
 import(grid)
 import(lattice)
 import(MASS)
@@ -48,8 +53,6 @@ S3method(inspect, data.frame)
 S3method(inspect, tbl_df)
 S3method(probgroup, polr)
 S3method(probgroup, multinom)
-S3method(summary, polr)
-S3method(print, summary.polr)
 export(
     tscslag, 
     makeHypSurv,
@@ -58,8 +61,6 @@ export(
     probgroup.polr, 
     probgroup.multinom, 
     oc2plot, 
-    print.summary.polr, 
-    summary.polr,
     DAintfun3,
     testGAMint,
     probci,

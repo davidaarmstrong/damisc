@@ -3,7 +3,8 @@
 \title{Bayesian Alternating Least Squares Optimal Scaling}
 \description{Estimates a Bayesian analog to the the Alternating Least Squares Optimal Scaling (ALSOS) solution for qualitative dependent variables.}
 \usage{
-	balsos(formula, data, iter=2500, chains = 1, alg = c("NUTS", "HMC", "Fixed_param"), ...)
+	balsos(formula, data, iter=2500, chains = 1, 
+    alg = c("NUTS", "HMC", "Fixed_param"), ...)
 }
 \arguments{
   \item{formula}{A formula with a dependent variable that will be optimally scaled}
@@ -32,11 +33,11 @@ A list with the following elements:
 }
 \references{
 
-Jacoby, William G. 1999. \sQuote{Levels of Measurement and Political Research: An Optimistic View.} American Journal of Political Science 43(1):271–301.
+Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political Research: An Optimistic View}  American Journal of Political Science  43(1): 271-301.
 
-Young, Forrest.  1981.  \sQuote{Quantitative Analysis of Qualitative Data}, Psychometrika, 46:357-388. 
+Young, Forrest.  1981.  \sQuote{Quantitative Analysis of Qualitative Data}  Psychometrika, 46: 357-388.
 
-Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression with Qualitative and Quantitative Variables: An Alternating Least Squares Method with Optimal Scaling Features}.  Psychometrika, 41:502-529.
+Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression with Qualitative and Quantitative Variables: An Alternating Least Squares Method with Optimal Scaling Features}  Psychometrika, 41:502-529.
 
 }
 \author{Dave Armstrong}

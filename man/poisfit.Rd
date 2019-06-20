@@ -3,10 +3,10 @@
 \title{Scalar Measures of Fit for Poisson GLMs Models}
 \description{Calculates scalar measures of fit for models with count dependent variables along the lines described in Long (1997) and Long and Freese (2005).}
 \usage{
-	poisfit(mod)
+	poisfit(obj)
 }
 \arguments{
-  \item{mod}{A model of class \code{glm} with \code{family=poisson}. }
+  \item{obj}{A model of class \code{glm} with \code{family=poisson}. }
 }
 \details{
 \code{poisfit} calculates scalar measures of fit (many of which are pseudo-R-squared measures) to describe how well a model fits data with a count dependent variable.  

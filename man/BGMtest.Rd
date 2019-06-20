@@ -3,7 +3,7 @@
 \title{Tests the five Berry, Golder and Milton (2012) Interactive Hypothesis}
 \description{This function tests the five hypotheses that Berry, Golder and Milton identify as important when two quantitative variables are interacted in a linear model.}
 \usage{
-BGMtest(obj, vars, digits = 3, level = 0.05, two.sided=T)
+BGMtest(obj, vars, digits = 3, level = 0.05, two.sided=TRUE)
 }
 \arguments{
   \item{obj}{An object of class \code{lm}.}

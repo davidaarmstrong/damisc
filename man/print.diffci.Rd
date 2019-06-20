@@ -10,7 +10,7 @@
   \item{digits}{How many digits to round output.}
   \item{filter}{A named list of values where the names indicate the variable to be filtered and the values in the vector indicate the values to include for the filtering variable.}
   \item{const}{A string identifying the name of the variable to be held constant across comparisons.}
-  \item{onlhSig}{Logical indicating whether all differes should be displayed or only those significant at the 95\% two-tailed level.}
+  \item{onlySig}{Logical indicating whether all differes should be displayed or only those significant at the 95\% two-tailed level.}
   \item{...}{Other arguments to be passed down to print, currently unimplemented.}
   }
 \value{
