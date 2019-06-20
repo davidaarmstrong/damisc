@@ -54,6 +54,7 @@ S3method(inspect, tbl_df)
 S3method(probgroup, polr)
 S3method(probgroup, multinom)
 export(
+    test.balsos,
     tscslag, 
     makeHypSurv,
     poisfit,
