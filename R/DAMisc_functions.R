@@ -3559,7 +3559,7 @@ print.glmc2 <- function(x, ...){
 
 print.iqq <- function(x, ...){
     cat("Conditional Effect of ", x$mainvar, " given ", x$givenvar, "\n")
-    print.data.frame(x$out, digits=4)
+    printCoefmat(x$out, digits=4)
     cat("\n")
     invisible(x)
 }
