@@ -996,10 +996,10 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 	    rownames(preds.min) <- rownames(preds.max) <- rownames(diffs) <- rn
 	}
 	if(sim){
-        if(class(obj) == "polr"){
+        if("polr" %in% class(obj)){
             b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
         }
-        if(class(obj) == "clm"){
+        if("clm" %in% class(obj)){
             zeta.ind <- grep("|", names(coef(obj)), fixed=TRUE)
             b.ind <- (1:length(coef(obj)))[-zeta.ind]
             b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]), 
@@ -1066,10 +1066,10 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
     }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
-    if(class(obj) == "polr"){
+    if("polr" %in% class(obj)){
         b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
     }
-    if(class(obj) == "clm"){
+    if("clm" %in% class(obj)){
         zeta.ind <- grep("|", names(coef(obj)), fixed=TRUE)
         b.ind <- (1:length(coef(obj)))[-zeta.ind]
         b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]), 
@@ -1098,10 +1098,10 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
         }
     	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x)[,-1])
     	intlist <- list()
-            if(class(obj) == "polr"){
+            if("polr" %in% class(obj)){
                 ylev <- obj$lev
             }
-            if(class(obj) == "clm"){
+            if("clm" %in% class(obj)){
                 ylev <- obj$y.levels
             }
         		for(i in 1:(length(ylev)-1)){
@@ -1147,7 +1147,7 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
 
 print.ordChange <- function(x, ..., digits=3){
     diffs <- x$diffs
-    if(class(diffs) == "list"){
+    if("list" %in% class(diffs)){
         sig <- ifelse(sign(diffs$lower) == sign(diffs$upper), "*", " ")
         leads <- ifelse(sign(diffs$mean) == -1, "", " ")
         out <- array(paste(leads, sprintf(paste("%0.", digits, "f", sep=""), diffs$mean), sig, sep=""), dim=dim(diffs$mean))
@@ -3437,7 +3437,7 @@ testGAMint <- function(m1, m2, data, R=1000, ranCoef=FALSE){
         if(ranCoef){
             b1 <- mvrnorm(1, coef(m1), vcov(m1))
         }
-        if(all(class(m1) == "lm")){
+        if(all("lm" %in% class(m1))){
             sig <- summary(m1)$sigma
         }
         if("gam" %in% class(m1)){
