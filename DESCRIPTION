@@ -3,7 +3,7 @@ Type: Package
 Title: Dave Armstrong's Miscellaneous Functions
 Version: 1.5
 Depends: car, effects, rstan
-Imports: lattice, MASS, nnet, splines, pscl, gdata, xtable, QRM, VGAM, boot, optiscale, fANCOVA, games, AICcmodavg, latticeExtra, coda
+Imports: lattice, MASS, nnet, splines, pscl, gdata, xtable, VGAM, boot, optiscale, fANCOVA, games, AICcmodavg, latticeExtra, coda
 Date: 2019-06-25
 Authors@R: person("Dave", "Armstrong", email = "dave@quantoid.net", role = c("aut", "cre"))
 Description: Miscellaneous set of functions I use in my teaching either at the University of Western Ontario or the Inter-university Consortium for Political and Social Research (ICPSR) Summer Program in Quantitative Methods.  Broadly, the functions help with presentation and interpretation of LMs and GLMs, but also implement some new tools like Alternating Least Squares Optimal Scaling for dependent variables, a Bayesian analog to the ALSOS algorithm.  There are also tools to help understand interactions in both LMs and binary GLMs. 

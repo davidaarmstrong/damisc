@@ -1,3 +1,10 @@
+## definition of pGumbel function taken from QRM 0.4-13
+pGumbel <- function (q, mu = 0, sigma = 1){
+  stopifnot(sigma > 0)
+  exp(-exp(-((q - mu)/sigma)))
+}
+
+
 binfit <-
 function (mod)
 {
