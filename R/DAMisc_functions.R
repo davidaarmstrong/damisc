@@ -2521,8 +2521,13 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
     var.classes <- sapply(vars, function(x) class(data[[x]]))
     b <- mvrnorm(R, coef(obj), vcov(obj))
     change <- match.arg(change)
+    if(!is.factor(data[[varname]])){
     delt <- switch(change, unit = 1, sd = sd(data[[varname]], 
         na.rm = TRUE))
+    }else{
+      delt <- 1
+    }
+    
     if (is.numeric(data[[varname]])) {
         d0 <- d1 <- data
         d0[[varname]] <- d0[[varname]] - (0.5 * delt)
