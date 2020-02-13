@@ -3847,3 +3847,113 @@ tscslag <- function(dat, x, id, time, lagLength=1){
 	lagx <- dat[match(lagobs, obs), x]
 	lagx
 }
+
+testNL <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
+  UseMethod("testNL")
+}
+powerTrans <- function(x, transPower){
+  if(abs(transPower) > .01){
+    x <- I(x^transPower)
+  }  else {
+    x <- log(x)
+  }
+  x
+}
+
+testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
+  res <- data.frame(Model1 = c("Original", "Original", "Power Transform"), 
+                    Model2 = c("Power Transform", "Polynomial", "Polynomial"), 
+                    pval = NA, 
+                    preferred = NA)
+  
+  form1 <- glue("~ . -{var} + powerTrans({var}, {transPower})")
+  form2 <- glue("~ . -{var} + poly({var}, {polyOrder}, raw=TRUE)")
+  o1 <- update(obj, form1)
+  t1 <- clarke_test(obj, o1)
+  b <- min(t1$stat, t1$nobs - t1$stat)
+  p <- 2 * pbinom(b, t1$nobs, 0.5)
+  pref <- ifelse(t1$stat > t1$nobs - t1$stat, 1, 2) 
+  res$pval[1] <- p
+  if(p < .05 & pref == 1){
+    res$preferred[1] <- "Original"  
+  }
+  if(p < .05 & pref == 2){
+    res$preferred[1] <- "Power Transform"  
+  }
+  if(p >= .05){
+    res$preferred[1] <- "Neither"
+  }
+  
+  o2 <- update(obj, form2)
+  t2 <- clarke_test(obj, o2)
+  b <- min(t2$stat, t2$nobs - t2$stat)
+  p <- 2 * pbinom(b, t2$nobs, 0.5)
+  pref <- ifelse(t2$stat > t2$nobs - t2$stat, 1, 2) 
+  res$pval[2] <- p
+  if(p < .05 & pref == 1){
+    res$preferred[2] <- "Original"  
+  }
+  if(p < .05 & pref == 2){
+    res$preferred[2] <- "Polynomial"  
+  }
+  if(p >= .05){
+    res$preferred[2] <- "Neither"
+  }
+  
+  t3 <- clarke_test(o1, o2)
+  b <- min(t3$stat, t3$nobs - t3$stat)
+  p <- 2 * pbinom(b, t3$nobs, 0.5)
+  pref <- ifelse(t3$stat > t3$nobs - t3$stat, 1, 2) 
+  res$pval[3] <- p
+  if(p < .05 & pref == 1){
+    res$preferred[3] <- "Power Transform"  
+  }
+  if(p < .05 & pref == 2){
+    res$preferred[3] <- "Polynomial"  
+  }
+  if(p >= .05){
+    res$preferred[3] <- "Neither"
+  }
+  res$pval <- sprintf("%.3f", res$pval)
+  xl <- list(25)
+  names(xl)[1] <- var
+  if(!plot){
+    return(res)
+  }
+  if(plot){
+    e1 <- Effect(var, obj, xlevels=xl)
+    se1 <- do.call(data.frame, summary(e1)[c("effect", "lower", "upper")])
+    se1$model <- factor(1, levels=1:3, 
+                        labels=c("Original", "Power", "Polynomial"))
+    se1$x <- e1$x[[var]]
+    
+    e2 <- Effect(var, o1, xlevels=xl)
+    se2 <- do.call(data.frame, summary(e2)[c("effect", "lower", "upper")])
+    se2$model <- factor(2, levels=1:3, 
+                        labels=c("Original", "Power", "Polynomial"))
+    se2$x <- e2$x[[var]]
+    
+    e3 <- Effect(var, o2, xlevels=xl)
+    se3 <- do.call(data.frame, summary(e3)[c("effect", "lower", "upper")])
+    se3$model <- factor(3, levels=1:3, 
+                        labels=c("Original", "Power", "Polynomial"))
+    se3$x <- e3$x[[var]]
+    plotData <- rbind(se1, rbind(se2, se3))  
+    ggplot(plotData, aes(x=x, y=effect, ymin = lower, ymax=upper, fill=model)) +       geom_ribbon(colour=NA, alpha=.25) + geom_line(aes(colour=model)) +   
+      theme_bw() +  theme(legend.position="bottom") + labs(x=var)
+    
+  }
+}
+testNL.lm <- testNL.glm
+
+effect.logistf <- function(var, obj, data, ...){
+  v <- function(obj, complete=FALSE)return(obj$var)
+  form <- as.character(obj$formula)
+  form <- as.formula(paste(form[2], form[3], sep=form[1]))
+  tmp.mod <- glm(form, data=data, family=binomial)
+  tmp.mod$coefficients <- as.vector(obj$coefficients)
+  tmp.mod$var <- obj$var
+  e <- Effect(var, tmp.mod, vcov.=v, ...)
+  return(e)
+}
+
