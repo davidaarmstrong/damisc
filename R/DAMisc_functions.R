@@ -1,4 +1,4 @@
-## definition of pGumbel function taken from QRM 0.4-13
+ ## definition of pGumbel function taken from QRM 0.4-13
 pGumbel <- function (q, mu = 0, sigma = 1){
   stopifnot(sigma > 0)
   exp(-exp(-((q - mu)/sigma)))
@@ -853,9 +853,13 @@ mnlChange2 <-
     change <- match.arg(diffchange)
     allmean <- alllower <- allupper <- NULL
     for(m in 1:length(varnames)){
-        delt <- switch(change,
-                       unit=1,
-                       sd = sd(data[[varnames[m]]], na.rm=TRUE))
+        if(!is.factor(data[[varnames[m]]])){
+          delt <- switch(change,
+                         unit=1,
+                         sd = sd(data[[varnames[m]]], na.rm=TRUE))
+        } else{
+          delt <- 1
+        }
         d0 <- list()
         if(is.numeric(data[[varnames[m]]])){
           d0[[1]] <- d0[[2]] <- data
@@ -1002,11 +1006,11 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
         if("clm" %in% class(obj)){
             zeta.ind <- grep("|", names(coef(obj)), fixed=TRUE)
             b.ind <- (1:length(coef(obj)))[-zeta.ind]
-            b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]), 
+            b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]),
                 vcov(obj)[c(b.ind, zeta.ind),c(b.ind, zeta.ind)])
         }
         if(!(class(obj) %in% c("clm", "polr"))){stop("Simulation requires either a clm or polr object\n")}
-    
+
     X <- model.matrix(update(formula(obj), NULL ~ .), data=tmp.df)
 	intlist <- list()
     if(class(obj) == "polr"){
@@ -1015,7 +1019,7 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
     if(class(obj) == "clm"){
         ylev <- obj$y.levels
     }
-    
+
     	for(i in 1:(length(ylev)-1)){
 			intlist[[i]] <- matrix(0, ncol=(length(ylev)-1), nrow=nrow(X))
 			intlist[[i]][,i] <- 1
@@ -1072,7 +1076,7 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
     if("clm" %in% class(obj)){
         zeta.ind <- grep("|", names(coef(obj)), fixed=TRUE)
         b.ind <- (1:length(coef(obj)))[-zeta.ind]
-        b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]), 
+        b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]),
             vcov(obj)[c(b.ind, zeta.ind),c(b.ind, zeta.ind)])
     }
     if(!(class(obj) %in% c("clm", "polr"))){stop("Simulation requires either a clm or polr object\n")}
@@ -1080,9 +1084,13 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
     allmean <- alllower <- allupper <- NULL
 
     for(m in 1:length(varnames)){
+      if(!is.factor(data[[varnames[m]]])){
         delt <- switch(change,
                        unit=1,
                        sd = sd(data[[varnames[m]]], na.rm=TRUE))
+      } else{
+        delt <- 1
+      }
         d0 <- list()
         if(is.numeric(data[[varnames[m]]])){
           d0[[1]] <- d0[[2]] <- data
@@ -2395,7 +2403,7 @@ if(!span.as){
     lo.mods <- lapply(terms.list, function(z)loess(y ~ x, data=z, span=span, ...))
 }
 if(span.as){
-    lo.mods <- lapply(terms.list, function(z)loess.as(z$x, z$y, ...))    
+    lo.mods <- lapply(terms.list, function(z)loess.as(z$x, z$y, ...))
 }
 lin.mods <- lapply(terms.list, function(z)lm(y ~ x, data=z))
 n <- nrow(model.matrix(model))
@@ -2522,12 +2530,12 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
     b <- mvrnorm(R, coef(obj), vcov(obj))
     change <- match.arg(change)
     if(!is.factor(data[[varname]])){
-    delt <- switch(change, unit = 1, sd = sd(data[[varname]], 
+    delt <- switch(change, unit = 1, sd = sd(data[[varname]],
         na.rm = TRUE))
     }else{
       delt <- 1
     }
-    
+
     if (is.numeric(data[[varname]])) {
         d0 <- d1 <- data
         d0[[varname]] <- d0[[varname]] - (0.5 * delt)
@@ -2538,13 +2546,13 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
         p1 <- family(obj)$linkinv(X1 %*% t(b))
         diff <- p1 - p0
         eff <- colMeans(diff)
-        res <- matrix(c(mean(eff), quantile(eff, c(0.025, 0.975))), 
+        res <- matrix(c(mean(eff), quantile(eff, c(0.025, 0.975))),
             nrow = 1)
         colnames(res) <- c("mean", "lower", "upper")
         rownames(res) <- varname
         outres = list(res = res, ames=eff, avesamp = rowMeans(diff))
     }
-    if (!is.numeric(data[[varname]]) & length(unique(na.omit(data[[varname]]))) == 
+    if (!is.numeric(data[[varname]]) & length(unique(na.omit(data[[varname]]))) ==
         2) {
         l <- obj$xlevels[[varname]]
         D0 <- D1 <- data
@@ -2556,14 +2564,14 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
         p1 <- family(obj)$linkinv(X1 %*% t(b))
         diff <- p1 - p0
         eff <- colMeans(diff)
-        res <- matrix(c(mean(eff), quantile(eff, c(0.025, 0.975))), 
+        res <- matrix(c(mean(eff), quantile(eff, c(0.025, 0.975))),
             nrow = 1)
         colnames(res) <- c("mean", "lower", "upper")
         rownames(res) <- varname
         outres = list(res = res, ames=eff, avesamp = rowMeans(diff))
 
     }
-    if (!is.numeric(data[[varname]]) & length(unique(na.omit(data[[varname]]))) > 
+    if (!is.numeric(data[[varname]]) & length(unique(na.omit(data[[varname]]))) >
         2) {
         l <- obj$xlevels[[varname]]
         X.list <- list()
@@ -2575,12 +2583,12 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
         combs <- combn(length(X.list), 2)
         d.list <- list()
         for (j in 1:ncol(combs)) {
-            d.list[[j]] <- family(obj)$linkinv(X.list[[combs[2, 
-                j]]] %*% t(b)) - family(obj)$linkinv(X.list[[combs[1, 
+            d.list[[j]] <- family(obj)$linkinv(X.list[[combs[2,
+                j]]] %*% t(b)) - family(obj)$linkinv(X.list[[combs[1,
                 j]]] %*% t(b))
         }
         eff <- sapply(d.list, colMeans)
-        res <- apply(eff, 2, function(x) c(mean(x), quantile(x, 
+        res <- apply(eff, 2, function(x) c(mean(x), quantile(x,
             c(0.025, 0.975))))
         cl <- array(l[combs], dim = dim(combs))
         rownames(res) <- c("mean", "lower", "upper")
@@ -2755,13 +2763,13 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
    cstats <- sapply(tests2, function(x)x$stat)
    cprobs <- sapply(tests2, function(x)x$stat/x$nobs)
    cminstat <- sapply(tests2, function(x)min(x$stat, x$nobs - x$stat))
-   cbetter <- 
+   cbetter <-
    cp <- 2 * pbinom(cminstat, sapply(tests2, function(x)x$nobs), 0.5)
-   pref <- sapply(tests2, function(x)ifelse(x$stat > x$nobs - x$stat,  "(T)", "(C)")) 
+   pref <- sapply(tests2, function(x)ifelse(x$stat > x$nobs - x$stat,  "(T)", "(C)"))
    pref <- ifelse(cp > .05, "", pref)
    delta.aic <- sapply(cand.mods, AIC) - AIC(target.mod)
    delta.aicc <- sapply(cand.mods, AICc) - AICc(target.mod)
-   delta.bic <- sapply(cand.mods, BIC) - BIC(target.mod)   
+   delta.bic <- sapply(cand.mods, BIC) - BIC(target.mod)
    res <- cbind(Fstats, num.df, denom.df, pval, cstats, cprobs, cp, delta.aic, delta.aicc, delta.bic)
    sigchar <- ifelse(res[,4] < .05, "*", " ")
    sigchar2 <- ifelse(res[,7] < .05, "*", " ")
@@ -2778,7 +2786,7 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
       if(i == 7){
           tmp <- paste(tmp, pref,  sep=" ")
       }
-      
+
       strres <- cbind(strres,tmp )
    }
    colnames(strres) <- c("F", "DF1", "DF2", "p(F)", "Clarke", "Pr(Better)", "p(Clarke)", "Delta_AIC", "Delta_AICc", "Delta_BIC")
@@ -2927,7 +2935,7 @@ class(ret) <- "balsos"
 return(ret)
 }
 
-#figure out whether we need the col.alpha parameter in the panel.transci function. 
+#figure out whether we need the col.alpha parameter in the panel.transci function.
 plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE, col.alpha=.5){
     alpha <- (1-level)/2
     tmp <- data.frame(x=x$x, y=x$y)
@@ -2940,16 +2948,16 @@ plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE
     names(tmp2) <- names(tmp)
     preds <- predict(x, newdata=tmp2, se=TRUE)
     crit <- abs(qnorm(alpha))
-    plot.dat <- data.frame(fit=preds$fit, 
-        lower=preds$fit - crit*preds$se.fit, 
-        upper = preds$fit + crit*preds$se.fit, 
-        x = xs, 
+    plot.dat <- data.frame(fit=preds$fit,
+        lower=preds$fit - crit*preds$se.fit,
+        upper = preds$fit + crit*preds$se.fit,
+        x = xs,
         g = "loess")
     if(!linear){
      p <-    xyplot(fit ~ x, data=plot.dat, groups=plot.dat$g, ...,
-            lower=plot.dat$lower, 
-            upper=plot.dat$upper, 
-            panel=panel.transci, 
+            lower=plot.dat$lower,
+            upper=plot.dat$upper,
+            panel=panel.transci,
             prepanel=prepanel.ci)
     }
     if(linear){
@@ -2961,9 +2969,9 @@ plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE
         linpred$g <- "linear"
         plot.dat <- rbind(plot.dat, linpred)
         p <- xyplot(fit ~ x, data=plot.dat, groups=plot.dat$g, ...,
-            lower=plot.dat$lower, 
-            upper=plot.dat$upper, 
-            panel=panel.transci, 
+            lower=plot.dat$lower,
+            upper=plot.dat$upper,
+            panel=panel.transci,
             prepanel=prepanel.ci)
 
     }
@@ -3079,7 +3087,7 @@ optim_yj <- function(pars, form, data, trans.vars, ...){
     }
     form <- as.formula(paste0(form[2], form[1], form[3]))
     m <- lm(form, data=data)
-    ll <- logLik(m)   
+    ll <- logLik(m)
     -ll
 }
     opt.pars <- nlminb(rep(1, length(trans.vars)), optim_yj, form=form, data=data, trans.vars = trans.vars, lower=0, upper=2)
@@ -3095,7 +3103,7 @@ optim_yj <- function(pars, form, data, trans.vars, ...){
     return(out)
 }
 
-cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=TRUE), 
+cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=TRUE),
     K = n, numiter = 100, which=c("corrected", "raw")) {
     sample0 <- function (x, ...)x[sample.int(length(x), ...)]
     w <- match.arg(which)
@@ -3116,7 +3124,7 @@ cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2
             j.in <- setdiff(1:n, samps[[i]])
             d.mod <- loess(as.formula(form), data=data[j.in, ], span=span)
             p.alpha <- n.s[i]/n
-            cost.i <-  cost(tmp.y[j.out], predict(d.mod, data[j.out, 
+            cost.i <-  cost(tmp.y[j.out], predict(d.mod, data[j.out,
                 , drop = FALSE]))
             CV <- CV + p.alpha * cost.i
             cost.0 <- cost.0 - p.alpha * cost(tmp.y, predict(d.mod, data))
@@ -3147,9 +3155,9 @@ os <- chains[, mins[,2]]
 s<- summary(as.mcmc(os))
 
 newdf <- data.frame(
-    os = s$statistics[,1], 
-    lower = s$quantiles[,1], 
-    upper = s$quantiles[,5], 
+    os = s$statistics[,1],
+    lower = s$quantiles[,1],
+    upper = s$quantiles[,5],
     orig = sort(unique(x$y))
 )
 tp <- trellis.par.get()$superpose.symbol
@@ -3169,14 +3177,14 @@ else{
             panel.points(x+offset, newdf$freq, col=tp$col[2], pch=tp$pch[2])
         })
     }
-    
+
 }
 
 summary.balsos <- function(object, ...){
     coef.inds <- grep("^b", names(object$fit))
     mins <- aggregate(1:length(object$y), list(object$y), min)
     os.inds <- sapply(paste("y_new2[", mins[,2], "]", sep=""), function(z)grep(z, names(object$fit), fixed=TRUE))
-    names(object$fit)[c(coef.inds, os.inds)] <- c(colnames(object$X), 
+    names(object$fit)[c(coef.inds, os.inds)] <- c(colnames(object$X),
         paste0("y_", sort(unique(object$y))))
     summary(object$fit, pars=c(colnames(object$X), paste0("y_", sort(unique(object$object)))))
 }
@@ -3231,8 +3239,8 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
     fmts <- c(paste0("%.", digits, "f"), "%.1i")
     for(i in 1:ncol(D)){
         if(is.numeric(D[[i]])){
-            D2[,i] <- sprintf(ifelse(is.integer(D[[i]]) | 
-                all(round(D[[i]], 5) == as.integer(D[[i]])), 
+            D2[,i] <- sprintf(ifelse(is.integer(D[[i]]) |
+                all(round(D[[i]], 5) == as.integer(D[[i]])),
                 fmts[2], fmts[1]), D[[i]])
         }
         if(is.factor(D[[i]]) | is.character(D[[i]])){
@@ -3477,8 +3485,8 @@ function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
     indboth <- which(names(obj$coef) %in% c(paste0(v1,":",v2),paste0(v2,":",v1)))
     ind1 <- c(ind1, indboth)
     ind2 <- c(ind2, indboth)
-    s1 <- c(mean(MM[,v1]) - sd(MM[,v1]), mean(MM[,v1]), mean(MM[,v1]) + sd(MM[,v1])) 
-    s2 <- c(mean(MM[,v2]) - sd(MM[,v2]), mean(MM[,v2]), mean(MM[,v2]) + sd(MM[,v2])) 
+    s1 <- c(mean(MM[,v1]) - sd(MM[,v1]), mean(MM[,v1]), mean(MM[,v1]) + sd(MM[,v1]))
+    s2 <- c(mean(MM[,v2]) - sd(MM[,v2]), mean(MM[,v2]), mean(MM[,v2]) + sd(MM[,v2]))
     a1 <- a2 <- matrix(0, nrow = 3, ncol = ncol(MM))
     a1[, ind1[1]] <- 1
     a1[, ind1[2]] <- s2
@@ -3515,7 +3523,7 @@ function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
             oldpar <- par()
             par(mfrow = c(1, 2))
         }
-        plot(s2, eff1, type = "n", ylim = range(c(low1, up1)), axes=FALSE, 
+        plot(s2, eff1, type = "n", ylim = range(c(low1, up1)), axes=FALSE,
             xlab = ifelse(is.null(xlab), toupper(v2), xlab[1]), ylab = ifelse(is.null(ylab), paste("Conditional Effect of ",
                 toupper(v1), " | ", toupper(v2), sep = ""), ylab[1]))
             axis(1, at=s2, labels=c("Mean-SD", "Mean", "Mean+SD"))
@@ -3540,8 +3548,8 @@ function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
         if (plot.type == "eps") {
             postscript(paste(name.stem, "_", v2, ".eps", sep = ""))
         }
-        plot(s1, eff2, type = "n", ylim = range(c(low2, up2)), 
-            axes=FALSE, 
+        plot(s1, eff2, type = "n", ylim = range(c(low2, up2)),
+            axes=FALSE,
             xlab = ifelse(is.null(xlab), toupper(v1), xlab[2]),
 			ylab = ifelse(is.null(ylab), paste("Conditional Effect of ",
                 toupper(v2), " | ", toupper(v1), sep = ""), ylab[2]))
@@ -3667,7 +3675,7 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), typical = NULL){
             tmp.df[[names(typical)[[i]]]] <- typical[[i]]
         }
     }
-    tmp.df <- tmp.df[c(1,1,1,1), ]  
+    tmp.df <- tmp.df[c(1,1,1,1), ]
     tmp.df[[vars[1]]][1] <- min1
     tmp.df[[vars[1]]][2] <- max1
     tmp.df[[vars[1]]][3] <- min1
@@ -3757,14 +3765,14 @@ outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson
 
 oc2plot <- function(ordc, plot=TRUE){
     tmpdat <- data.frame(
-        var = rep(rownames(ordc$diffs$mean), ncol(ordc$diffs$mean)), 
-        lev = rep(colnames(ordc$diffs$mean), each = nrow(ordc$diffs$mean)), 
-        mean = c(ordc$diffs$mean), 
-        lower=c(ordc$diffs$lower), 
+        var = rep(rownames(ordc$diffs$mean), ncol(ordc$diffs$mean)),
+        lev = rep(colnames(ordc$diffs$mean), each = nrow(ordc$diffs$mean)),
+        mean = c(ordc$diffs$mean),
+        lower=c(ordc$diffs$lower),
         upper = c(ordc$diffs$upper))
-    p1 <- xyplot(mean ~ lev | var, data=tmpdat, 
-        xlab = "", ylab = "Predicted Change in Pr(y=m)", 
-        lower = tmpdat$lower, upper=tmpdat$upper, 
+    p1 <- xyplot(mean ~ lev | var, data=tmpdat,
+        xlab = "", ylab = "Predicted Change in Pr(y=m)",
+        lower = tmpdat$lower, upper=tmpdat$upper,
         panel = function(x,y,subscripts, lower, upper,...){
             panel.abline(h=0, lty=2)
             panel.arrows(x, lower[subscripts], x, upper[subscripts], angle=90, length=.05, code=3)
@@ -3786,11 +3794,11 @@ probgroup.polr <- function(obj, ...){
     pr <- predict(obj, type="probs")
     y <- model.response(model.frame(obj))
     pr2 <- pr[cbind(1:nrow(pr), as.numeric(y))]
-    tmpdat <- data.frame(probs=c(pr2), 
+    tmpdat <- data.frame(probs=c(pr2),
         y = factor(as.numeric(y), labels=obj$lev))
     ly <- length(table(y))
-    return(histogram(~probs | y, data=tmpdat, col="gray75", ylim = c(0, 100), 
-        layout=c(ly,1), xlab="Predicted Probabilities", 
+    return(histogram(~probs | y, data=tmpdat, col="gray75", ylim = c(0, 100),
+        layout=c(ly,1), xlab="Predicted Probabilities",
         par.settings=list(strip.background=list(col="white"))))
 }
 probgroup.multinom <- function(obj, ...){
@@ -3798,11 +3806,11 @@ probgroup.multinom <- function(obj, ...){
     y <- model.response(model.frame(obj))
     pr2 <- pr[cbind(1:nrow(pr), as.numeric(y))]
 
-    tmpdat <- data.frame(probs=c(pr2), 
+    tmpdat <- data.frame(probs=c(pr2),
         y = y)
     ly <- length(table(y))
-    return(histogram(~probs | y, data=tmpdat, col="gray75", ylim = c(0, 100), 
-        layout=c(ly,1), xlab="Predicted Probabilities", 
+    return(histogram(~probs | y, data=tmpdat, col="gray75", ylim = c(0, 100),
+        layout=c(ly,1), xlab="Predicted Probabilities",
         par.settings=list(strip.background=list(col="white"))))
 }
 
@@ -3833,10 +3841,10 @@ poisfit <- function(obj){
 makeHypSurv <- function(l,obj, ...){
     tmp <- do.call(expand.grid, l)
     p <- seq(.99,0,by=-.01)
-    preds <- predict(obj, newdata=tmp, 
+    preds <- predict(obj, newdata=tmp,
     type="quantile", p=p)
     plot.data <- data.frame(
-        p.fail = rep(p, each=nrow(preds)), 
+        p.fail = rep(p, each=nrow(preds)),
         time = c(preds))
     plot.data <- cbind(plot.data, tmp[rep(1:3, nrow(plot.data)/3), ])
     rownames(plot.data) <- NULL
@@ -3844,10 +3852,10 @@ makeHypSurv <- function(l,obj, ...){
 }
 
 tscslag <- function(dat, x, id, time, lagLength=1){
-	obs <- apply(dat[, c(id, time)], 1, 
+	obs <- apply(dat[, c(id, time)], 1,
 	    paste, collapse=".")
 	tm1 <- dat[[time]] - lagLength
-	lagobs <- apply(cbind(dat[[id]], tm1), 
+	lagobs <- apply(cbind(dat[[id]], tm1),
 	    1, paste, collapse=".")
 	lagx <- dat[match(lagobs, obs), x]
 	lagx
@@ -3866,55 +3874,55 @@ powerTrans <- function(x, transPower){
 }
 
 testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
-  res <- data.frame(Model1 = c("Original", "Original", "Power Transform"), 
-                    Model2 = c("Power Transform", "Polynomial", "Polynomial"), 
-                    pval = NA, 
+  res <- data.frame(Model1 = c("Original", "Original", "Power Transform"),
+                    Model2 = c("Power Transform", "Polynomial", "Polynomial"),
+                    pval = NA,
                     preferred = NA)
-  
+
   form1 <- glue("~ . -{var} + powerTrans({var}, {transPower})")
   form2 <- glue("~ . -{var} + poly({var}, {polyOrder}, raw=TRUE)")
   o1 <- update(obj, form1)
   t1 <- clarke_test(obj, o1)
   b <- min(t1$stat, t1$nobs - t1$stat)
   p <- 2 * pbinom(b, t1$nobs, 0.5)
-  pref <- ifelse(t1$stat > t1$nobs - t1$stat, 1, 2) 
+  pref <- ifelse(t1$stat > t1$nobs - t1$stat, 1, 2)
   res$pval[1] <- p
   if(p < .05 & pref == 1){
-    res$preferred[1] <- "Original"  
+    res$preferred[1] <- "Original"
   }
   if(p < .05 & pref == 2){
-    res$preferred[1] <- "Power Transform"  
+    res$preferred[1] <- "Power Transform"
   }
   if(p >= .05){
     res$preferred[1] <- "Neither"
   }
-  
+
   o2 <- update(obj, form2)
   t2 <- clarke_test(obj, o2)
   b <- min(t2$stat, t2$nobs - t2$stat)
   p <- 2 * pbinom(b, t2$nobs, 0.5)
-  pref <- ifelse(t2$stat > t2$nobs - t2$stat, 1, 2) 
+  pref <- ifelse(t2$stat > t2$nobs - t2$stat, 1, 2)
   res$pval[2] <- p
   if(p < .05 & pref == 1){
-    res$preferred[2] <- "Original"  
+    res$preferred[2] <- "Original"
   }
   if(p < .05 & pref == 2){
-    res$preferred[2] <- "Polynomial"  
+    res$preferred[2] <- "Polynomial"
   }
   if(p >= .05){
     res$preferred[2] <- "Neither"
   }
-  
+
   t3 <- clarke_test(o1, o2)
   b <- min(t3$stat, t3$nobs - t3$stat)
   p <- 2 * pbinom(b, t3$nobs, 0.5)
-  pref <- ifelse(t3$stat > t3$nobs - t3$stat, 1, 2) 
+  pref <- ifelse(t3$stat > t3$nobs - t3$stat, 1, 2)
   res$pval[3] <- p
   if(p < .05 & pref == 1){
-    res$preferred[3] <- "Power Transform"  
+    res$preferred[3] <- "Power Transform"
   }
   if(p < .05 & pref == 2){
-    res$preferred[3] <- "Polynomial"  
+    res$preferred[3] <- "Polynomial"
   }
   if(p >= .05){
     res$preferred[3] <- "Neither"
@@ -3928,25 +3936,25 @@ testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
   if(plot){
     e1 <- Effect(var, obj, xlevels=xl)
     se1 <- do.call(data.frame, summary(e1)[c("effect", "lower", "upper")])
-    se1$model <- factor(1, levels=1:3, 
+    se1$model <- factor(1, levels=1:3,
                         labels=c("Original", "Power", "Polynomial"))
     se1$x <- e1$x[[var]]
-    
+
     e2 <- Effect(var, o1, xlevels=xl)
     se2 <- do.call(data.frame, summary(e2)[c("effect", "lower", "upper")])
-    se2$model <- factor(2, levels=1:3, 
+    se2$model <- factor(2, levels=1:3,
                         labels=c("Original", "Power", "Polynomial"))
     se2$x <- e2$x[[var]]
-    
+
     e3 <- Effect(var, o2, xlevels=xl)
     se3 <- do.call(data.frame, summary(e3)[c("effect", "lower", "upper")])
-    se3$model <- factor(3, levels=1:3, 
+    se3$model <- factor(3, levels=1:3,
                         labels=c("Original", "Power", "Polynomial"))
     se3$x <- e3$x[[var]]
-    plotData <- rbind(se1, rbind(se2, se3))  
-    ggplot(plotData, aes(x=x, y=effect, ymin = lower, ymax=upper, fill=model)) +       geom_ribbon(colour=NA, alpha=.25) + geom_line(aes(colour=model)) +   
+    plotData <- rbind(se1, rbind(se2, se3))
+    ggplot(plotData, aes(x=x, y=effect, ymin = lower, ymax=upper, fill=model)) +       geom_ribbon(colour=NA, alpha=.25) + geom_line(aes(colour=model)) +
       theme_bw() +  theme(legend.position="bottom") + labs(x=var)
-    
+
   }
 }
 testNL.lm <- testNL.glm
