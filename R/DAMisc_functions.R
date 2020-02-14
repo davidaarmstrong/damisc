@@ -3603,36 +3603,43 @@ central.numeric <- function(x, type=c("median", "mean"), ...){
     }
     return(res)
 }
-secondDiff <- function(obj, vars, data, method=c("AME", "MER"), typical = NULL){
+secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typical = NULL){
     disc <- sapply(vars, function(x)is.factor(data[[x]]))
     meth <- match.arg(method)
     mf <- model.frame(obj)
     b <- coef(obj)
-    if(!disc[1]){
-        min1 <- min(data[[vars[1]]], na.rm=TRUE)
-        max1 <- max(data[[vars[1]]], na.rm=TRUE)
-    }
-    if(disc[1]){
-        cn1 <- paste(vars[1], levels(droplevels(mf[, vars[1]])), sep="")
-        b1 <- b[cn1]
-        b1 <- ifelse(is.na(b1), 0, b1)
-        names(b1) <- levels(droplevels(mf[, vars[1]]))
-        min1 <- max1 <- mf[1,vars[1]]
-        min1[1] <- names(b1)[which.min(b1)]
-        max1[1] <- names(b1)[which.max(b1)]
-    }
-    if(!disc[2]){
-        min2 <- min(data[[vars[2]]], na.rm=TRUE)
-        max2 <- max(data[[vars[2]]], na.rm=TRUE)
-    }
-    if(disc[2]){
-        cn2 <- paste(vars[2], levels(droplevels(mf[, vars[2]])), sep="")
-        b2 <- b[cn2]
-        b2 <- ifelse(is.na(b2), 0, b2)
-        names(b2) <- levels(droplevels(mf[, vars[2]]))
-        min2 <- max2 <- mf[1,vars[2]]
-        min2[1] <- names(b2)[which.min(b2)]
-        max2[1] <- names(b2)[which.max(b2)]
+    if(is.null(vals)){
+      if(!disc[1]){
+          min1 <- min(data[[vars[1]]], na.rm=TRUE)
+          max1 <- max(data[[vars[1]]], na.rm=TRUE)
+      }
+      if(disc[1]){
+          cn1 <- paste(vars[1], levels(droplevels(mf[, vars[1]])), sep="")
+          b1 <- b[cn1]
+          b1 <- ifelse(is.na(b1), 0, b1)
+          names(b1) <- levels(droplevels(mf[, vars[1]]))
+          min1 <- max1 <- mf[1,vars[1]]
+          min1[1] <- names(b1)[which.min(b1)]
+          max1[1] <- names(b1)[which.max(b1)]
+      }
+      if(!disc[2]){
+          min2 <- min(data[[vars[2]]], na.rm=TRUE)
+          max2 <- max(data[[vars[2]]], na.rm=TRUE)
+      }
+      if(disc[2]){
+          cn2 <- paste(vars[2], levels(droplevels(mf[, vars[2]])), sep="")
+          b2 <- b[cn2]
+          b2 <- ifelse(is.na(b2), 0, b2)
+          names(b2) <- levels(droplevels(mf[, vars[2]]))
+          min2 <- max2 <- mf[1,vars[2]]
+          min2[1] <- names(b2)[which.min(b2)]
+          max2[1] <- names(b2)[which.max(b2)]
+      }
+    }else{
+      min1 <- vals[[vars[1]]][1]
+      min2 <- vals[[vars[2]]][1]
+      max1 <- vals[[vars[1]]][2]
+      max2 <- vals[[vars[2]]][2]
     }
     b <- mvrnorm(1500, coef(obj), vcov(obj))
 
