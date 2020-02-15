@@ -15,7 +15,7 @@ secondDiff(obj, vars, data, method=c("AME", "MER"), valss = NULL,
   \item{typical}{A named vector of values at which to hold variables constant. }
 }
 \details{
-The function calculates the second difference as  (Pr(Y=1|x1=max, x2=min) - Pr(Y=1|x1=min, x2=min)) - (Pr(Y=1|x1=max, x2=max) - Pr(Y=1|x1=min, x2=max)).  The function uses a parametric bootstrap to calculate the sampling distribution of the second difference.  
+The function calculates the second difference as  (Pr(Y=1|x1=max, x2=max) - Pr(Y=1|x1=min, x2=max)) - (Pr(Y=1|x1=max, x2=min) - Pr(Y=1|x1=min, x2=min)).  The function uses a parametric bootstrap to calculate the sampling distribution of the second difference.  
 }
 \value{
 A list with two elements: 
