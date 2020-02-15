@@ -3636,10 +3636,44 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
           max2[1] <- names(b2)[which.max(b2)]
       }
     }else{
-      min1 <- vals[[vars[1]]][1]
-      min2 <- vals[[vars[2]]][1]
-      max1 <- vals[[vars[1]]][2]
-      max2 <- vals[[vars[2]]][2]
+      if(disc[1]){
+        l1 <- levels(mf[, vars[1]])
+        w1 <- which(l1 == vals[[vars[1]]][1])
+        w2 <- which(l1 == vals[[vars[1]]][2])
+        if(length(w1) == 0){
+          stop(glue("{vals[[vars[1]]][1]} not a level of {vars[1]}\n"))
+        }
+        if(length(w2) == 0){
+          stop(glue("{vals[[vars[1]]][2]} not a level of {vars[1]}\n"))
+        }
+        v1 <- factor(w1, levels=1:length(l1), labels=l1)
+        v2 <- factor(w2, levels=1:length(l1), labels=l1)
+        min1 <- v1
+        max2 <- v2
+        
+      }else{
+        min1 <- vals[[vars[1]]][1]
+        max1 <- vals[[vars[1]]][2]
+      }
+      if(disc[2]){
+        l1 <- levels(mf[, vars[2]])
+        w1 <- which(l1 == vals[[vars[2]]][1])
+        w2 <- which(l1 == vals[[vars[2]]][2])
+        if(length(w1) == 0){
+          stop(glue("{vals[[vars[2]]][1]} not a level of {vars[2]}\n"))
+        }
+        if(length(w2) == 0){
+          stop(glue("{vals[[vars2]][2]} not a level of {vars[2]}\n"))
+        }
+        v1 <- factor(w1, levels=1:length(l1), labels=l1)
+        v2 <- factor(w2, levels=1:length(l1), labels=l1)
+        min2 <- v1
+        max2 <- v2
+        
+      }else{
+        min2 <- vals[[vars[2]]][1]
+        max2 <- vals[[vars[2]]][2]
+      }
     }
     b <- mvrnorm(1500, coef(obj), vcov(obj))
 
@@ -3698,11 +3732,69 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
     D <- c(-1,1,1,-1)
     secdiff <- (preds %*% D)
     ret <- list(ave = secdiff, probs=preds)
-
   }
-
-  return(ret)
+    class(ret) <- "secdiff"
+    return(ret)
 }
+
+summary.secdiff <- function(x, level=0.95, digits=3, ...){
+  ll <- (1-level)/2
+  ul <- 1-ll
+  type <- ifelse("ind" %in% names(x), "Average Marginal Effect", "Marginal Effect at Typical Values")
+  cat("Second Difference Using the", type, "Approach\n\n")
+  s <- c(mean(x$ave), quantile(x$ave, c(ll, ul)))
+  s <- sprintf(glue("%.{digits}f"), s)
+  if(type == "Average Marginal Effect"){
+    cat("Overall: \n")
+  }
+  cat("Average Second Difference: ", s[1], ", ", level*100, "% CI: (", s[2], ",", s[3], ")\n\n", sep="")
+  if(type == "Average Marginal Effect"){
+    cat("Individual:\n")
+  sigpos <- sum(x$ind$lower > 0)
+  signeg <- sum(x$ind$upper < 0)
+  insig <- sum(x$ind$lower <=0 & x$ind$upper >=0)
+  cat("Significant Negative Individual Second Differences:", signeg, "\n")
+  cat("Significant Positive Individual Second Differences:", sigpos, "\n")
+  cat("Inignificant Individual Second Differences:", insig, "\n")
+  }
+}
+
+plot.secdiff <- function(x, level=.95, ...){
+  ll <- (1-level)/2
+  ul <- 1-ll
+  type <- ifelse("ind" %in% names(x), "Average Marginal Effect", "Marginal Effect at Typical Values")
+  s <- c(mean(x$ave), quantile(x$ave, c(ll, ul)))
+  ave.df <- data.frame(difference = s[1], lower=s[2], upper=s[3])
+  if(!("ind" %in% names(x))){
+    g <- ggplot(ave.df) + 
+      geom_point(aes(y=difference, x=factor(1, levels=1, labels="Average"))) + 
+      geom_segment(aes(x=1, xend=1, y=lower, yend=upper)) + 
+      theme_bw() + 
+      labs(x="", y="Second Difference") + 
+      ggtitle(glue("Plot of Second Differences\n{type} Approach"))
+  }
+    if("ind" %in% names(x)){
+    ind.df <- x$ind
+    ind.df <- ind.df[order(ind.df$secddiff), ] 
+    ind.df$obs <- 1:nrow(ind.df)
+    d <- abs(ave.df$difference - ind.df$secddiff)
+    w <- which.min(d)
+    ave.df <- data.frame(secddiff = s[1], lower=s[2], upper=s[3], obs=w)
+    g <- ggplot(ind.df) + 
+      geom_point(aes(y=secddiff, x=obs), size=.5) + 
+      geom_segment(aes(x=obs, xend=obs, y=lower, yend=upper), 
+                   size=.25, col="gray75", alpha=.5) + 
+      geom_hline(aes(yintercept=0), lty=2, size=.75) + 
+      geom_point(data=ave.df, aes(y=secddiff, x=obs), size=.75, col="red") +
+      geom_segment(data=ave.df, aes(x=obs, xend=obs, y=lower, yend=upper), 
+                   size=1, col="red", alpha=.5) +
+      theme_bw() + 
+      labs(x="", y="Second Difference") + 
+      ggtitle(glue("Plot of Individual Second Differences\n{type} Approach"))
+      }
+}
+
+
 outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson"), nOut = 10, whichOut=NULL, cumulative=FALSE){
     stat <- match.arg(stat)
     if(is.null(whichOut)){
