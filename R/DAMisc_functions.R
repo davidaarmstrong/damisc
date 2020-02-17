@@ -1,10 +1,36 @@
- ## definition of pGumbel function taken from QRM 0.4-13
+## definition of pGumbel function taken from QRM 0.4-13
 pGumbel <- function (q, mu = 0, sigma = 1){
   stopifnot(sigma > 0)
   exp(-exp(-((q - mu)/sigma)))
 }
 
 
+#' Scalar Measures of Fit for Binary Variable Models
+#' 
+#' Calculates scalar measures of fit for models with binary dependent variables
+#' along the lines described in Long (1997) and Long and Freese (2005).
+#' 
+#' \code{binfit} calculates scalar measures of fit (many of which are
+#' pseudo-R-squared measures) to describe how well a model fits data with a
+#' binary dependent variable.
+#' 
+#' @param mod A model of class \code{glm} with \code{family=binomial}.
+#' @return A named vector of scalar measures of fit
+#' @author Dave Armstrong
+#' @references Long, J.S.  1997.  Regression Models for Categorical and Limited
+#' Dependent Variables.  Thousand Oaks, CA: Sage.
+#' 
+#' Long, J.S. and J. Freese.  2005.  Regression Models for Categorical Outcomes
+#' Using Stata, 2nd ed.  College Station, TX: Stata Press.
+#' 
+#' @export
+#' 
+#' @examples
+#' data(france)
+#' left.mod <- glm(voteleft ~ male + age + retnat + 
+#' 	poly(lrself, 2), data=france, family=binomial)
+#' binfit(left.mod)
+#' 
 binfit <-
 function (mod)
 {
@@ -38,6 +64,53 @@ function (mod)
         res.col2))
     return(res.df)
 }
+
+
+#' Generate Spells for Binary Variables
+#' 
+#' Beck et. al. (1998) identified that binary time-series cross-section data
+#' are discrete-time duration data and time dependence can be modeled in a
+#' logistic regression by including a flexible function (e.g., cubic spline) of
+#' time since the last event as a covariate.  This function creates the
+#' variable identifying time since last event.
+#' 
+#' 
+#' @param data A data frame.
+#' @param event Character string giving the name of the dichotomous variable
+#' identifying the event (where an event is coded 1 and the absence of an event
+#' is coded 0).
+#' @param tvar Character string giving the name of the time variable.
+#' @param csunit Character string giving the name of the cross-sectional unit.
+#' @param pad.ts Logical indicating whether the time-series should be filled
+#' in, when panels are unbalanced.
+#' @return The original data frame with one additional variable.  The
+#' \code{spell} variable identifies the number of observed periods since the
+#' last event.
+#' @author Dave Armstrong
+#' @references Alvarez, M., J.A. Cheibub, F. Limongi and A. Przeworski. 1996.
+#' Classifying political regimes. Studies in Comparative International
+#' Development 31 (Summer): 1-37.
+#' 
+#' Beck, N.. J. Katz and R. Tucker. 1998. Beyond Ordinary Logit: Taking Time
+#' Seriously in Binary-Time-Series-Cross-Section Models. American Journal of
+#' Political Science 42(4): 1260-1288.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(splines)
+#' ## Data from Alvarez et. al. (1996)
+#' data(aclp)
+#' newdat <- btscs(aclp, "democ", "year", "country")	
+#' 
+#' # Estimate Model with and without spell
+#' full.mod <- glm(democ ~ log(gdpw) + popg + bs(spell, df=4), data=newdat, family=binomial)	
+#' restricted.mod <- glm(democ ~ log(gdpw) + popg, data=newdat, family=binomial)	
+#' 	
+#' # Incremental F-test of time dependence
+#' anova(restricted.mod, full.mod, test='Chisq')	
+#' 
 btscs <-
 function (data, event, tvar, csunit, pad.ts = FALSE)
 {
@@ -95,6 +168,28 @@ function (data, event, tvar, csunit, pad.ts = FALSE)
     invisible(data)
 }
 
+
+
+#' Test for Combining Categories in Multinomial Logistic Regression Models.
+#' 
+#' Tests the null hypothesis that categories can be combined in Multinomial
+#' Logistic Regression Models
+#' 
+#' 
+#' @param obj An object of class \code{multinom}.
+#' @return A matrix of test statistics and p-values.
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(nnet)
+#' data(france)
+#' mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
+#' combTest(mnl.mod)
+#' 
+#' 
 combTest <- function(obj){
 	y <- model.response(model.frame(obj))
 	b <- c(t(coef(obj)))
@@ -139,6 +234,53 @@ combTest <- function(obj){
 	noquote(res)
 }
 
+
+
+#' Surface Plots for Two-Way Interactions
+#' 
+#' Makes surface plots to display interactions between two continuous variables
+#' 
+#' This function makes a surface plot of an interaction between two continuous
+#' covariates.  If the model is \cr \deqn{y_{i} = b_{0} + b_{1}x_{i1} +
+#' b_{2}x_{i2} + b_{3}x_{i1}\times x_{i2} + \ldots + e_{i},}{y = b[0] + b[1]x1
+#' + b[2]x2 + b[3]x1*x2 + ... + e[i],}\cr this function plots \eqn{b_{1}x_{i1}
+#' + b_{2}x_{i2} + b_{3}x_{i1}\times x_{i2}}{b[1]x1 + b[2]x2 + b[3]x1*x2} for
+#' values over the range of \eqn{X_{1}}{X1} and \eqn{X_{2}}{X2}.  The highest
+#' 75\%, 50\% and 25\% of the bivariate density of \eqn{X_{1}}{X1} and
+#' \eqn{X_{2}}{X2} (as calculated by \code{sm.density} from the \code{sm}
+#' package) are colored in with colors of increasing gray-scale.
+#' 
+#' @param obj A model object of class \code{lm}
+#' @param varnames A two-element character vector where each element is the
+#' name of a variable involved in a two-way interaction.
+#' @param theta Angle defining the azimuthal viewing direction to be passed to
+#' \code{persp}
+#' @param phi Angle defining the colatitude viewing direction to be passed to
+#' \code{persp}
+#' @param xlab Optional label to put on the x-axis, otherwise if \code{NULL},
+#' it will take the first element of \code{varnames}
+#' @param ylab Optional label to put on the y-axis, otherwise if \code{NULL},
+#' it will take the second element of \code{varnames}
+#' @param zlab Optional label to put on the z-axis, otherwise if \code{NULL},
+#' it will be \sQuote{Predictions}
+#' @param hcols Vector of four colors to color increasingly high density areas
+#' @param ... Other arguments to be passed down to the initial call to
+#' \code{persp}
+#' @return \item{x1}{Values of the first element of \code{varnames} used to
+#' make predictions.} \item{x2}{Values of the second element of \code{varnames}
+#' used to make predictions.} \item{pred}{The predictions based on the values
+#' \code{x1} and \code{x2}.} \item{graph}{A graph is produced, but no other
+#' information is returned.}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(InteractionEx)
+#' mod <- lm(y ~ x1*x2 + z, data=InteractionEx)
+#' DAintfun(mod, c("x1", "x2"))
+#' 
 DAintfun <-
 function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,
     hcols=NULL, ...)
@@ -206,6 +348,88 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,
 	    invisible(list(x1=v1.seq, x2=v2.seq, pred=predsurf))
     }
 }
+
+
+#' Conditional Effects Plots for Interactions in Linear Models
+#' 
+#' Generates two conditional effects plots for two interacted continuous
+#' covariates in linear models.
+#' 
+#' This function produces graphs along the lines suggested by Brambor, Clark
+#' and Golder (2006) and Berry, Golder and Milton (2012), that show the
+#' conditional effect of one variable in an interaction given the values of the
+#' conditioning variable.  This is an alternative to the methods proposed by
+#' John Fox in his \code{effects} package, upon which this function depends
+#' heavily.\cr\cr Specifically, if the model is \cr \deqn{y_{i} = b_{0} +
+#' b_{1}x_{i1} + b_{2}x_{i2} + b_{3}x_{i1}\times x_{i2} + \ldots + e_{i},}{y =
+#' b[0] + b[1]x1 + b[2]x2 + b[3]x1*x2 + ... + e[i],}\cr this function plots
+#' calculates the conditional effect of \eqn{X_{1}}{X1} given
+#' \eqn{X_{2}}{X2}\cr \deqn{\frac{\partial y}{\partial X_{1}} = b_{1} +
+#' b_{3}X_{2}}{dy/dX1 = b[1] + b[3]X2} and the variances of the conditional
+#' effects\cr \deqn{V(b_{1} + b_{3}X_{2}) = V(b_{1} + X_{2}^{2}V(b_{3}) +
+#' 2(1)(X_{2})V(b_{1},b_{3}))}{V(b[1] + b[3]X[2]) = V(b[1] + (X[2]^2)V(b[3]) +
+#' 2(1)(X[2])V(b[1],b[3]))} for different values of \eqn{X_{2}}{X2} and then
+#' switches the places of \eqn{X_{1}}{X1} and \eqn{X_{2}}{X2}, calculating the
+#' conditional effect of \eqn{X_{2}}{X2} given a range of values of
+#' \eqn{X_{1}}{X1}.  95\% confidence bounds are then calculated and plotted for
+#' each conditional effects along with a horizontal reference line at 0.
+#' 
+#' @param obj A model object of class \code{lm}
+#' @param varnames A two-element character vector where each element is the
+#' name of a variable involved in a two-way interaction.
+#' @param varcov A variance-covariance matrix with which to calculate the
+#' conditional standard errors.  If \code{NULL}, it is calculated with
+#' \code{vcov(obj)}.
+#' @param rug Logical indicating whether a rug plot should be included.
+#' @param ticksize A scalar indicating the size of ticks in the rug plot (if
+#' included) positive values put the rug inside the plotting region and
+#' negative values put it outside the plotting region.
+#' @param hist Logical indicating whether a histogram of the x-variable should
+#' be included in the plotting region.
+#' @param hist.col Argument to be passed to \code{polygon} indicating the color
+#' of the histogram bins.
+#' @param nclass vector of two integers indicating the number of bins in the
+#' two histograms, which will be passed to \code{hist}.
+#' @param scale.hist A scalar in the range (0,1] indicating how much vertical
+#' space in the plotting region the histogram should take up.
+#' @param border Argument passed to \code{polygon} indicating how the border of
+#' the histogram bins should be printed (\code{NA} for no border).
+#' @param name.stem A character string giving filename to which the appropriate
+#' extension will be appended
+#' @param xlab Optional vector of length two giving the x-labels for the two
+#' plots that are generated.  The first element of the vector corresponds to
+#' the figure plotting the conditional effect of the first variable in
+#' \code{varnames} given the second and the second element of the vector
+#' corresponds to the figure plotting the conditional effect of the second
+#' variable in \code{varnames} conditional on the first.
+#' @param ylab Optional vector of length two giving the y-labels for the two
+#' plots that are generated.  The first element of the vector corresponds to
+#' the figure plotting the conditional effect of the first variable in
+#' \code{varnames} given the second and the second element of the vector
+#' corresponds to the figure plotting the conditional effect of the second
+#' variable in \code{varnames} conditional on the first.
+#' @param plot.type One of \sQuote{pdf}, \sQuote{png}, \sQuote{eps} or
+#' \sQuote{screen}, where the one of the first three will produce two graphs
+#' starting with \code{name.stem} written to the appropriate file type and the
+#' third will produce graphical output on the screen.
+#' @return \item{graphs}{Either a single graph is printed on the screen (using
+#' \code{par(mfrow=c(1,2))}) or two figures starting with \code{name.stem} are
+#' produced where each gives the conditional effect of one variable based on
+#' the values of another.}
+#' @author Dave Armstrong
+#' @references Brambor, T., W.R. Clark and M. Golder.  (2006) Understanding
+#' Interaction Models: Improving Empirical Analyses.  Political Analysis 14,
+#' 63-82.\cr Berry, W., M. Golder and D. Milton.  (2012) Improving Tests of
+#' Theories Positing Interactions.  Journal of Politics.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(InteractionEx)
+#' mod <- lm(y ~ x1*x2 + z, data=InteractionEx)
+#' DAintfun2(mod, c("x1", "x2"), hist=TRUE, scale.hist=.3)
+#' 
 DAintfun2 <-
 function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE,
     hist.col = "gray75", nclass = c(10, 10), scale.hist = 0.5,
@@ -345,6 +569,57 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
         }
     }
 }
+
+
+#' Maximal First Differences for Generalized Linear Models
+#' 
+#' For objects of class \code{glm}, it calculates the change in predicted
+#' responses, for maximal discrete changes in all covariates holding all other
+#' variables constant at typical values.
+#' 
+#' The function calculates the changes in predicted responses for maximal
+#' discrete changes in the covariates, for objects of class \code{glm}.  This
+#' function works with polynomials specified with the \code{poly} function.  It
+#' also works with multiplicative interactions of the covariates by virtue of
+#' the fact that it holds all other variables at typical values.  By default,
+#' typical values are the median for quantitative variables and the mode for
+#' factors. The way the function works with factors is a bit different.  The
+#' function identifies the two most different levels of the factor and
+#' calculates the change in predictions for a change from the level with the
+#' smallest prediction to the level with the largest prediction.
+#' 
+#' @param obj A model object of class \code{glm}.
+#' @param data Data frame used to fit \code{object}.
+#' @param typical.dat Data frame with a single row containing values at which
+#' to hold variables constant when calculating first differences.  These values
+#' will be passed to \code{predict}, so factors must take on a single value,
+#' but have all possible levels as their levels attribute.
+#' @param diffchange A string indicating the difference in predictor values to
+#' calculate the discrete change.  \code{range} gives the difference between
+#' the minimum and maximum, \code{sd} gives plus and minus one-half standard
+#' deviation change around the median and \code{unit} gives a plus and minus
+#' one-half unit change around the median.
+#' @param sim Logical indicating whether simulated confidence bounds on the
+#' difference should be calculated and presented.
+#' @param R Number of simulations to perform if \code{sim} is \code{TRUE}
+#' @return A list with the following elements: \item{diffs}{A matrix of
+#' calculated first differences} \item{minmax}{A matrix of values that were
+#' used to calculate the predicted changes}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(france)
+#' left.mod <- glm(voteleft ~ male + age + retnat + 
+#' 	poly(lrself, 2), data=france, family=binomial)
+#' typical.france <- data.frame(
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
+#' 	age = 35
+#' 	)
+#' glmChange(left.mod, data=france, typical.dat=typical.france)
+#' 
 glmChange <-
 function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), sim=FALSE, R=1000)
 {
@@ -389,7 +664,10 @@ function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), 
             minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = TRUE)
             }
             if(mmc == "sd"){
-            minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
+              tmp <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
+              tmp[1] <- ifelse(tmp[1] < min(data[[vars[i]]], na.rm=TRUE), min(data[[vars[i]]], na.rm=TRUE), tmp[1])
+              tmp[2] <- ifelse(tmp[2] > max(data[[vars[i]]], na.rm=TRUE), max(data[[vars[i]]], na.rm=TRUE), tmp[2])
+              minmax[[vars[i]]] <- tmp
             }
             if(mmc == "unit"){
             minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)
@@ -436,6 +714,59 @@ function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), 
     class(ret) <- "change"
     return(ret)
 }
+
+
+#' Functions for Estimating Interaction Effects in Logit and Probit Models
+#' 
+#' Norton and Ai (2003) and Norton, Wang and Ai (2004) discuss methods for
+#' calculating the appropriate marginal effects for interactions in binary
+#' logit/probit models.  These functions are direct translations of the Norton,
+#' Wang and Ai (2004) Stata code.
+#' 
+#' 
+#' @param obj A binary logit or probit model estimated with \code{glm}.
+#' @param vars A vector of the two variables involved in the interaction.
+#' @param data A data frame used in the call to \code{obj}.
+#' @return A list is returned with two elements - \code{byobs} and
+#' \code{atment}.  The \code{byobs} result gives the interaction effect
+#' evaluated at each observation.  The \code{atmean} element has the marginal
+#' effect evaluated at the mean.  Each eleement contains an element \code{int}
+#' which is a data frame with the following variable: \item{int_eff}{The
+#' correctly calucalted marginal effect.} \item{linear}{The incorrectly
+#' calculated marginal effect following the linear model analogy.}
+#' \item{phat}{Predicted Pr(Y=1|X).} \item{se_int_eff}{Standard error of
+#' \code{int_eff}.} \item{zstat}{The interaction effect divided by its standard
+#' error}
+#' 
+#' The \code{X} element of each returned result is the X-matrix used to
+#' generate the result.
+#' @author Dave Armstrong
+#' @references Norton, Edward C., Hua Wang and Chunrong Ai.  2004.  Computing
+#' Interaction Effects and Standard Errors in Logit and Probit Models.  The
+#' Stata Journal 4(2): 154-167.\cr
+#' 
+#' Ai, Chunrong and Edward C. Norton.  2003.  Interaction Terms in Logit and
+#' Probit Models.  Economics Letters 80(1): 123-129.
+#' 
+#' Norton, Edward C., Hua Wang and Chunrong Ai.  2004.  inteff: Computing
+#' Interaction Effects and Standard Errors in Logit and Probit Models, Stata
+#' Code.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(france)
+#' mod <- glm(voteleft ~ age*lrself + retnat + male, data=france, family=binomial)
+#' out <- intEff(obj=mod, vars=c("age", "lrself"), data=france)
+#' out <- out$byobs$int
+#' plot(out$phat, out$int_eff, xlab="Predicted Pr(Y=1|X)", 
+#' 	ylab = "Interaction Effect")
+#' ag <- aggregate(out$linear, list(out$phat), mean)
+#' lines(ag[,1], ag[,2], lty=2, col="red", lwd=2)
+#' legend("topright", c("Correct Marginal Effect", "Linear Marginal Effect"), 
+#' 	pch=c(1, NA), lty=c(NA, 2), col=c("black", "red"), lwd=c(NA, 2), inset=.01)
+#' 
 intEff <-
 function (obj, vars, data)
 {
@@ -504,6 +835,44 @@ function (obj, vars, data)
     res <- list(byobs = list(int = out.dat, X=X), atmean = list(mean.out.dat, X=meanX))
     invisible(res)
 }
+
+
+#' Functions for Estimating Interaction Effects in Logit and Probit Models
+#' 
+#' Norton and Ai (2003) and Norton, Wang and Ai (2004) discuss methods for
+#' calculating the appropriate marginal effects for interactions in binary
+#' logit/probit models.  These functions are direct translations of the Norton,
+#' Wang and Ai (2004) Stata code.  These functions are not intended to be
+#' called by the user directly, rather they are called as needed by
+#' \code{intEff}.
+#' 
+#' 
+#' @aliases logit_cc logit_cd logit_dd probit_cc probit_cd probit_dd
+#' @param obj A binary logit or probit model estimated with \code{glm}.
+#' @param int.var The name of the interaction variable.
+#' @param vars A vector of the two variables involved in the interaction.
+#' @param b Coefficients from the \code{glm} object.
+#' @param X Model matrix from the \code{glm} object.
+#' @return A data frame with the following variable: \item{int_eff}{The
+#' correctly calucalted marginal effect.} \item{linear}{The incorrectly
+#' calculated marginal effect following the linear model analogy.}
+#' \item{phat}{Predicted Pr(Y=1|X).} \item{se_int_eff}{Standard error of
+#' \code{int_eff}.} \item{zstat}{The interaction effect divided by its standard
+#' error}
+#' @author Dave Armstrong
+#' @references Norton, Edward C., Hua Wang and Chunrong Ai.  2004.  Computing
+#' Interaction Effects and Standard Errors in Logit and Probit Models.  The
+#' Stata Journal 4(2): 154-167.\cr
+#' 
+#' Ai, Chunrong and Edward C. Norton.  2003.  Interaction Terms in Logit and
+#' Probit Models.  Economics Letters 80(1): 123-129.
+#' 
+#' Norton, Edward C., Hua Wang and Chunrong Ai.  2004.  inteff: Computing
+#' Interaction Effects and Standard Errors in Logit and Probit Models, Stata
+#' Code.
+#' 
+#' @export
+#' 
 logit_cc <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
@@ -546,6 +915,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         se_int_eff = logit_se, zstat = logit_t)
     invisible(out)
 }
+#' 
+#' @export
+#' 
 logit_cd <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
@@ -594,6 +966,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         se_int_eff = logit_se, zstat = logit_t)
     invisible(out)
 }
+#' 
+#' @export
+#' 
 logit_dd <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
@@ -646,6 +1021,40 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         se_int_eff = logit_se, zstat = logit_t)
     invisible(out)
 }
+
+
+#' Print Statistically Significant MNL Coefficients
+#' 
+#' By default, the summary for objects of class \code{multinom} is not
+#' particularly helpful.  It still requires a lot of work on the part of the
+#' user to figure out which coefficients are significantly different from zero
+#' and which ones are not.  \code{mnlSig} solves this problem by either
+#' flagging significant coefficients with an asterisk or only printing
+#' significant coefficients, leaving insignificant ones blank.
+#' 
+#' 
+#' @param obj A model object of class \code{multinom}.
+#' @param pval The desired Type I error rate to identify coefficients as
+#' statistically significant.
+#' @param two.sided Logical indicating whether calculated p-values should be
+#' two-sided (if \code{TRUE}) or one-sided (if \code{FALSE}).
+#' @param flag.sig Logical indicating whether an asterisk should be placed
+#' beside coefficients which are significant at the \code{pval} level.
+#' @param insig.blank Logical indicating whether coefficients which are not
+#' significant at the \code{pval} level should be blank in the output.
+#' @return A data frame suitable for printing with the (optionally
+#' significance-flagged) coefficients from a multinomial logit model.
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(nnet)
+#' data(france)
+#' mnl.mod <- multinom(vote ~ retnat + male + retnat + lrself, data=france)
+#' mnlSig(mnl.mod)
+#' 
 mnlSig <-
 function (obj, pval = 0.05, two.sided = TRUE, flag.sig = TRUE,
     insig.blank = FALSE)
@@ -669,6 +1078,43 @@ function (obj, pval = 0.05, two.sided = TRUE, flag.sig = TRUE,
     return(b)
 }
 
+
+
+#' Average Effects Plot for Multinomial Logistic Regression
+#' 
+#' Produces a plot of average effects for one variable while holding the others
+#' constant at observed values.
+#' 
+#' 
+#' @param obj An object of class \code{multinom}.
+#' @param varname A string indicating the variable for which the plot is
+#' desired.
+#' @param data The data used to estimate \code{obj}.
+#' @param R Number of simulations used to generate confidence bounds.
+#' @param nvals Number of evaluation points for the predicted probabilities.
+#' @param plot Logical indicating whether a plot should be produced (if
+#' \code{TRUE}) or numerical results should be returned (if \code{FALSE}).
+#' @param \dots Other arguments to be passed down to \code{xyplot}.
+#' @return Either a plot or a data frame with variables \item{mean}{The average
+#' effect (i.e., predicted probability)} \item{lower}{The lower 95\% confidence
+#' bound} \item{upper}{The upper 95\% confidence bound} \item{y}{The values of
+#' the dependent variable being predicted} \item{x}{The values of the
+#' independent variable being manipulated}
+#' @author Dave Armstrong
+#' @references Hanmer, M.J. and K.O. Kalkan.  2013.  \sQuote{Behind the Curve:
+#' Clarifying the Best Approach to Calculating Predicted Probabilities and
+#' Marginal Effects from Limited Dependent Variable Models}.  American Journal
+#' of Political Science.  57(1): 263-277.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(nnet)
+#' data(france)
+#' mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
+#' \dontrun{mnlAveEffPlot(mnl.mod, "lrself", data=france)}
+#' 
 mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
     vars <- all.vars(formula(obj))[-1]
     if(any(!(vars %in% names(data)))){
@@ -733,6 +1179,60 @@ mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 	}
 
 
+
+
+#' Maximal First Differences for Multinomial Logistic Regression Models
+#' 
+#' For objects of class \code{multinom}, it calculates the change in predicted
+#' probabilities, for maximal discrete changes in all covariates holding all
+#' other variables constant at typical values.
+#' 
+#' The function calculates the changes in predicted probabilities for maximal
+#' discrete changes in the covariates for objects of class \code{multinom}.
+#' This function works with polynomials specified with the \code{poly}
+#' function.  It also works with multiplicative interactions of the covariates
+#' by virtue of the fact that it holds all other variables at typical values.
+#' By default, typical values are the median for quantitative variables and the
+#' mode for factors. The way the function works with factors is a bit
+#' different.  The function identifies the two most different levels of the
+#' factor and calculates the change in predictions for a change from the level
+#' with the smallest prediction to the level with the largest prediction.
+#' 
+#' @param obj A model object of class \code{multinom}.
+#' @param data Data frame used to fit \code{object}.
+#' @param typical.dat Data frame with a single row containing values at which
+#' to hold variables constant when calculating first differences.  These values
+#' will be passed to \code{predict}, so factors must take on a single value,
+#' but have all possible levels as their levels attribute.
+#' @param diffchange A string indicating the difference in predictor values to
+#' calculate the discrete change.  \code{range} gives the difference between
+#' the minimum and maximum, \code{sd} gives plus and minus one-half standard
+#' deviation change around the median and \code{unit} gives a plus and minus
+#' one-half unit change around the median.
+#' @param sim Logical indicating whether simulated confidence bounds should be
+#' produced.
+#' @param R Number of simulations to perform if \code{sim = TRUE}
+#' @return A list with the following elements: \item{diffs}{A matrix of
+#' calculated first differences} \item{minmax}{A matrix of values that were
+#' used to calculate the predicted changes} \item{minPred}{A matrix of
+#' predicted probabilities when each variable is held at its minimum value, in
+#' turn.} \item{maxPred}{A matrix of predicted probabilities when each variable
+#' is held at its maximum value, in turn.}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(nnet)
+#' data(france)
+#' mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
+#' typical.france <- data.frame(
+#' 	age = 35, 
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
+#' 	)
+#' mnlChange(mnl.mod, data=france, typical.dat=typical.france)	
+#' 
 mnlChange <-
 function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
  	sim=TRUE, R=1500){
@@ -776,7 +1276,10 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
         minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = TRUE)
 		}
 		if(mmc == "sd"){
-        minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
+		  tmp <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
+		  tmp[1] <- ifelse(tmp[1] < min(data[[vars[i]]], na.rm=TRUE), min(data[[vars[i]]], na.rm=TRUE), tmp[1])
+		  tmp[2] <- ifelse(tmp[2] > max(data[[vars[i]]], na.rm=TRUE), max(data[[vars[i]]], na.rm=TRUE), tmp[2])
+		  minmax[[vars[i]]] <- tmp
 		}
 		if(mmc == "unit"){
         minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)
@@ -840,6 +1343,38 @@ class(ret) <- "ordChange"
 return(ret)
 }
 
+
+
+#' Average Effects for Multinomial Logistic Regression Models
+#' 
+#' Calculates average effects of a variable in multinomial logistic regression
+#' holding all other variables at observed values.
+#' 
+#' 
+#' @param obj An object of class \code{multinom}
+#' @param varnames A string identifying the variable to be manipulated.
+#' @param data Data frame used to fit \code{object}.
+#' @param diffchange A string indicating the difference in predictor values to
+#' calculate the discrete change. \code{sd} gives plus and minus one-half
+#' standard deviation change around the median and \code{unit} gives a plus and
+#' minus one-half unit change around the median.
+#' @param R Number of simulations.
+#' @return A list with elements: \item{mean}{Average effect of the variable for
+#' each category of the dependent variable.} \item{lower}{Lower 95 percent
+#' confidence bound} \item{upper}{Upper 95 percent confidence bound}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(nnet)
+#' data(france)
+#' mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
+#' mnlChange2(mnl.mod, "lrself", data=france, )	
+#' 
+#' 
+#' 
 mnlChange2 <-
   function (obj, varnames, data, diffchange=c("unit", "sd"), R=1500)
   {
@@ -863,8 +1398,14 @@ mnlChange2 <-
         d0 <- list()
         if(is.numeric(data[[varnames[m]]])){
           d0[[1]] <- d0[[2]] <- data
-          d0[[1]][[varnames[m]]] <- d0[[1]][[varnames[m]]]-(.5*delt)
-          d0[[2]][[varnames[m]]] <- d0[[2]][[varnames[m]]]+(.5*delt)
+          tmp0 <- d0[[1]][[varnames[m]]]-(.5*delt)
+          tmp1 <- d0[[2]][[varnames[m]]]+(.5*delt)
+          tmp0 <- ifelse(tmp0 < min(d0[[1]][[varnames[m]]], na.rm=TRUE), 
+                         min(d0[[1]][[varnames[m]]], na.rm=TRUE), tmp0)
+          tmp1 <- ifelse(tmp1 > max(d0[[2]][[varnames[m]]], na.rm=TRUE), 
+                         max(d0[[2]][[varnames[m]]], na.rm=TRUE), tmp1)
+          d0[[1]][[varnames[m]]] <- tmp0
+          d0[[2]][[varnames[m]]] <- tmp1
         }
         if(!is.numeric(data[[varnames[m]]])){
           l <- obj$xlevels[[varnames[m]]]
@@ -920,6 +1461,62 @@ mnlChange2 <-
 }
 
 
+
+
+#' Maximal First Differences for Proportional Odds Logistic Regression Models
+#' 
+#' For objects of class \code{polr}, it calculates the change in predicted
+#' probabilities, for maximal discrete changes in all covariates holding all
+#' other variables constant at typical values.
+#' 
+#' The function calculates the changes in predicted probabilities for maximal
+#' discrete changes in the covariates for objects of class \code{polr}.  This
+#' function works with polynomials specified with the \code{poly} function.  It
+#' also works with multiplicative interactions of the covariates by virtue of
+#' the fact that it holds all other variables at typical values.  By default,
+#' typical values are the median for quantitative variables and the mode for
+#' factors. The way the function works with factors is a bit different.  The
+#' function identifies the two most different levels of the factor and
+#' calculates the change in predictions for a change from the level with the
+#' smallest prediction to the level with the largest prediction.
+#' 
+#' @aliases ordChange print.ordChange
+#' 
+#' @param obj A model object of class \code{polr}.
+#' @param data Data frame used to fit \code{object}.
+#' @param typical.dat Data frame with a single row containing values at which
+#' to hold variables constant when calculating first differences.  These values
+#' will be passed to \code{predict}, so factors must take on a single value,
+#' but have all possible levels as their levels attribute.
+#' @param diffchange A string indicating the difference in predictor values to
+#' calculate the discrete change.  \code{range} gives the difference between
+#' the minimum and maximum, \code{sd} gives plus and minus one-half standard
+#' deviation change around the median and \code{unit} gives a plus and minus
+#' one-half unit change around the median.
+#' @param sim Logical indicating whether or not simulations should be done to
+#' generate confidence intervals for the difference.
+#' @param R Number of simulations.
+#' @return A list with the following elements: \item{diffs}{A matrix of
+#' calculated first differences} \item{minmax}{A matrix of values that were
+#' used to calculate the predicted changes} \item{minPred}{A matrix of
+#' predicted probabilities when each variable is held at its minimum value, in
+#' turn.} \item{maxPred}{A matrix of predicted probabilities when each variable
+#' is held at its maximum value, in turn.}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(MASS)
+#' data(france)
+#' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
+#' typical.france <- data.frame(
+#' 	age = 35, 
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
+#' 	)
+#' ordChange(polr.mod, data=france, typical.dat=typical.france, sim=FALSE)	
+#' 
 ordChange <-
 function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
  	sim=TRUE, R=1500){
@@ -965,7 +1562,10 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
         minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = TRUE)
 		}
 		if(mmc == "sd"){
-        minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
+		    tmp <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
+		    tmp[1] <- ifelse(tmp[1] < min(data[[vars[i]]], na.rm=TRUE), min(data[[vars[i]]], na.rm=TRUE), tmp[1])
+		    tmp[2] <- ifelse(tmp[2] > max(data[[vars[i]]], na.rm=TRUE), max(data[[vars[i]]], na.rm=TRUE), tmp[2])
+		    minmax[[vars[i]]] <- tmp
 		}
 		if(mmc == "unit"){
         minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)
@@ -1062,6 +1662,55 @@ print(ret)
 invisible(ret)
 }
 
+
+
+#' Average Effects for Proportional Odds Logistic Regression Models
+#' 
+#' For objects of class \code{polr}, it calculates the average change in
+#' predicted probabilities, for discrete changes in a covariate holding all
+#' other variables at their observed values.
+#' 
+#' The function calculates the changes in predicted probabilities for maximal
+#' discrete changes in the covariates for objects of class \code{polr}.  This
+#' function works with polynomials specified with the \code{poly} function.  It
+#' also works with multiplicative interactions of the covariates by virtue of
+#' the fact that it holds all other variables at typical values.  By default,
+#' typical values are the median for quantitative variables and the mode for
+#' factors. The way the function works with factors is a bit different.  The
+#' function identifies the two most different levels of the factor and
+#' calculates the change in predictions for a change from the level with the
+#' smallest prediction to the level with the largest prediction.
+#' 
+#' @param obj A model object of class \code{polr}.
+#' @param varnames A vector of strings identifying the variable to be
+#' manipulated.
+#' @param data Data frame used to fit \code{object}.
+#' @param diffchange A string indicating the difference in predictor values to
+#' calculate the discrete change. \code{sd} gives plus and minus one-half
+#' standard deviation change around the median and \code{unit} gives a plus and
+#' minus one-half unit change around the median.
+#' @param R Number of simulations.
+#' @return A list with the following elements: \item{diffs}{A matrix of
+#' calculated first differences} \item{minmax}{A matrix of values that were
+#' used to calculate the predicted changes} \item{minPred}{A matrix of
+#' predicted probabilities when each variable is held at its minimum value, in
+#' turn.} \item{maxPred}{A matrix of predicted probabilities when each variable
+#' is held at its maximum value, in turn.}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(MASS)
+#' data(france)
+#' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
+#' typical.france <- data.frame(
+#' 	age = 35, 
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
+#' 	)
+#' ordChange2(polr.mod, "age", data=france, diffchange="sd")	
+#' 
 ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
       R=1500){
     vars <- all.vars(formula(obj))[-1]
@@ -1094,8 +1743,14 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
         d0 <- list()
         if(is.numeric(data[[varnames[m]]])){
           d0[[1]] <- d0[[2]] <- data
-          d0[[1]][[varnames[m]]] <- d0[[1]][[varnames[m]]]-(.5*delt)
-          d0[[2]][[varnames[m]]] <- d0[[2]][[varnames[m]]]+(.5*delt)
+          tmp0 <- d0[[1]][[varnames[m]]]-(.5*delt)
+          tmp1 <- d0[[2]][[varnames[m]]]+(.5*delt)
+          tmp0 <- ifelse(tmp0 < min(d0[[1]][[varnames[m]]], na.rm=TRUE), 
+                         min(d0[[1]][[varnames[m]]], na.rm=TRUE), tmp0)
+          tmp1 <- ifelse(tmp1 > max(d0[[2]][[varnames[m]]], na.rm=TRUE), 
+                         max(d0[[2]][[varnames[m]]], na.rm=TRUE), tmp1)
+          d0[[1]][[varnames[m]]] <- tmp0
+          d0[[2]][[varnames[m]]] <- tmp1
         }
         if(!is.numeric(data[[varnames[m]]])){
           l <- obj$xlevels[[varnames[m]]]
@@ -1153,6 +1808,14 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
     res
 }
 
+##' Print method for ordChange objects
+##' 
+##' @description Print methods for objects of class \code{ordChange}
+##' @param x Object of class \code{ordChange}
+##' @param ... Other arguments to be passed down to the function
+##' @param digits Number of digits to print
+##' @export
+##' @method print ordChange
 print.ordChange <- function(x, ..., digits=3){
     diffs <- x$diffs
     if("list" %in% class(diffs)){
@@ -1169,6 +1832,35 @@ print.ordChange <- function(x, ..., digits=3){
 }
 
 
+
+
+#' Fit Statistics and Specification Test for Multinomial Logistic Regression
+#' 
+#' Provides fit statistics (pseudo R-squared values) and the Fagerland, Hosmer
+#' and Bonfi (2008) specification test for Multinomial Logistic Regression
+#' models.
+#' 
+#' 
+#' @aliases mnlfit print.mnlfit
+#' @param obj An object of class \code{multinom}
+#' @param permute Logical indicating whether to check all base categories for
+#' the Fagerland et. al. specification test.
+#' @return A list with elements: \item{result}{Fit statistics.}
+#' \item{permres}{The results of the base category permutation exercise.}
+#' @author Dave Armstrong
+#' @references Fagerland M. W., D. W. Hosmer and A. M. Bonfi.  2008.
+#' \sQuote{Multinomial goodness-of-fit tests for logistic regression models.}
+#' Statistics in Medicine.  27(21): 4238-4253.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(nnet)
+#' data(france)
+#' mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
+#' mnlfit(mnl.mod)
+#' 
 mnlfit <- function(obj, permute=FALSE){
 	obj <- update(obj, trace=FALSE)
 	y <- model.response(model.frame(obj))
@@ -1242,6 +1934,7 @@ mnlfit <- function(obj, permute=FALSE){
 	return(out)
 }
 
+##' @method print mnlfit
 print.mnlfit <- function(x, ..., digits=3){
 	fmt <- paste("%.", digits, "f", sep="")
 	est <- sprintf(fmt, x$result[,1])
@@ -1261,7 +1954,7 @@ print.mnlfit <- function(x, ..., digits=3){
 	}
 }
 
-
+##' @method print ordfit
 print.ordfit <- function(x,..., digits=3){
 	fmt <- paste("%.", digits, "f", sep="")
 	est <- sprintf(fmt, x[,1])
@@ -1271,6 +1964,36 @@ print.ordfit <- function(x,..., digits=3){
 	print(noquote(newx[-(1:4), 1, drop=FALSE]))
 }
 
+
+
+#' Fit Statistics for Proportional Odds Logistic Regression Models
+#' 
+#' For objects of class \code{polr}, it calculates a number of fit statistics
+#' and specification tests.
+#' 
+#' 
+#' @aliases ordfit print.ordfit
+#' @param obj A model object of class \code{polr}.
+#' @return An object of class \code{ordfit} which is a matrix containing
+#' statistics and specification tests.
+#' @author Dave Armstrong
+#' @references Lipsitz, S. R., Fitzmaurice, G. M. and Mohlenberghs, G.  1996.
+#' Goodness-of-fit Tests for Ordinal Response Regression Models.  Applied
+#' Statistics, 45: 175-190.\cr Pulkstenis, E. and Robinson, T. J. 2004.
+#' Goodness-of-fit Test for Ordinal Response Regression Models.  Statistics in
+#' Medicine, 23: 999-1014. \cr Fagerland, M. W. and Hosmer, D. W.  2013.  A
+#' Goodness-of-fit Test for the Proportional Odds Regression Model.  Statistics
+#' in Medicine 32(13): 2235-2249.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(MASS)
+#' data(france)
+#' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
+#' ordfit(polr.mod)
+#' 
 ordfit <- function(obj){
 	# combfun <- function(mytab){
 	# 	lt <- sum(mytab[,2] < 5)
@@ -1395,6 +2118,51 @@ ordfit <- function(obj){
 	print(res)
 }
 
+
+
+#' Plot Average Effects of Variables in Proportional Odds Logistic Regression
+#' 
+#' For objects of class \code{polr} the function plots the average effect of a
+#' single variable holding all other variables at their observed values.
+#' 
+#' Following the advice of Hanmer and Kalkan (2013) the function calculates the
+#' average effect of a variable holding all other variables at observed values
+#' and then plots the result.
+#' 
+#' @param obj An object of class \code{polr}
+#' @param varname A string providing the name of the variable for which you
+#' want the plot to be drawn.
+#' @param data Data used to estimate \code{obj}.
+#' @param R Number of simulations to generate confidence intervals.
+#' @param nvals Number of evaluation points of the function
+#' @param plot Logical indicating whether or not the result should be plotted
+#' (if \code{TRUE}) or returned to the console (if \code{FALSE}).
+#' @param returnInd Logical indicating whether average individual probabilities
+#' should be returned.
+#' @param returnMprob Logical indicating whether marginal probabilities,
+#' averaged over individuals, should be returned.
+#' @param \dots Arguments passed down to the call to \code{xyplot}
+#' @return Either a plot or a list with a data frame containing the variables
+#' \item{mean}{The average effect (i.e., predicted probability)}
+#' \item{lower}{The lower 95\% confidence bound} \item{upper}{The upper 95\%
+#' confidence bound} \item{y}{The values of the dependent variable being
+#' predicted} \item{x}{The values of the independent variable being
+#' manipulated} and the elements Ind or Mprob, as requested.
+#' @author Dave Armstrong
+#' @references Hanmer, M.J. and K.O. Kalkan.  2013.  \sQuote{Behind the Curve:
+#' Clarifying the Best Approach to Calculating Predicted Probabilities and
+#' Marginal Effects from Limited Dependent Variable Models}.  American Journal
+#' of Political Science.  57(1): 263-277.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(MASS)
+#' data(france)
+#' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
+#' \dontrun{ordAveEffPlot(polr.mod, "lrself", data=france)	}
+#' 
 ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, returnInd=FALSE, returnMprob=FALSE,...){
     pfun <- switch(obj$method, logistic = plogis, probit = pnorm,
            loglog = pgumbel, cloglog = pGumbel, cauchit = pcauchy)
@@ -1493,6 +2261,36 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, retur
 		}
 	}
 
+
+
+#' Deviance and Chi-squared Goodness-of-Fit Test for Poisson Models
+#' 
+#' Deviance and Chi-squared goodness-of-fit test of the null hypothesis that
+#' poisson variance is appropriate to model the conditional dispersion of the
+#' data, given a particular model.
+#' 
+#' 
+#' @param obj A model object of class \code{glm} (with \code{family=poisson}).
+#' @return A 2x2 data frame with rows representing the different types of
+#' statistics (Deviance and Chi-squared) and columns representing the test
+#' statistic and p-value.
+#' @author Dave Armstrong
+#' @references Dobson, A. J. (1990) An Introduction to Generalized Linear
+#' Models. London: Chapman and Hall.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' ## Example taken from MASS help file for glm, identified to be
+#' ## Dobson (1990) Page 93: Randomized Controlled Trial :
+#' counts <- c(18,17,15,20,10,20,25,13,12)
+#' outcome <- gl(3,1,9)
+#' treatment <- gl(3,3)
+#' print(d.AD <- data.frame(treatment, outcome, counts))
+#' glm.D93 <- glm(counts ~ outcome + treatment, family=poisson())
+#' poisGOF(glm.D93)
+#' 
 poisGOF <-
 function (obj)
 {
@@ -1514,6 +2312,54 @@ function (obj)
     mat <- as.data.frame(mat)
     return(mat)
 }
+
+
+#' Proportional and Expected Proportional Reductions in Error
+#' 
+#' Calculates proportional reduction in error (PRE) and expected proportional
+#' reduction in error (epre) from Herron (1999).
+#' 
+#' Proportional reduction in error is calculated as a function of correct and
+#' incorrect predictions (and the probabilities of correct and incorrect
+#' predictions for ePRE).  When \code{sim=TRUE}, a parametric bootstrap will be
+#' used that draws from the multivariate normal distribution centered at the
+#' coefficient estimates from the model and using the estimated
+#' variance-covariance matrix of the estimators as Sigma.  This matrix is used
+#' to form \code{R} versions of XB and predictions are made for each of the
+#' \code{R} different versions of XB.  Confidence intervals can then be created
+#' from the bootstrap sampled (e)PRE values.
+#' 
+#' @param mod1 A model of class \code{glm} (with family \code{binomial}),
+#' \code{polr} or \code{multinom} for which (e)PRE will be calculated.
+#' @param mod2 A model of the same class as \code{mod1} against which
+#' proportional reduction in error will be measured.  If \code{NULL}, the null
+#' model will be used.
+#' @param sim A logical argument indicating whether a parametric bootstrap
+#' should be used to calculate confidence bounds for (e)PRE.  See
+#' \code{Details} for more information.
+#' @param R Number of bootstrap samples to be drawn if \code{sim=TRUE}.
+#' @return An object of class \code{pre}, which is a list with the following
+#' elements: \item{pre}{The proportional reduction in error} \item{epre}{The
+#' expected proportional reduction in error} \item{m1form}{The formula for
+#' model 1} \item{m2form}{The formula for model 2} \item{pcp}{The percent
+#' correctly predicted by model 1} \item{pmc}{The percent correctly predicted
+#' by model 2} \item{epcp}{The expected percent correctly predicted by model 1}
+#' \item{epmc}{The expected percent correctly predicted by model 2}
+#' \item{pre.sim}{A vector of bootstrapped PRE values if \code{sim=TRUE}}
+#' \item{epre.sim}{A vector of bootstrapped ePRE values if \code{sim=TRUE}}
+#' @author Dave Armstrong
+#' @references Herron, M.  1999.  Postestimation Uncertainty in Limited
+#' Dependent Variable Models.  Political Analysis 8(1): 83--98.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(france)
+#' left.mod <- glm(voteleft ~ male + age + retnat + 
+#' 	poly(lrself, 2), data=france, family=binomial)
+#' pre(left.mod)
+#' 
 pre <-
 function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
 {
@@ -1694,6 +2540,25 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
     class(ret) <- "pre"
     return(ret)
 }
+
+
+#' Print method for objects of class pre
+#' 
+#' Prints the output from an object of class \code{pre}.  The function prints
+#' all components of the calculation and optionally simulated confidence
+#' bounds.
+#' 
+#' 
+#' @param x An object of class \code{pre}.
+#' @param sim.ci Coverage for the simulated confidence interval, if
+#' \code{sim=TRUE} in the call to \code{pre}.
+#' @param ... Other arguments passed to print, currently not implemented
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @method print pre
+#' @seealso \code{pre}
 print.pre <-
 function (x, ..., sim.ci = 0.95)
 {
@@ -1720,6 +2585,9 @@ function (x, ..., sim.ci = 0.95)
         print(tmp, quote = FALSE)
     }
 }
+#' 
+#' @export
+#' 
 probit_cc <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
@@ -1760,6 +2628,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         se_int_eff = probit_se, zstat = probit_t)
     invisible(out)
 }
+#' 
+#' @export
+#' 
 probit_cd <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
@@ -1804,6 +2675,9 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         se_int_eff = probit_se, zstat = probit_t)
     invisible(out)
 }
+#' 
+#' @export
+#' 
 probit_dd <-
 function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 {
@@ -1858,7 +2732,36 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         se_int_eff = probit_se, zstat = probit_t)
     invisible(out)
 }
+
+
+#' Search Variable Labels Attribute
+#' 
+#' Data imported from SPSS or Stata comes with the variable labels set (if they
+#' were set in the original dataset) as one of the dataframe's attributes.
+#' This allows you to search the variable labels and returns the variable
+#' column number, name and label for all variables that have partially match
+#' the search term either in their labels or names.
+#' 
+#' For an imported Stata dataset, variable labels are in the \code{var.labels}
+#' attribute of the dataset and in an SPSS dataset, they are in the
+#' \code{variable.labels} attribute.  These are searched, ignoring case, for
+#' the desired string
+#' 
+#' @aliases searchVarLabels searchVarLabels.data.frame searchVarLabels.tbl_df
+#' @param dat a data frame whose variable labels you want to search.
+#' @param str string used to search variable labels.
+#' @return \item{matrix}{A matrix of dimensions n-matches x 2 is returned,
+#' where the first column is the column number of the matching variable and the
+#' second column is the variable label.  The row names of the matrix are the
+#' variable names.}
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 searchVarLabels <- function(dat, str) UseMethod("searchVarLabels")
+
+#' @export
+#' @method searchVarLabels data.frame
 searchVarLabels.data.frame <-
 function (dat, str)
 {
@@ -1873,6 +2776,9 @@ function (dat, str)
     rownames(vldf) <- names(dat)[ind]
     vldf
 }
+
+#' @export
+#' @method searchVarLabels tbl_df
 searchVarLabels.tbl_df <-
 function (dat, str)
 {
@@ -1882,6 +2788,25 @@ function (dat, str)
     rownames(vldf) <- names(dat)[ind]
     vldf
 }
+
+
+#' Calculate Predictions for Proportional Odds Logistic Regression
+#' 
+#' Calculates predicted probabilities from models of class \code{polr} from a
+#' model object and a vector of coefficient values.  This is an auxiliary
+#' function used in \code{pre} if \code{sim=TRUE}.
+#' 
+#' 
+#' @param object An object of class \code{polr}.
+#' @param n.coef Number of coefficients (minus intercepts) for the \code{polr}
+#' model.
+#' @param coefs A vector of coefficients where elements 1 to \code{n.coef} give
+#' model coefficients and elements \code{n.coef}+1 to k have intercepts.
+#' @return An n x m-category matrix of predicted probabilities
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 simPredpolr <-
 function (object, coefs, n.coef)
 {
@@ -1902,10 +2827,60 @@ function (object, coefs, n.coef)
     pfun <- switch(object$method, logistic = plogis, probit = pnorm,
         cauchit = pcauchy)
     cumpr <- matrix(pfun(matrix(coefs[(n.coef + 1):length(coefs)],
-        n, q, byrow = TRUE) - eta), , q)
+        n, q, byrow = TRUE) - eta), q)
     Y <- t(apply(cumpr, 1L, function(x) diff(c(0, x, 1))))
     return(Y)
 }
+
+
+#' Maximal First Differences for Zero-Inflated Models
+#' 
+#' Calculates the change in predicted counts or optionally the predicted
+#' probability of being in the zero-count group, for maximal discrete changes
+#' in all covariates holding all other variables constant at typical values.
+#' 
+#' The function calculates the changes in predicted counts, or optionally the
+#' predicted probability of being in the zero group, for maximal discrete
+#' changes in the covariates.  This function works with polynomials specified
+#' with the \code{poly} function.  It also works with multiplicative
+#' interactions of the covariates by virtue of the fact that it holds all other
+#' variables at typical values.  By default, typical values are the median for
+#' quantitative variables and the mode for factors. The way the function works
+#' with factors is a bit different.  The function identifies the two most
+#' different levels of the factor and calculates the change in predictions for
+#' a change from the level with the smallest prediction to the level with the
+#' largest prediction.
+#' 
+#' @param obj A model object of class \code{zeroinfl}.
+#' @param data Data frame used to fit \code{object}.
+#' @param typical.dat Data frame with a single row containing values at which
+#' to hold variables constant when calculating first differences.  These values
+#' will be passed to \code{predict}, so factors must take on a single value,
+#' but have all possible levels as their levels attribute.
+#' @param type Character string of either \sQuote{count} (to obtain changes in
+#' predicted counts) or \sQuote{zero} (to obtain changes in the predicted
+#' probability of membership in the zero group).
+#' @return A list with the following elements: \item{diffs}{A matrix of
+#' calculated first differences} \item{minmax}{A matrix of values that were
+#' used to calculate the predicted changes}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(pscl)
+#' ## Example from the help file for zeroinfl in the pscl package
+#' data("bioChemists", package = "pscl")
+#' fm_zinb <- zeroinfl(art ~ fem + mar + kid5 + phd + ment |
+#'     fem + mar + kid5 + phd + ment, data = bioChemists, dist = "negbin")
+#' typical.bioChem <- data.frame(
+#' 	kid5 = 2,
+#' 	mar = factor(1, levels=1:2, labels=levels(bioChemists$mar))
+#' 	)
+#' ziChange(fm_zinb, data=bioChemists, typical.dat=typical.bioChem, type="zero")	
+#' ziChange(fm_zinb, data=bioChemists, typical.dat=typical.bioChem, type="count")	
+#' 
 ziChange <-
 function (obj, data, typical.dat = NULL, type = "count")
 {
@@ -1988,6 +2963,36 @@ function (obj, data, typical.dat = NULL, type = "count")
     class(ret) <- "change"
     return(ret)
 }
+
+
+#' Fitted Values and CIs for 2-Categorical Interactions
+#' 
+#' This function makes a table of fitted values and confidence intervals for
+#' all of the combinations of two categorical variables in an interaction.
+#' 
+#' 
+#' @param eff.obj An object generated by \code{effect} from the \code{effects}
+#' package where the effect is calculated for two factors involved in an
+#' interaction.
+#' @param digits Number of digits of the fitted values and confidence intervals
+#' to print.
+#' @param rownames An optional vector of row names for the table, if
+#' \code{NULL}, the levels of the factor will be used
+#' @param colnames An optional vector of column names for the table, if
+#' \code{NULL}, the levels of the factor will be used
+#' @return A matrix of fitted values and confidence intervals
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' library(effects)
+#' data(Duncan, package="carData")
+#' Duncan$inc.cat <- cut(Duncan$income, 3)
+#' mod <- lm(prestige ~ inc.cat*type + income, data=Duncan)
+#' e1 <- effect("inc.cat*type", mod)
+#' cat2Table(e1)
+#' 
 cat2Table <- function(eff.obj, digits=2, rownames = NULL, colnames=NULL){
 	print.digs <- paste("%.", digits, "f", sep="")
 	cis <- paste("(",
@@ -2021,6 +3026,34 @@ cat2Table <- function(eff.obj, digits=2, rownames = NULL, colnames=NULL){
 		rownames(out.mat) <- rn2
 	out.mat
 }
+
+
+#' Tests the five Berry, Golder and Milton (2012) Interactive Hypothesis
+#' 
+#' This function tests the five hypotheses that Berry, Golder and Milton
+#' identify as important when two quantitative variables are interacted in a
+#' linear model.
+#' 
+#' 
+#' @param obj An object of class \code{lm}.
+#' @param vars A vector of two variable names giving the two quantitative
+#' variables involved in the interaction.  These variables must be involved in
+#' one, and only one, interaction.
+#' @param digits Number of digits to be printed in the summary.
+#' @param level Type I error rate for the tests.
+#' @param two.sided Logical indicating whether the tests should be two-sided
+#' (if \code{TRUE}, the default) or one-sided (if \code{FALSE}).
+#' @return A matrix giving five t-tests.
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(Duncan, package="carData")
+#' mod <- lm(prestige ~ income*education + type, data=Duncan)
+#' BGMtest(mod, c("income", "education"))
+#' 
 BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=TRUE){
 	cl <- attr(terms(obj), "dataClasses")
     if(any(cl[vars] != "numeric"))stop("Both variables in vars must be numeric")
@@ -2071,6 +3104,81 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=TRUE){
 	return(noquote(out))
 }
 
+
+
+#' Predictions for Factor-Numeric Interactions in Linear Models
+#' 
+#' This function works on linear models with a single interaction between a
+#' continuous (numeric) variable and a factor.  The output is a data frame that
+#' gives the predicted effect of moving from each category to each other
+#' category of the factor over the range of values of the continuous
+#' conditioning variable.
+#' 
+#' 
+#' @aliases intQualQuant print.iqq
+#' @param obj An object of class \code{lm}.
+#' @param vars A vector of two variable names giving the two quantitative
+#' variables involved in the interaction.  These variables must be involved in
+#' one, and only one, interaction.
+#' @param level Confidence level desired for lower and upper bounds of
+#' confidence interval.
+#' @param varcov A potentially clustered or robust variance-covariance matrix
+#' of parameters used to calculate standard errors.  If \code{NULL}, the
+#' \code{vcov} function will be used.
+#' @param labs An optional vector of labels that will be used to identify the
+#' effects, if \code{NULL}, the factor levels will be used.
+#' @param n Number of values of the conditioning variable to use.
+#' @param onlySig Logical indicating whether only contrasts with significant
+#' differences should be returned.  Significance is determined to exist if the
+#' largest lower bound is greater than zero or the smallest upper bound is
+#' smaller than zero.
+#' @param type String indicating whether the conditional partial effect of the
+#' factors is plotted (if \sQuote{facs}), or the conditional partial effect of
+#' the quantitative variable (if \sQuote{slopes}) is produced.
+#' @param plot Logical indicating whether graphical results (if \code{TRUE}) or
+#' numerical results (if \code{FALSE}) are produced.
+#' @param vals A vector of values at which the continuous variable will be held
+#' constant.  If \code{NULL}, a sequence of length \code{n} across the
+#' variable's range will be used.
+#' @param rug Logical indicating whether rug plots should be plotted in the
+#' panels.
+#' @param ci Logical indicating whether confidence bounds should be drawn.
+#' @param digits Number indicating how many decimal places to round the numeric
+#' output.
+#' @param ... Other arguments to be passed down to \code{effect} if
+#' \code{plot.type} = \sQuote{slopes}.
+#' @return For \code{type} = \sQuote{facs} and \code{plot} = \code{FALSE}, a
+#' data frame with the following values: \item{fit}{The expected difference
+#' between the two factor levels at the specified value of the conditioning
+#' variable.} \item{se.fit}{The standard error of the expected differences. }
+#' \item{x}{The value of the continuous conditioning variable}
+#' \item{contrast}{A factor giving the two values of the factor being
+#' evaluated.} \item{lower}{The lower 95\% confidence interval for \code{fit}}
+#' \item{upper}{The upper 95\% confidence interval for \code{fit}} For
+#' \code{type} = \sQuote{facs} and \code{plot} = \code{TRUE}, a lattice display
+#' is returned For \code{type} = \sQuote{slopes} and \code{plot} =
+#' \code{FALSE}, A character matrix with the following columns: \item{B}{The
+#' conditional effect of the quantitative variable for each level of the
+#' factor.} \item{SE(B)}{The standard error of the conditional effect.}
+#' \item{t-stat}{The t-statistic of the conditional effect.}
+#' \item{Pr(>|t|)}{The two-sided p-value.} For \code{type} = \sQuote{slopes}
+#' and \code{plot} = \code{TRUE}, a lattice display is returned
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(Prestige, package="carData")
+#' Prestige$income <- Prestige$income/1000
+#' mod <- lm(prestige ~ income * type + education, data=Prestige)
+#' intQualQuant(mod, c("income", "type"), n=10, 
+#' 	plot.type="none")
+#' intQualQuant(mod, c("income", "type"), n=10, 
+#' 	plot.type="facs")
+#' intQualQuant(mod, c("income", "type"), n=10, 
+#' 	plot.type="slopes")
+#' 
 intQualQuant <- function(obj, vars, level = .95 , varcov=NULL,
 	labs = NULL, n = 10 , onlySig = FALSE, type = c("facs", "slopes"),
 	plot=TRUE, vals = NULL, rug=TRUE, ci=TRUE, digits=3,...){
@@ -2307,6 +3415,25 @@ if(plot){
 }
 }
 
+
+
+#' Lattice panel function for translucent confidence intervals
+#' 
+#' This panel function is defined to plot translucent confidence intervals in a
+#' single-panel, grouped (i.e., superposed) lattice display. Note, both lower
+#' and upper must be passed directly to \code{xyplot} as they will be passed
+#' down to the panel function.
+#' 
+#' 
+#' @param x,y Data from the call to \code{xyplot}.
+#' @param groups Variable used to created the superposed panels.
+#' @param lower,upper 95\% lower and upper bounds of \code{y}.
+#' @param ca Value of the alpha channel in [0,1]
+#' @param ... Other arguments to be passed down to the plotting functions.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 panel.transci <- function(x,y,groups,lower,upper, ca=.25, ...){
 	ungroup <- unique(groups)
 	sup.poly <- trellis.par.get("superpose.polygon")
@@ -2331,6 +3458,29 @@ panel.transci <- function(x,y,groups,lower,upper, ca=.25, ...){
 
 
 
+
+
+#' Lattice panel function for two rug plots
+#' 
+#' This panel function is defined to plot two rugs, one on top of the other in
+#' a multi-panel lattice display.
+#' 
+#' 
+#' @param xa,xb Numeric vectors to be plotted.
+#' @param regular Logical flag indicating whether rug is to be drawn on the
+#' usual side (bottom/left) as opposed to the other side (top/right).
+#' @param start,end Start and end points for the rug ticks on the y-axis.
+#' @param x.units Character vectors, replicated to be of length two. Specifies
+#' the (grid) units associated with start and end above. x.units are for the
+#' rug on the x-axis and y-axis respectively (and thus are associated with
+#' start and end values on the y and x scales respectively). See
+#' \code{panel.rug} for more details.
+#' @param lty,lwd Line type and width arguments (see \code{par} for more
+#' details).
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 panel.doublerug <- function (xa = NULL, xb = NULL,
 	regular = TRUE, start = if (regular) 0 else 0.97,
     end = if (regular) 0.03 else 1, x.units = rep("npc", 2),
@@ -2345,6 +3495,24 @@ panel.doublerug <- function (xa = NULL, xb = NULL,
 		gp=gpar(col.line="black", lty=lty, lwd=lwd))
 }
 
+
+
+#' Lattice panel function for confidence intervals
+#' 
+#' This panel function is defined to plot confidence intervals in a multi-panel
+#' lattice display. Note, both lower and upper must be passed directly to
+#' \code{xyplot} as they will be passed down to the prepanel function.
+#' 
+#' 
+#' @param x,y Data from the call to \code{xyplot}.
+#' @param subscripts Variable used to created the juxtaposed panels.
+#' @param lower,upper 95\% lower and upper bounds of \code{y}.
+#' @param zl Logical indicating whether or not a horizontal dotted line at zero
+#' is desired.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 panel.ci <- function(x,y,subscripts,lower,upper,zl){
 	panel.lines(x,y,col="black")
 	panel.lines(x,lower[subscripts], col="black", lty=2)
@@ -2352,6 +3520,25 @@ panel.ci <- function(x,y,subscripts,lower,upper,zl){
 	if(zl)panel.abline(h=0, lty=3, col="gray50")
 }
 
+
+
+#' Lattice prepanel function for confidence intervals
+#' 
+#' This prepanel function is defined so as to allow room for all confidence
+#' intervals plotted in a lattice display. Note, both lower and upper must be
+#' passed directly to \code{xyplot} as they will be passed down to the prepanel
+#' function.
+#' 
+#' 
+#' @param x,y Data from the call to \code{xyplot}.
+#' @param subscripts Variable used to created the juxtaposed panels.
+#' @param lower,upper 95\% lower and upper bounds of \code{y}.
+#' @return A list giving the ranges and differences in ranges of x and the
+#' lower and upper bounds of y.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 prepanel.ci <- function(x,y,subscripts, lower,upper){
     x2 <- as.numeric(x)
     list(xlim = range(x2, finite = TRUE),
@@ -2361,12 +3548,80 @@ prepanel.ci <- function(x,y,subscripts, lower,upper){
          dy = diff(range(c(lower[subscripts], upper[subscripts]),
             finite = TRUE)))
 }
+
+
+#' Lattice panel function for confidence intervals with capped bars
+#' 
+#' This panel function is defined to plot confidence intervals in a multi-panel
+#' lattice display where the x-variable is categorical. Note, both lower and
+#' upper must be passed directly to \code{xyplot} as they will be passed down
+#' to the panel function.
+#' 
+#' 
+#' @param x,y Data from the call to \code{xyplot}.
+#' @param subscripts Variable used to created the juxtaposed panels.
+#' @param lower,upper 95\% lower and upper bounds of \code{y}.
+#' @param length Length of the arrow head lines.
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(lattice)
+#' library(effects)
+#' data(Duncan, package="carData")
+#' Duncan$inc.cat <- cut(Duncan$income, 3)
+#' mod <- lm(prestige~ inc.cat * type + education,
+#'   data=Duncan)
+#' e1 <- effect("inc.cat*type", mod)
+#' update(plot(e1), panel=panel.2cat)
+#' 
 panel.2cat <- function(x,y,subscripts,lower,upper, length=.2){
 	panel.points(x,y, pch=16, col="black")
 	panel.arrows(x, lower[subscripts], x, upper[subscripts], code=3, angle=90, length=length)
 }
 
 
+
+
+#' Test of linearity for Component + Residual Plots
+#' 
+#' This function estimates a linear model and a loess model on the
+#' component-plus-residual plot (i.e., a partial residual plot) for each
+#' quantitative variable in the model.  The residual sums of squares for each
+#' are used to calculate an F-test for each quantitative variable.
+#' 
+#' 
+#' @param model A model object of class \code{lm}
+#' @param adjust.method Adjustment method for multiple-testing procedure, using
+#' \code{p.adjust} from \code{stats}.
+#' @param cat Number of unique values below which numeric variables are
+#' considered categorical for the purposes of the smooth.
+#' @param var Character string indicating the term desired for testing.  If
+#' left \code{NULL}, the default value, all numeric variables will be tested.
+#' @param span.as Logical indicating whether the span should be automatically
+#' selected through AICC or GCV
+#' @param span Span to be passed down to the \code{loess} function if
+#' \code{span.as=FALSE}.
+#' @param ... Other arguments to be passed down to the call to \code{loess}.
+#' @return A matrix with the following columns for each variable:
+#' \item{RSSp}{Residual sum-of-squares for the parametric (linear) model.}
+#' \item{RSSnp}{Residual sum-of-squares for the non-parametric (loess) model.}
+#' \item{DFnum}{Numerator degrees of freedom for the F-test: tr(S)-(k+1).}
+#' \item{DFdenom}{Denominator degrees of freedom for the F-test: n-tr(S)}
+#' \item{F}{F-statistic} \item{p}{p-value, potentially adjusted for multiple
+#' comparisons.}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(Prestige, package="carData")
+#' mod <- lm(prestige ~ income + education + women, data=Prestige)
+#' crTest(mod)
+#' 
 crTest <- function(model, adjust.method="none", cat = 5, var=NULL, span.as = TRUE, span = 0.75, ...){
     cl <- attr(terms(model), "dataClasses")
 	cl <- cl[which(cl != "factor")]
@@ -2425,6 +3680,44 @@ out <- data.frame(
 rownames(out) <- terms
 return(out)
 }
+
+
+#' Test of Span Parameter in linearity for Component + Residual Plots
+#' 
+#' This function performs \code{crTest} for a user-defined range of span
+#' parameters, optionally allowing for multiple testing corrections in the
+#' p-values.
+#' 
+#' 
+#' @param model A model object of class \code{lm}
+#' @param spfromto A vector of two values across which a range of \code{n} span
+#' values will be generated and tested.
+#' @param n Number of span parameters to test.
+#' @param adjust.method Adjustment method for multiple-testing procedure, using
+#' \code{p.adjust} from \code{stats}.
+#' @param adjust.type String giving the values over which the multiple testing
+#' correction will be performed.  Here, \sQuote{both} refers to a multiple
+#' testing correction done over all span parameters and all variables in the
+#' model.  \sQuote{within} means the multiple testing correction should be done
+#' within each model, but not across the span parameters and \sQuote{across}
+#' means that the multiple testing correction should be for each variable
+#' across the various span parameters, but not across variables within the same
+#' model.  \sQuote{none} refers to a pass-through option of no multiple testing
+#' procedure.
+#' @return A list with two elements: \item{x}{Sequence of span values used in
+#' testing} \item{y}{p-values for each variable for each span parameter}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(Prestige, package="carData")
+#' mod <- lm(prestige ~ income + education + women, data=Prestige)
+#' tmp <- crSpanTest(mod, c(.1, .9), adjust.method="holm", 
+#' 	adjust.type="both")
+#' matplot(tmp$x, tmp$y, type="l")
+#' 
 crSpanTest <-
 function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", "across", "within", "both")){
 	span.seq <- seq(from=spfromto[1], to=spfromto[2],
@@ -2457,6 +3750,21 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", 
 	ret = list(x=span.seq, y=t(pvals))
     return(ret)
 }
+
+
+#' Standardize quantitative variables in a data frame
+#' 
+#' This function standardizes quantitative variables in a data frame while
+#' leaving the others untouched.  This leaves not only factors, but also binary
+#' variables (those with values 0, 1, or NA).
+#' 
+#' 
+#' @param data A data frame.
+#' @return A data frame with standardized quantitative variables
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 scaleDataFrame <-
 function(data){
 classes <- sapply(1:ncol(data), function(x)class(data[,x]))
@@ -2477,6 +3785,39 @@ if(is.null(dimnames(nonnum.dat))){
 newdat <- cbind(as.data.frame(scale(num.dat)), as.data.frame(nonnum.dat))
 newdat
 }
+
+
+#' Create LaTeX or CSV versions of an Object Produced by CrossTable
+#' 
+#' \code{outXT} takes the output from \code{CrossTable} in the \code{gmodels}
+#' package and produces either LaTeX code or CSV file that can be imported into
+#' word processing software.
+#' 
+#' 
+#' @param obj A list returned by \code{CrossTable} from the \code{gmodels}
+#' package.
+#' @param count Logical indicating whether the cell frequencies should be
+#' returned.
+#' @param prop.r Logical indicating whether the row proportions should be
+#' returned.
+#' @param prop.c Logical indicating whether the column proportions should be
+#' returned.
+#' @param prop.t Logical indicating whether the cell proportions should be
+#' returned.
+#' @param col.marg Logical indicating whether the column marginals should be
+#' printed.
+#' @param row.marg Logical indicating whether the row marginals should be
+#' printed.
+#' @param digits Number of digits to use in printing the proportions.
+#' @param type String where \code{word} indicates a CSV file will be produced
+#' and \code{latex} indicates LaTeX code will be generated.
+#' @param file Connection where the file will be written, if \code{NULL} the
+#' output will only be written to the console
+#' @return A file containing LaTeX Code or CSV data to make a table
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 	col.marg=TRUE, row.marg=TRUE, digits = 3, type = "word", file=NULL){
 	if(!(type %in% c("word", "latex"))){stop("type must be one of 'word' or 'latex'")}
@@ -2518,6 +3859,45 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 	return(noquote(rl))
 }
 
+
+
+#' Maximal First Differences for Generalized Linear Models
+#' 
+#' For objects of class \code{glm}, it calculates the change in predicted
+#' responses, for discrete changes in a covariate holding all other variables
+#' at their observed values.
+#' 
+#' The function calculates the average change in predicted probabiliy for a
+#' discrete change in a single covariate with all other variables at their
+#' observed values, for objects of class \code{glm}.  This function works with
+#' polynomials specified with the \code{poly} function.
+#' 
+#' @aliases glmChange2 print.glmc2
+#' @param obj A model object of class \code{glm}.
+#' @param varname Character string giving the variable name for which average
+#' effects are to be calculated.
+#' @param data Data frame used to fit \code{object}.
+#' @param change A string indicating the difference in predictor values to
+#' calculate the discrete change.  \code{sd} gives plus and minus one-half
+#' standard deviation change around the median and \code{unit} gives a plus and
+#' minus one-half unit change around the median.
+#' @param R Number of simulations to perform.
+#' @return \item{res}{A vector of values giving the average and 95 percent
+#' confidence bounds} \item{ames}{The average change in predicted probability
+#' (across all N observations) for each of the R simulations.}
+#' \item{avesamp}{The average change in predicted probability for each of the N
+#' observation (across all of the R simulations). }
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(france)
+#' left.mod <- glm(voteleft ~ male + age + retnat + 
+#' 	poly(lrself, 2), data=france, family=binomial)
+#' glmChange2(left.mod, "age", data=france, "sd")
+#' 
 glmChange2 <-
 function (obj, varname, data, change=c("unit", "sd"), R=1500)
 {
@@ -2538,8 +3918,12 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
 
     if (is.numeric(data[[varname]])) {
         d0 <- d1 <- data
-        d0[[varname]] <- d0[[varname]] - (0.5 * delt)
-        d1[[varname]] <- d1[[varname]] + (0.5 * delt)
+        tmp0 <- d0[[varname]] - (0.5 * delt)
+        tmp0 <- ifelse(tmp0 < min(d0[[varname]], na.rm=TRUE), min(d0[[varname]], na.rm=TRUE), tmp0)
+        tmp1 <- d1[[varname]] + (0.5 * delt)
+        tmp1 <- ifelse(tmp1 > max(d1[[varname]], na.rm=TRUE), max(d1[[varname]], na.rm=TRUE), tmp1)
+        d0[[varname]] <- tmp0
+        d1[[varname]] <- tmp1
         X0 <- model.matrix(obj, data = d0)
         X1 <- model.matrix(obj, data = d1)
         p0 <- family(obj)$linkinv(X0 %*% t(b))
@@ -2599,6 +3983,44 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
     class(outres) <- "glmc2"
     print(outres)
 }
+
+
+#' Average Effect Plot for Generalized Linear Models
+#' 
+#' For objects of class \code{glm}, it calculates the change the average
+#' predicted probability (like the one calculated by \code{glmChange2}) for a
+#' hypothetical candidate set of values of a covariate.
+#' 
+#' The function plots the average effect of a model covariate, for objects of
+#' class \code{glm}.  The function does not work with \code{poly} unless the
+#' coefficients are provided as arguments to the command in the model (see
+#' example below).
+#' 
+#' @param obj A model object of class \code{glm}.
+#' @param varname Character string giving the variable name for which average
+#' effects are to be calculated.
+#' @param data Data frame used to fit \code{object}.
+#' @param R Number of simulations to perform.
+#' @param nvals Number of evaluation points at which the average probability
+#' will be calculated.
+#' @param plot Logical indicating whether plot should be returned, or just data
+#' (if \code{FALSE}).
+#' @param returnSim Logical indicating whether simulated predicted
+#' probabilities should be returned.
+#' @param ... Other arguments to be passed down to \code{xyplot}.
+#' @return A plot or a data frame
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(france)
+#' p <- poly(france$lrself, 2)
+#' left.mod <- glm(voteleft ~ male + age + retnat + 
+#' 	poly(lrself, 2, coefs=attr(p, "coefs")), data=france, family=binomial)
+#' aveEffPlot(left.mod, "age", data=france, plot=FALSE)
+#' 
 aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnSim=FALSE, ...)
 {
     vars <- all.vars(formula(obj))[-1]
@@ -2684,6 +4106,42 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnS
 	}
 }
 
+
+
+#' AIC and BIC selection of number of spline knots
+#' 
+#' Calculates AIC and BIC for the selection of knots in a spline over values
+#' (potentially including polynomials) up to a user-defined maximum.
+#' 
+#' 
+#' @param form A formula detailing the model for which smoothing is to be
+#' evaluated.
+#' @param var A character string identifying the variable for which smoothing
+#' is to be evaluated.
+#' @param data Data frame providing values of all variables in \code{form}.
+#' @param degree Degree of polynomial in B-spline basis functions.
+#' @param min.knots Minimum number of internal B-spline knots to be evaluated.
+#' @param max.knots Maximum number of internal B-spline knots to be evaluated.
+#' @param includePoly Include linear and polynomial models up to, and including
+#' \code{degree}-th order polynomials.
+#' @param plot Logical indicating whether a plot should be returned.
+#' @param criterion Statistical criterion to minimize in order to find the best
+#' number of knots - AIC, BIC or Cross-validation.
+#' @param cvk Number of groups for cross-validation
+#' @param cviter Number of iterations of cross-validation to average over.  10
+#' is the default but in real-world applications, this should be somewhere
+#' around 200.
+#' @return A plot, if \code{plot=TRUE}, otherwise a data frame with the degrees
+#' of freedom and corresponding fit measure.
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(Prestige, package="carData")
+#' NKnots(prestige ~ education + type, var="income", data=na.omit(Prestige), plot=FALSE)
+#' 
 NKnots <- function(form, var, data, degree=3, min.knots=1,
    max.knots=10, includePoly = FALSE, plot=FALSE, criterion=c("AIC", "BIC", "CV"),
    cvk=10, cviter=10){
@@ -2731,6 +4189,46 @@ NKnots <- function(form, var, data, degree=3, min.knots=1,
    }
 }
 
+
+
+#' Test of functional form assumption using B-splines
+#' 
+#' Estimate hypothesis test of lower- and higher-order non-linear relationships
+#' against an assumed target relationship.
+#' 
+#' 
+#' @param form A formula detailing the model for which smoothing is to be
+#' evaluated.
+#' @param var A character string identifying the variable for which smoothing
+#' is to be evaluated.
+#' @param data Data frame providing values of all variables in \code{form}.
+#' @param targetdf The assumed degrees of freedom against which the tests will
+#' be conducted.
+#' @param degree Degree of polynomial in B-spline basis functions.
+#' @param min.knots Minimum number of internal B-spline knots to be evaluated.
+#' @param max.knots Maximum number of internal B-spline knots to be evaluated.
+#' @param adjust Method by which p-values will be adjusted (see
+#' \code{\link{p.adjust}})
+#' @return A matrix with the following columns: \item{F}{F statistics of test
+#' of candidate models against target model} \item{DF1}{Numerator DF from
+#' F-test} \item{DF2}{Denominator DF from F-test} \item{p(F)}{p-value from the
+#' F-test} \item{Clarke}{Test statistic from the Clarke test}
+#' \item{Pr(Better)}{The Clarke statistic divided by the number of
+#' observations} \item{p(Clarke)}{p-value from the Clarke test.  (T) means that
+#' the significant p-value is in favor of the Target model and (C) means the
+#' significant p-value is in favor of the candidate (alternative) model.}
+#' \item{Delta_AIC}{AIC(candidate model) - AIC(target model)}
+#' \item{Delta_AICc}{AICc(candidate model) - AICc(target model)}
+#' \item{Delta_BIC}{BIC(candidate model) - BIC(target model)}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(Prestige, package="carData")
+#' NKnotsTest(prestige ~ education + type, var="income", data=na.omit(Prestige), targetdf=3)
+#' 
 NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
    max.knots=10, adjust="none"){
    k <- seq(min.knots, max.knots, by=1)
@@ -2755,7 +4253,7 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
    cand.mods <- mods
    cand.mods[[which(mods.df == targetdf)]] <- NULL
    tests <- lapply(cand.mods, function(x)as.matrix(anova(target.mod, x)))
-   tests2 <- lapply(cand.mods, function(x)clarke(target.mod, x))
+   tests2 <- lapply(cand.mods, function(x)clarke_test(target.mod, x))
    num.df <- sapply(tests, function(x)abs(diff(x[,1])))
    denom.df <- sapply(tests, function(x)min(x[,1]))
    Fstats <- sapply(tests, function(x)x[2,5])
@@ -2800,6 +4298,29 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
    return(noquote(strres))
 }
 
+
+
+#' Significance Test for Loess vs. LM
+#' 
+#' Calculates an F test to evaluate significant differences between a LOESS
+#' model and a parametric alternative estimated with \code{lm}
+#' 
+#' 
+#' @param lmobj An object of class \code{lm}.
+#' @param loessobj An object of class \code{loess}.
+#' @param alpha Desired Type I error rate of test.
+#' @return Printed output describing the results of the test.
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(Prestige, package="carData")
+#' linmod <- lm(prestige ~ income, data=Prestige)
+#' lomod <- loess(prestige ~ income, data=Prestige)
+#' testLoess(linmod, lomod)
+#' 
 testLoess <- function(lmobj, loessobj, alpha=.05){
    n <- nrow(model.matrix(lmobj))
    if(n != loessobj$n){
@@ -2823,7 +4344,33 @@ else{
 }
 }
 
+
+
+#' Inspect a Variable in a Data Frame
+#' 
+#' Shows the variable label, factor levels (i.e., value labels) and frequency
+#' distribution for the specified variable.
+#' 
+#' 
+#' @aliases inspect inspect.data.frame inspect.tbl_df
+#' @param data A data frame of class \code{data.frame} or \code{tbl_df}.
+#' @param x A string identifying the name of the variable to be inspected.
+#' @param ... Other arguments to be passed down, currently unimplemented.
+#' @return A list with a variable label (if present), factor levels/value
+#' labels (if present) and a frequency distribution
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(france)
+#' inspect(france, "vote")
+#' 
 inspect <- function(data, x, ...)UseMethod("inspect")
+
+#' @method inspect tbl_df
+#' @export
 inspect.tbl_df <- function(data, x, ...){
   tmp <- data[[as.character(x)]]
   var.lab <- attr(tmp, "label")
@@ -2834,6 +4381,9 @@ inspect.tbl_df <- function(data, x, ...){
   out <- list(variable_label = var.lab, value_labels=t(t(val.labs)), freq_dist = tab)
   return(out)
 }
+
+##' @method inspect data.frame
+##' @export
 inspect.data.frame <- function(data, x, ...){
   var.lab <- attr(data, "var.label")[which(names(data) == x)]
   if(is.null(var.lab)){var.lab <- "No Label Found"}
@@ -2844,6 +4394,54 @@ inspect.data.frame <- function(data, x, ...){
   return(out)
 }
 
+
+
+#' Alternating Least Squares Optimal Scaling
+#' 
+#' Estimates the Alternating Least Squares Optimal Scaling (ALSOS) solution for
+#' qualitative dependent variables.
+#' 
+#' \code{alsosDV} estimates the Alternating Least Squares Optimal Scaling
+#' solution on the dependent variable.
+#' 
+#' @param form A formula with a dependent variable that will be optimally
+#' scaled
+#' @param data A data frame.
+#' @param maxit Maximum number of iterations of the optimal scaling algorithm.
+#' @param level Measurement level of the dependent variable 1=Nominal,
+#' 2=Ordinal
+#' @param process Nature of the measurement process: 1=discrete, 2=continuous.
+#' Basically identifies whether tied observations will continue to be tied in
+#' the optimally scaled variale (1) or whether the algorithm can untie the
+#' points (2) subject to the overall measurement constraints in the model.
+#' @param starts Optional starting values for the optimal scaling algorithm.
+#' @param ... Other arguments to be passed down to \code{lm}.
+#' @return A list with the following elements:
+#' 
+#' \item{result}{The result of the optimal scaling process}
+#' 
+#' \item{data}{The original data frame with additional columns adding the
+#' optimally scaled DV}
+#' 
+#' \item{iterations}{The iteration history of the algorithm}
+#' 
+#' \item{form}{Original formula}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @references
+#' 
+#' Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political
+#' Research: An Optimistic View} American Journal of Political Science 43(1):
+#' 271-301.
+#' 
+#' Young, Forrest.  1981.  \sQuote{Quantitative Analysis of Qualitative Data}
+#' Psychometrika, 46: 357-388.
+#' 
+#' Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression
+#' with Qualitative and Quantitative Variables: An Alternating Least Squares
+#' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
 alsosDV <- function(form, data, maxit=30, level=2, process=1, starts=NULL,...){
 	# process: 1 = discrete, 2 = continuous
 	# level: 1 = nominal, 2 = ordinal
@@ -2884,6 +4482,48 @@ alsosDV <- function(form, data, maxit=30, level=2, process=1, starts=NULL,...){
 	invisible(list(result=opscaled.dvar, data=tmpdata, iterations=record, formula=form))
 }
 
+
+
+#' Bayesian Alternating Least Squares Optimal Scaling
+#' 
+#' Estimates a Bayesian analog to the the Alternating Least Squares Optimal
+#' Scaling (ALSOS) solution for qualitative dependent variables.
+#' 
+#' \code{balsos} estimates a Bayesian analog to the Alternating Least Squares
+#' Optimal Scaling solution on the dependent variable.  This permits testing
+#' linearity assumptions on the original scale of the dependent variable.
+#' 
+#' @param formula A formula with a dependent variable that will be optimally
+#' scaled
+#' @param data A data frame.
+#' @param iter Number of samples for the MCMC sampler.
+#' @param chains Number of parallel chains to be run.
+#' @param alg Algorithm used to do sampling.  See \code{\link{stan}} for more
+#' details.
+#' @param ... Other arguments to be passed down to \code{stanfit}.
+#' @return A list with the following elements:
+#' 
+#' \item{fit}{The fitted stan output}
+#' 
+#' \item{y}{The dependent variable values used in the regression. }
+#' 
+#' \item{X}{The design matrix for the regression}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @references
+#' 
+#' Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political
+#' Research: An Optimistic View} American Journal of Political Science 43(1):
+#' 271-301.
+#' 
+#' Young, Forrest.  1981.  \sQuote{Quantitative Analysis of Qualitative Data}
+#' Psychometrika, 46: 357-388.
+#' 
+#' Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression
+#' with Qualitative and Quantitative Variables: An Alternating Least Squares
+#' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
 balsos <- function(formula, data, iter=2500, chains = 1, alg = c("NUTS", "HMC", "Fixed_param"), ...){
 alg <- match.arg(alg)
 stancode <- "data{
@@ -2936,6 +4576,30 @@ return(ret)
 }
 
 #figure out whether we need the col.alpha parameter in the panel.transci function.
+
+
+#' Plot LOESS curve.
+#' 
+#' Plots the loess curve of the fitted values against a focal x-variable. .
+#' 
+#' Plots the fitted loess curve potentially with point-wise confidence bounds.
+#' 
+#' @param x An object of class \code{loess}.
+#' @param ci Logical indicating whether point-wise confidence intervals should
+#' be included around the fitted curve.
+#' @param level The confidence level of the confidence intervals
+#' @param linear Logical indicating whether the OLS line should also be
+#' included.
+#' @param addPoints Logical indicating whether or not points should be added to
+#' the figure idtntifying the postion of individual observations.
+#' @param col.alpha Value for alpha channel of the RGB color palette.
+#' @param ... Other arguments to be passed down to \code{xyplot}.
+#' @return A plot.
+#' @method plot loess
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE, col.alpha=.5){
     alpha <- (1-level)/2
     tmp <- data.frame(x=x$x, y=x$y)
@@ -2982,6 +4646,21 @@ plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE
         trellis.unfocus()
     }
 }
+
+
+#' Estimate Derivatives of LOESS Curve.
+#' 
+#' Estimates the first derivatives of the LOESS curve.
+#' 
+#' 
+#' @param obj An object of class \code{loess}.
+#' @param delta Small change to be induced to estimate derivative.
+#' @return A vector of first derivative values evaluated at each original
+#' x-value.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 loessDeriv <- function(obj, delta=.00001){
     newdf <- data.frame(y = obj$y)
     newdf[[obj$xnames[1]]] <- obj$x
@@ -2992,6 +4671,25 @@ loessDeriv <- function(obj, delta=.00001){
     deriv
 }
 
+
+
+#' Regions of Statistical Significance in Interactions
+#' 
+#' Calculates the regions of statistical significance in interaction and
+#' identifies the points at which the statistical significance of conditional
+#' coefficients changes.
+#' 
+#' 
+#' @param obj A model of class \code{glm} or class \code{lm}.
+#' @param vars A character vector of the names of the two variables involved in
+#' the interaction.
+#' @param alpha Critical p-value of the test.
+#' @return Printed output that identifies the change-points in statistical
+#' significance.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 changeSig <- function(obj, vars, alpha=.05){
     v1 <- which(names(obj$coef) == vars[1])
     v2 <- which(names(obj$coef) == vars[2])
@@ -3066,6 +4764,23 @@ changeSig <- function(obj, vars, alpha=.05){
     invisible(res)
 }
 
+
+
+#' Testing Measurement Level Assumptions.
+#' 
+#' Uses the algorithm discussed in Armstrong and Jacoby 2018) to test the
+#' intervality of a variable scaled by the Bayesian ALSOS method.
+#' 
+#' 
+#' @param obj An object of class \code{balsos}.
+#' @param cor.type Type of correlation to be used in the p-value calculation.
+#' @return Printed output giving the Bayesian p-value evaluating the null that
+#' ther eis no interesting difference between the original values and the
+#' optimally scaled values.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 test.balsos <- function(obj, cor.type=c("pearson", "spearman")){
     cor.type <- match.arg(cor.type)
     chains <- as.matrix(obj$fit)
@@ -3079,6 +4794,27 @@ test.balsos <- function(obj, cor.type=c("pearson", "spearman")){
     sprintf("%.3f", mean(r1 >= r0))
 }
 
+
+
+#' Optimizing Yeo-Johnson Transformation
+#' 
+#' Uses \code{nlminb} to find the optimal Yeo-Johnson transformation parameters
+#' conditional on a parametric model specification.
+#' 
+#' 
+#' @param form A formula with a dependent variable that will be optimally
+#' scaled
+#' @param data A data frame.
+#' @param trans.vars A character string identifying the variables that should
+#' be transformed
+#' @param round.digits Number of digits to round the transformation parameters.
+#' @param ... Other arguments to be passed down to \code{lm}.
+#' @return A linear model object that was estimated on the optimally
+#' transformed variables.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 yj_trans <- function(form, data, trans.vars, round.digits = 3, ...){
 optim_yj <- function(pars, form, data, trans.vars, ...){
     form <- as.character(form)
@@ -3103,6 +4839,26 @@ optim_yj <- function(pars, form, data, trans.vars, ...){
     return(out)
 }
 
+
+
+#' Cross-validating Loess curve
+#' 
+#' Function provides the cross-validation error for the loess curve in a manner
+#' that is amenable to optimization of the span.
+#' 
+#' 
+#' @param span The span of the loess smoother.
+#' @param form The formula that identifies the model
+#' @param data A data frame containing the required variables.
+#' @param cost Cost function to be passed down to loess.
+#' @param K Number of folds for the cross-validation
+#' @param numiter Number of times over which the cv error will be aggregated
+#' @param which Return raw or corrected cv error
+#' @return The cross-validation error from the loess curve.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=TRUE),
     K = n, numiter = 100, which=c("corrected", "raw")) {
     sample0 <- function (x, ...)x[sample.int(length(x), ...)]
@@ -3138,6 +4894,29 @@ cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2
 
 
 
+
+
+#' Plot Results from BALSOS
+#' 
+#' Plots the optimally scaled points with posterior 95\% credible intervals.
+#' 
+#' 
+#' @param x Object of class \code{balsos}.
+#' @param freq Logical indicating whether you want the frequentist result
+#' plotted alongside the Bayesian result.
+#' @param offset If \code{freq=T}, the Bayesian points will be plotted at
+#' \code{x-offset} and the frequentist points will be plotted at
+#' \code{x+offset}.
+#' @param ... Other arguments to be passed down, currently not implement and
+#' may conflict with the lattice figure.  To change the figure the best advice
+#' would be to save the plot as an oject and use the \code{update} function to
+#' change its features.
+#' @return A lattice graph produce by a call to \code{xyplot}.
+#' @method plot balsos
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 plot.balsos <- function(x, ..., freq=TRUE, offset=.1){
 if(freq){
     Xdat <- as.data.frame(x$X[,-1])
@@ -3180,6 +4959,15 @@ else{
 
 }
 
+##' Summry method for Bayesian ALSOS
+##' 
+##' @description summary method for objects of class \code{balsos}
+##' @param x Object of class \code{balsos}
+##' @param ... Other arguments, currently unimplemented
+##' 
+##' @export
+##' 
+##' @method summary balsos
 summary.balsos <- function(object, ...){
     coef.inds <- grep("^b", names(object$fit))
     mins <- aggregate(1:length(object$y), list(object$y), min)
@@ -3205,6 +4993,49 @@ central <- function(x){
     return(cent)
 }
 
+
+
+#' Print Confidence Intervals for Predicted Probabilities and Their Differences
+#' 
+#' Print method for output from the \code{probci} function.
+#' 
+#' 
+#' @param x A object of class \code{diffci} produced by \code{\link{probci}}.
+#' @param digits How many digits to round output.
+#' @param filter A named list of values where the names indicate the variable
+#' to be filtered and the values in the vector indicate the values to include
+#' for the filtering variable.
+#' @param const A string identifying the name of the variable to be held
+#' constant across comparisons.
+#' @param onlySig Logical indicating whether all differes should be displayed
+#' or only those significant at the 95\% two-tailed level.
+#' @param ... Other arguments to be passed down to print, currently
+#' unimplemented.
+#' @return An data frame with the following variables: \item{variables}{The
+#' variables and the values at which they are held constant.  For example,
+#' \code{tmp1} would be the first value of \code{tmp} used in the probability
+#' calculation and \code{tmp2} would be the second value of \code{tmp} used in
+#' the probability calculation. } \item{pred_prob}{The difference in predicted
+#' probability given the following change in \code{X}:
+#' \code{tmp2}-\code{tmp1}.} \item{lower, upper}{The lower and upper 95\%
+#' confidence bounds.}
+#' @method print diffci
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(france)
+#' left.mod <- glm(voteleft ~ male + age + retnat + 
+#' 	poly(lrself, 2, raw=TRUE), data=france, family=binomial)
+#' out <- probci(left.mod, france, numQuantVals=3, 
+#'     changeX=c("retnat", "lrself"))
+#' print(out, filter=list(retnat=c("Better", "Worse")))
+#' print(out, filter=list(retnat=c("Better", "Worse")),
+#'      const="lrself")
+#' print(out, const="retnat")
+#' 
 print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FALSE){
     D <- x[[2]]
     if(!is.null(filter)){
@@ -3253,6 +5084,68 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
 }
 
 
+
+
+#' Confidence Intervals for Predicted Probabilities and Their Differences
+#' 
+#' Calculates predicted probabilities for any combination of x-variable values
+#' holding all other variables constant at either typical values (average case
+#' approach) or at observed values (average effect approach).
+#' 
+#' Calculates predicted probabilities for any combination of x-variable values
+#' holding all other variables constant at either typical values (average case
+#' approach) or at observed values (average effect approach).  The function
+#' uses a parametric bootstrap to provide generate confidence bounds for
+#' predicted probabilities and their differences.  The confidence intervals
+#' produced are raw percentile interviews (at the 5\% level).
+#' 
+#' @param obj A model of class \code{glm}, particularly those with
+#' \code{binomial} family.
+#' @param data Data frame used to estimate \code{obj}.
+#' @param .b A vector of coefficients to be passed down to the simulation.  If
+#' \code{NULL}, \code{coef()} will be used to obtain coefficients from
+#' \code{obj}.
+#' @param .vcov A parameter variance covariance matrix to be passed to the
+#' simulation.  If \code{NULL}, \code{vcov()} will be used to obtain the
+#' variance-covariance matrix of the parameters.
+#' @param changeX A vector of strings giving the names of variables for which
+#' changes are desired.
+#' @param numQuantVals For quantitative variables, if no x-values are specified
+#' in \code{xvals}, then \code{numQuantVals} gives the number of values used
+#' across the range of the variable.
+#' @param xvals A named list of values used to make the predictions.  The names
+#' in the list should correspond with the variable names specified in
+#' \code{changeX}.
+#' @param type Type of effect to be generated.  \code{aveEff} produces the
+#' average first difference across all observed values of \code{X}, while
+#' \code{aveCase} gives the first difference holding all other variables
+#' constant at typical values.
+#' @return An data frame with the following variables: \item{variables}{The
+#' variables and the values at which they are held constant.  For example,
+#' \code{tmp1} would be the first value of \code{tmp} used in the probability
+#' calculation and \code{tmp2} would be the second value of \code{tmp} used in
+#' the probability calculation. } \item{pred_prob}{The difference in predicted
+#' probability given the following change in \code{X}:
+#' \code{tmp2}-\code{tmp1}.} \item{lower, upper}{The lower and upper 95\%
+#' confidence bounds.}
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(france)
+#' left.mod <- glm(voteleft ~ male + age + retnat + 
+#' 	poly(lrself, 2, raw=TRUE), data=france, family=binomial)
+#' out <- probci(left.mod, france, changeX="retnat")
+#' out
+#' out2 <- probci(left.mod, france, changeX="lrself",
+#'     xvals = list(lrself = c(1,10)))
+#' out2
+#' out3 <- probci(left.mod, france, changeX=c("lrself", "retnat"), 
+#'     xvals = list(lrself = c(1,10)))
+#' out3
+#' 
 probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase")){
     type <- match.arg(type)
     vn <- changeX
@@ -3373,7 +5266,7 @@ probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=
 }
 
 
-
+##' @method plot diffci
 plot.diffci <- function(x, ..., xvar = NULL, condvars = NULL){
     D <- x$plot.data
     rg <- range(D[,c("lower", "upper")])
@@ -3435,6 +5328,57 @@ plot.diffci <- function(x, ..., xvar = NULL, condvars = NULL){
      }
 }
 
+
+
+#' Simulated F-test for Linear Interactions
+#' 
+#' Simluates the sampling distribution of the F statistic when comparing a
+#' linear intreraction model to a generalized additive model with a smooth over
+#' the two variables in the interaction.
+#' 
+#' In simple simulations, an F-test of a linear interaction relative to a
+#' smooth interaction with a GAM using a nominal .05 type I error rate, has an
+#' actual type I error rate of more than double the nominal rate (this tended
+#' to be in the low teens).  This function tries to build the F-distribution
+#' using simulation.  First, it uses the coefficients from the linear
+#' interaction model, multiplies them by the coefficients from the linear
+#' interaction model and for each iteration of the simulation, it creates the
+#' simulated dependent variable by adding a random error to the linear
+#' predictor with the same standard deviation as the residual standard
+#' deviation from the linear interaction model.  All of that is to say that
+#' this model has all of the same features as the linear interaction model,
+#' except that we are certain that this is the right model.  The algorithm then
+#' estimates both the linear interaction model and the GAM with a smooth
+#' interaction on the original X variables and the new simulated y variable.
+#' The F-test is performed and the F-statistic saved for each iteraction.  The
+#' algorithm then calculates the probability of being to the right of the
+#' observed F-statistic in the simulated F-distribution.
+#' 
+#' @param m1 An object of class \code{gam} estimated with the \code{mgcv}
+#' package.  This model should be linear in the interaction of the two
+#' x-variables of interest.
+#' @param m2 An object of class \code{gam} esimtated with the \code{mgcv}
+#' package.  This model should contain a smooth interaction.  For two
+#' continuous variables, this should be done with \code{te()} unless the
+#' variables are measured in the same units (e.g., spatial coordinates) in
+#' which case the usual thin-plate regression spline will work.  For
+#' categorical moderators, you should use the \code{s(x, by=D0)} and \code{s(x,
+#' by=D)} (for a dummy variable moderator, \code{D}, where \code{D0=1} when
+#' \code{D=0}.  Remember to include \code{D} as a parametric term in the model
+#' as well to account for the intercept difference between the two smooth
+#' terms.)
+#' @param data Data frame used to estimate both models
+#' @param R Number of simulated F values to create.
+#' @param ranCoef Logcial indicating whether the coefficients should be treated
+#' as fixed or whether they should be drawn from their implied sampling
+#' distribution for each iteration of the simulation.
+#' @return \item{obsF}{The observed F-statistic from the test on the original
+#' models.} \item{Fdist}{The \code{R} different F-statistics calculated at each
+#' iteration of the simulation.}
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 testGAMint <- function(m1, m2, data, R=1000, ranCoef=FALSE){
     v1 <- all.vars(formula(m1))
     v2 <- all.vars(formula(m2))
@@ -3469,6 +5413,59 @@ testGAMint <- function(m1, m2, data, R=1000, ranCoef=FALSE){
     return(list(obsF = obsF, Fdist = Fstat))
 }
 
+
+
+#' Conditional Effects Plots for Interactions in Linear Models
+#' 
+#' Generates two conditional effects plots for two interacted continuous
+#' covariates in linear models.
+#' 
+#' This function does the same thing as \code{\link{DAintfun2}}, but presents
+#' effects only at the mean of the conditioning variable and the mean +/- 1
+#' standard deviation.
+#' 
+#' @param obj A model object of class \code{lm}
+#' @param varnames A two-element character vector where each element is the
+#' name of a variable involved in a two-way interaction.
+#' @param varcov A variance-covariance matrix with which to calculate the
+#' conditional standard errors.  If \code{NULL}, it is calculated with
+#' \code{vcov(obj)}.
+#' @param name.stem A character string giving filename to which the appropriate
+#' extension will be appended
+#' @param xlab Optional vector of length two giving the x-labels for the two
+#' plots that are generated.  The first element of the vector corresponds to
+#' the figure plotting the conditional effect of the first variable in
+#' \code{varnames} given the second and the second element of the vector
+#' corresponds to the figure plotting the conditional effect of the second
+#' variable in \code{varnames} conditional on the first.
+#' @param ylab Optional vector of length two giving the y-labels for the two
+#' plots that are generated.  The first element of the vector corresponds to
+#' the figure plotting the conditional effect of the first variable in
+#' \code{varnames} given the second and the second element of the vector
+#' corresponds to the figure plotting the conditional effect of the second
+#' variable in \code{varnames} conditional on the first.
+#' @param plot.type One of \sQuote{pdf}, \sQuote{png}, \sQuote{eps} or
+#' \sQuote{screen}, where the one of the first three will produce two graphs
+#' starting with \code{name.stem} written to the appropriate file type and the
+#' third will produce graphical output on the screen.
+#' @return \item{graphs}{Either a single graph is printed on the screen (using
+#' \code{par(mfrow=c(1,2))}) or two figures starting with \code{name.stem} are
+#' produced where each gives the conditional effect of one variable based on
+#' the values of another.}
+#' @author Dave Armstrong
+#' @references Brambor, T., W.R. Clark and M. Golder.  (2006) Understanding
+#' Interaction Models: Improving Empirical Analyses.  Political Analysis 14,
+#' 63-82.\cr Berry, W., M. Golder and D. Milton.  (2012) Improving Tests of
+#' Theories Positing Interactions.  Journal of Politics.
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' data(InteractionEx)
+#' mod <- lm(y ~ x1*x2 + z, data=InteractionEx)
+#' DAintfun3(mod, c("x1", "x2"))
+#' 
 DAintfun3 <-
 function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
 	xlab = NULL, ylab=NULL, plot.type = "screen")
@@ -3572,11 +5569,29 @@ function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
         }
     }
 }
+
+##' Print method for glmChange objects
+##' 
+##' @description Print method for object of class \code{glmc2}. 
+##' 
+##' @param x Object of class \code{glmc2}
+##' @param ... Currently unimplemented. 
+##' @export
+##' @method print glmc2
 print.glmc2 <- function(x, ...){
     print.default(x$res)
     invisible(x)
 }
 
+##' Print method for intQualQuant objects. 
+##' 
+##' @description Print method for objects of class \code{iqq} calculated
+##' with the \code{intQualQuant} function.
+##' 
+##' @param x Object of class \code{iqq}
+##' @param ... Currently unimplmeneted
+##' @export 
+##' @method print iqq
 print.iqq <- function(x, ...){
     cat("Conditional Effect of ", x$mainvar, " given ", x$givenvar, "\n")
     printCoefmat(x$out, digits=4)
@@ -3587,12 +5602,16 @@ print.iqq <- function(x, ...){
 central <- function(x, ...){
     UseMethod("central")
 }
+
+##' @method central factor
 central.factor  <- function(x, ...){
     tab <- table(droplevels(x))
     res <- x[1]
     res[1] <- names(tab)[which.max(tab)]
     return(res)
 }
+
+##' @method central numeric
 central.numeric <- function(x, type=c("median", "mean"), ...){
     type <- match.arg(type)
     if(type == "median"){
@@ -3603,6 +5622,41 @@ central.numeric <- function(x, type=c("median", "mean"), ...){
     }
     return(res)
 }
+
+
+#' Calculate Cross-Derivative and its Variability
+#' 
+#' Calculates the cross-derivative required to evaluate interactions in
+#' logistic/probit regression models.
+#' 
+#' The function calculates the second difference as (Pr(Y=1|x1=max, x2=max) -
+#' Pr(Y=1|x1=min, x2=max)) - (Pr(Y=1|x1=max, x2=min) - Pr(Y=1|x1=min, x2=min)).
+#' The function uses a parametric bootstrap to calculate the sampling
+#' distribution of the second difference.
+#' 
+#' @aliases secondDiff summary.secdiff plot.secdiff
+#' 
+#' @param obj An object of class \code{glm} that will be used to find the
+#' cross-derivative.
+#' @param vars A vector of two variables to be used in calculating the
+#' derivative.
+#' @param data A data frame.
+#' @param method Indicate whether you want to use average marginal effects
+#' (AME) or marginal effects at representative values (MER).
+#' @param vals A named list of length 2 where each element gives the minimum
+#' and maximum values used in the calculation.
+#' @param typical A named vector of values at which to hold variables constant.
+#' @return A list with two elements:
+#' 
+#' \item{ave}{The average second difference in each iteration of the
+#' bootstrap.} \item{ind}{If \code{type == 'AME'}, \code{ind} is returned with
+#' the second difference and measures of uncertainty for each individual
+#' observation in the original dataset} \item{probs}{If \code{type == 'MER'},
+#' \code{probs} is returned with the full matrix of simulated predicted
+#' probabilities for the four conditions.}
+#'
+#' @export
+#' @author Dave Armstrong
 secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typical = NULL){
     disc <- sapply(vars, function(x)is.factor(data[[x]]))
     meth <- match.arg(method)
@@ -3737,12 +5791,23 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
     return(ret)
 }
 
-summary.secdiff <- function(x, level=0.95, digits=3, ...){
+##' Summary for Second Difference Objects
+##' 
+##' @description Summary method for objects of class \code{secdiff}. 
+##' 
+##' @param object An object of class \code{secdiff}
+##' @param level Confidence level for the confidence intervals
+##' @param digits Number of digits to print
+##' @param ... Other arguments to be passed down to \code{summary}. 
+##' 
+##' @method summary secdiff
+##' @export
+summary.secdiff <- function(object, ..., level=0.95, digits=3){
   ll <- (1-level)/2
   ul <- 1-ll
-  type <- ifelse("ind" %in% names(x), "Average Marginal Effect", "Marginal Effect at Typical Values")
+  type <- ifelse("ind" %in% names(object), "Average Marginal Effect", "Marginal Effect at Typical Values")
   cat("Second Difference Using the", type, "Approach\n\n")
-  s <- c(mean(x$ave), quantile(x$ave, c(ll, ul)))
+  s <- c(mean(object$ave), quantile(object$ave, c(ll, ul)))
   s <- sprintf(glue("%.{digits}f"), s)
   if(type == "Average Marginal Effect"){
     cat("Overall: \n")
@@ -3750,15 +5815,26 @@ summary.secdiff <- function(x, level=0.95, digits=3, ...){
   cat("Average Second Difference: ", s[1], ", ", level*100, "% CI: (", s[2], ",", s[3], ")\n\n", sep="")
   if(type == "Average Marginal Effect"){
     cat("Individual:\n")
-  sigpos <- sum(x$ind$lower > 0)
-  signeg <- sum(x$ind$upper < 0)
-  insig <- sum(x$ind$lower <=0 & x$ind$upper >=0)
+  sigpos <- sum(object$ind$lower > 0)
+  signeg <- sum(object$ind$upper < 0)
+  insig <- sum(object$ind$lower <=0 & object$ind$upper >=0)
   cat("Significant Negative Individual Second Differences:", signeg, "\n")
   cat("Significant Positive Individual Second Differences:", sigpos, "\n")
   cat("Inignificant Individual Second Differences:", insig, "\n")
   }
 }
 
+
+##' Plotting Method for Second Difference Objects
+##' 
+##' @description Plots the results of the \code{secondDiff} function.
+##' 
+##' @param x An object of class \code{secdiff} 
+##' @param level The confidence level of the confidence interval(s)
+##' @param ... Other arguments to be passed down, currently not implemented. 
+##' 
+##' @method plot secdiff
+##' @export
 plot.secdiff <- function(x, level=.95, ...){
   ll <- (1-level)/2
   ul <- 1-ll
@@ -3766,9 +5842,10 @@ plot.secdiff <- function(x, level=.95, ...){
   s <- c(mean(x$ave), quantile(x$ave, c(ll, ul)))
   ave.df <- data.frame(difference = s[1], lower=s[2], upper=s[3])
   if(!("ind" %in% names(x))){
+    ave.df$x <- factor(1, levels=1, labels="Average")
     g <- ggplot(ave.df) + 
-      geom_point(aes(y=difference, x=factor(1, levels=1, labels="Average"))) + 
-      geom_segment(aes(x=1, xend=1, y=lower, yend=upper)) + 
+      geom_point(aes_string(y="difference", x="x")) + 
+      geom_segment(aes_string(x="x", xend="x", y="lower", yend="upper")) + 
       theme_bw() + 
       labs(x="", y="Second Difference") + 
       ggtitle(glue("Plot of Second Differences\n{type} Approach"))
@@ -3781,12 +5858,12 @@ plot.secdiff <- function(x, level=.95, ...){
     w <- which.min(d)
     ave.df <- data.frame(secddiff = s[1], lower=s[2], upper=s[3], obs=w)
     g <- ggplot(ind.df) + 
-      geom_point(aes(y=secddiff, x=obs), size=.5) + 
-      geom_segment(aes(x=obs, xend=obs, y=lower, yend=upper), 
+      geom_point(aes_string(y="secddiff", x="obs"), size=.5) + 
+      geom_segment(aes_string(x="obs", xend="obs", y="lower", yend="upper"), 
                    size=.25, col="gray75", alpha=.5) + 
       geom_hline(aes(yintercept=0), lty=2, size=.75) + 
-      geom_point(data=ave.df, aes(y=secddiff, x=obs), size=.75, col="red") +
-      geom_segment(data=ave.df, aes(x=obs, xend=obs, y=lower, yend=upper), 
+      geom_point(data=ave.df, aes_string(y="secddiff", x="obs"), size=.75, col="red") +
+      geom_segment(data=ave.df, aes_string(x="obs", xend="obs", y="lower", yend="upper"), 
                    size=1, col="red", alpha=.5) +
       theme_bw() + 
       labs(x="", y="Second Difference") + 
@@ -3795,6 +5872,28 @@ plot.secdiff <- function(x, level=.95, ...){
 }
 
 
+
+
+#' Plot Effects of Removing Outliers
+#' 
+#' Plots the effect of a variable sequentially removing outlying observations.
+#' 
+#' 
+#' @param obj An object of class \code{glm} that will be used to plot the
+#' outlier removed lines.
+#' @param var A character string giving the name of the variable to be used.
+#' @param data A data frame.
+#' @param stat Which statistic to use to evaluate \sQuote{outlyingness}.
+#' @param nOut Number of outliers to be removed.
+#' @param whichOut If not \code{NULL}, a vector of observation numbers to be
+#' removed manually, rather than using \code{stat}.
+#' @param cumulative Logical indicating whether the outliers should be removed
+#' cumulatively, or each one in turn, replacing the other outlying
+#' observations.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson"), nOut = 10, whichOut=NULL, cumulative=FALSE){
     stat <- match.arg(stat)
     if(is.null(whichOut)){
@@ -3862,6 +5961,34 @@ outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson
             }
     }
 
+
+
+#' Plot First Differences from Ordinal DV Model
+#' 
+#' Takes the output from \code{\link{ordChange}} and turns it into a plot.
+#' 
+#' 
+#' @param ordc The output from \code{ordChange}.
+#' @param plot Logical indicating whether a plot (if \code{TRUE}) or data (if
+#' \code{FALSE}) should be returned.
+#' @return Either a \code{lattice} plot or a \code{data.frame} depending on the
+#' specification of the \code{plot} argument.
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @examples
+#' 
+#' library(MASS)
+#' data(france)
+#' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
+#' typical.france <- data.frame(
+#' 	age = 35, 
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
+#' 	)
+#' oc.res <- ordChange(polr.mod, data=france, typical.dat=typical.france, sim=TRUE)	
+#' oc2plot(oc.res)
+#' 
 oc2plot <- function(ordc, plot=TRUE){
     tmpdat <- data.frame(
         var = rep(rownames(ordc$diffs$mean), ncol(ordc$diffs$mean)),
@@ -3885,10 +6012,31 @@ oc2plot <- function(ordc, plot=TRUE){
     }
 }
 
+
+
+#' Plog Probabilities by Group
+#' 
+#' Plots predicted probabilities by value of the dependent variable for
+#' proportional odds logistic regression and multinomial logistic regression
+#' models
+#' 
+#' Plots the predicted probabilities by value of the dependent variable.  Each
+#' panel only includes the observations that had the identified value of the
+#' dependent variable.
+#' 
+#' @aliases probgroup probgroup.polr probgroup.multinom
+#' @param obj Object of class \code{polr} or \code{multinom} where appropraite.
+#' @param ... Currently not implemented.
+#' @return A plot.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 probgroup <- function(obj, ...){
     UseMethod("probgroup")
 }
 
+##' @method probgroup polr
 probgroup.polr <- function(obj, ...){
     pr <- predict(obj, type="probs")
     y <- model.response(model.frame(obj))
@@ -3900,6 +6048,8 @@ probgroup.polr <- function(obj, ...){
         layout=c(ly,1), xlab="Predicted Probabilities",
         par.settings=list(strip.background=list(col="white"))))
 }
+
+##' @method probgroup multinom
 probgroup.multinom <- function(obj, ...){
     pr <- predict(obj, type="probs")
     y <- model.response(model.frame(obj))
@@ -3913,6 +6063,28 @@ probgroup.multinom <- function(obj, ...){
         par.settings=list(strip.background=list(col="white"))))
 }
 
+
+
+#' Scalar Measures of Fit for Poisson GLMs Models
+#' 
+#' Calculates scalar measures of fit for models with count dependent variables
+#' along the lines described in Long (1997) and Long and Freese (2005).
+#' 
+#' \code{poisfit} calculates scalar measures of fit (many of which are
+#' pseudo-R-squared measures) to describe how well a model fits data with a
+#' count dependent variable.
+#' 
+#' @param obj A model of class \code{glm} with \code{family=poisson}.
+#' @return A named vector of scalar measures of fit
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @references Long, J.S.  1997.  Regression Models for Categorical and Limited
+#' Dependent Variables.  Thousand Oaks, CA: Sage.
+#' 
+#' Long, J.S. and J. Freese.  2005.  Regression Models for Categorical Outcomes
+#' Using Stata, 2nd ed.  College Station, TX: Stata Press.
 poisfit <- function(obj){
 	y <- model.response(model.frame(obj))
 	r2_mcf <- 1-(logLik(obj)/logLik(update(obj, y~1)))
@@ -3937,6 +6109,23 @@ poisfit <- function(obj){
 	invisible(res)
 }
 
+
+
+#' Make Hypothetical Predictions for Survey Data
+#' 
+#' Calculates survival probabilities for hypothetical data.
+#' 
+#' 
+#' @param l A named list where variable names are the names and values of the
+#' variables are the values.  Combinations will be made with
+#' \code{expand.grid}.
+#' @param obj A model object estimated with \code{survreg}.
+#' @param ... currently not implemented.
+#' @return A data frame.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 makeHypSurv <- function(l,obj, ...){
     tmp <- do.call(expand.grid, l)
     p <- seq(.99,0,by=-.01)
@@ -3950,6 +6139,24 @@ makeHypSurv <- function(l,obj, ...){
     return(plot.data)
 }
 
+
+
+#' Lag a time-series cross-sectional variables
+#' 
+#' Lags (or leads) a variable in a time-series corss-sectional dataset.
+#' 
+#' 
+#' @param dat A data frame.
+#' @param x A string identifying variable to be lagged.
+#' @param id A string identifying the name of the cross-sectional identifier.
+#' @param time A string identifying the name of the time variable.
+#' @param lagLength The length of the lag, use negative values for leading
+#' variables.
+#' @return A vector giving the lagged values of \code{x}.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
 tscslag <- function(dat, x, id, time, lagLength=1){
 	obs <- apply(dat[, c(id, time)], 1,
 	    paste, collapse=".")
@@ -3960,9 +6167,49 @@ tscslag <- function(dat, x, id, time, lagLength=1){
 	lagx
 }
 
+
+
+#' Test Transformations and Polynomials in Non-linear Models
+#' 
+#' Tests for model improvements for non-linear transformations and polynomials
+#' with Clarke's (2007) distribution-free test for non-nested models.
+#' 
+#' Three hypotheses are tested with this function.  The first is whether the
+#' original specification is preferred to the power transformation.  The second
+#' is whether the original specification is preferred to the polynomial model.
+#' The third is whether the power transformation is preferred to the polynomial
+#' model.  All tests are done with the Clarke test.
+#' 
+#' @aliases testNL testNL.glm testNL.lm
+#' @param obj Object of a supported class in which non-linear functional forms
+#' will be tested.
+#' @param var String giving name of variable to be tested.
+#' @param transPower The power used in the transformation.  For transformations
+#' in the range (-0.01, 0.01), the log transformation is used.
+#' @param transPower The name value of the power used in the transformation.
+#' @param polyOrder The order of the polynomial to be used.
+#' @param plot Logical indicating whether the effects should be plotted
+#' @param ... Currently not implemented.
+#' @return A plot or a data frame giving the results of the tests identified
+#' above.
+#' @author Dave Armstrong
+#' 
+#' @export
+#' 
+#' @references Kevin Clarke.  2007.  "A Simple Distribution-Free Test for
+#' Nonnested Hypotheses."  \emph{Political Analysis} 15(3): 347--363.
 testNL <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
   UseMethod("testNL")
 }
+
+##' Power Transformation Function
+##' 
+##' @description Power transformation function that treats everything with
+##' absolute power transform < .01 as the log transform.  
+##' @param x Vector of values to be transformed
+##' @param transPower The power of the transformation
+##' @return A vector of transformed values
+##' @export
 powerTrans <- function(x, transPower){
   if(abs(transPower) > .01){
     x <- I(x^transPower)
@@ -3972,6 +6219,9 @@ powerTrans <- function(x, transPower){
   x
 }
 
+##' @rdname testNL
+##' @export
+##' @method testNL glm
 testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
   res <- data.frame(Model1 = c("Original", "Original", "Power Transform"),
                     Model2 = c("Power Transform", "Polynomial", "Polynomial"),
@@ -4051,14 +6301,53 @@ testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
                         labels=c("Original", "Power", "Polynomial"))
     se3$x <- e3$x[[var]]
     plotData <- rbind(se1, rbind(se2, se3))
-    ggplot(plotData, aes(x=x, y=effect, ymin = lower, ymax=upper, fill=model)) +       geom_ribbon(colour=NA, alpha=.25) + geom_line(aes(colour=model)) +
-      theme_bw() +  theme(legend.position="bottom") + labs(x=var)
+    ggplot(plotData, aes_string(x="x", y="effect", ymin = "lower", 
+            ymax="upper", fill="model")) + 
+      geom_ribbon(colour=NA, alpha=.25) + 
+      geom_line(aes_string(colour="model")) +
+      theme_bw() +  
+      theme(legend.position="bottom") + 
+      labs(x=var)
 
   }
 }
+
+##' @rdname testNL
+##' @export
+##' @method testNL lm
 testNL.lm <- testNL.glm
 
-effect.logistf <- function(var, obj, data, ...){
+
+
+#' Plot Effects from Firth Logit
+#' 
+#' Plots the effect of a variable in a model estimated with Firth Logit.
+#' 
+#' The \code{effect.logistf} function calculates the effect (predicted
+#' probabilities) of a variable in a Firth logit model estimated with the
+#' \code{logistf} function.  The function estimates the analogous glm.
+#' It then replaces the coefficient vector in that model object with the Frith
+#' logit coefficients.  It also puts the variance-covariance matrix from the
+#' Firth logit in the model object and uses a custom extractor function in the
+#' \code{Effect} function to extract that variance-covariance matrix rather
+#' than the one usually extracted with \code{vcov}.  Note that variability and
+#' confidence intervals for the effects will not be calculated using profile
+#' likelihood as they are in the Firth logit, but will be calculated using the
+#' appropriate variance-covariance matrix.
+#' 
+#' @param var A character string giving the name of the variable whose effect
+#' is to be generated.
+#' @param obj An object of class \code{logistf}.
+#' @param data A data frame.
+#' @param ... Other arguments to be passed down to the \code{\link{Effect}}
+#' function.
+#' @return An object of class \code{eff} that can be used with other functions
+#' from the \code{effects} package.
+#' 
+#' @export
+#' 
+#' @author Dave Armstrong
+effect_logistf <- function(var, obj, data, ...){
   v <- function(obj, complete=FALSE)return(obj$var)
   form <- as.character(obj$formula)
   form <- as.formula(paste(form[2], form[3], sep=form[1]))
