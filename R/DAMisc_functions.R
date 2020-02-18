@@ -231,7 +231,7 @@ combTest <- function(obj){
     res <- cbind(r1, r2)
 	rownames(res) <- apply(combs, 2, paste, collapse="-")
 	colnames(res) <- c("Estimate", "p-value")
-	noquote(res)
+	print(res, quote=FALSE)
 }
 
 
@@ -1828,7 +1828,7 @@ print.ordChange <- function(x, ..., digits=3){
         out <- array(sprintf(paste("%0.", digits, "f", sep=""), diffs), dim=dim(diffs))
         dimnames(out) <- dimnames(diffs)
     }
-    noquote(out)
+    print(out, quote=FALSE)
 }
 
 
@@ -1942,7 +1942,7 @@ print.mnlfit <- function(x, ..., digits=3){
 	newx <- cbind(est, p)
 	dimnames(newx) <- dimnames(x$result)
 	cat("Fit Statistics\n")
-	print(noquote(newx))
+	print(newx, quote=FALSE)
 	if(exists("permres", x)){
 		permbase <- as.character(x$permres[,1])
 		permest <- sprintf(fmt, x$permres[,2])
@@ -1950,7 +1950,7 @@ print.mnlfit <- function(x, ..., digits=3){
 		newp <- cbind(permbase, permest, permp)
 		dimnames(newp) <- dimnames(x$permres)
 		cat("\nPermutations for Fagerland et. al\n")
-		print(noquote(newp))
+		print(newp, quote=FALSE)
 	}
 }
 
@@ -1961,7 +1961,7 @@ print.ordfit <- function(x,..., digits=3){
 	p <- gsub("NA", "", sprintf(fmt, x[,2]))
 	newx <- cbind(est, p)
 	dimnames(newx) <- dimnames(x)
-	print(noquote(newx[-(1:4), 1, drop=FALSE]))
+	print(newx[-(1:4), 1, drop=FALSE], quote=FALSE)
 }
 
 
@@ -3101,7 +3101,7 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=TRUE){
 		ifelse(pad[4] > 6,
 			paste(paste(rep(" ", pad[4]-6), collapse=""), "p-value", collapse=""),
 			"p-value"))
-	return(noquote(out))
+	print(out, quote=FALSE)
 }
 
 
@@ -3856,7 +3856,7 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 		rl <- gsub(" & ", ",", rl, fixed=TRUE)
 		if(!is.null(file)){writeLines(rl, con=file)}
 	}
-	return(noquote(rl))
+	print(rl, quote=FALSE)
 }
 
 
@@ -4295,7 +4295,7 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
       strres <- rbind(below, rep("", 10), above)
       rownames(strres)[targetdf] <- "   Target"
    }
-   return(noquote(strres))
+   print(strres, quote=FALSE)
 }
 
 
@@ -6105,7 +6105,7 @@ poisfit <- function(obj){
 	if("negbin" %in% class(obj)){res <- res[-(1:2), ]}
 	pres <- matrix(apply(res, 2, function(x)sprintf("%.3f", x)), ncol=2)
 	dimnames(pres) <- dimnames(res)
-	print(noquote(pres))
+	print(pres, quote=FALSE)
 	invisible(res)
 }
 
