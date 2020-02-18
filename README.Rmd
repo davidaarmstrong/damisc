@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 # DAMisc <img src="https://quantoid.net/files/images/damsticker.png" align="right" alt="" width="200" />
 
-The `DAMisc` package has evolved over the past decade to include many of the functions I use when teaching applied stats to social scientists.  I think many of the functions might be useful more broadly so I thought it would be worth discussing the functionality in a sort of thematic way here.  The functions do fall into a few different thems.  
+The `DAMisc` package has evolved over the past decade to include many of the functions I use when teaching applied stats to social scientists.  I think many of the functions might be useful more broadly so I thought it would be worth discussing the functionality in a sort of thematic way here.  The functions do fall into a few different themes.  
 
   - Functions that attempt to figure out whether and what kind of unmodeled non-linearities exist.  
   - Functions for investigating interactions in different settings (linear models and binomial GLMs).  
