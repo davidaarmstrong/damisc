@@ -1,7 +1,7 @@
 Package: DAMisc
 Type: Package
 Title: Dave Armstrong's Miscellaneous Functions
-Version: 1.5.2
+Version: 1.5.3
 Imports: lattice, grid, car, effects, rstan, gdata, ggplot2, MASS, nnet, splines, xtable, VGAM, boot, optiscale, fANCOVA, AICcmodavg, latticeExtra, coda, glue, clarkeTest
 Suggests: carData
 Authors@R: person("Dave", "Armstrong", email = "dave@quantoid.net", role = c("aut", "cre"))
