@@ -81,7 +81,6 @@ NULL
 #' @importFrom MASS mvrnorm polr kde2d
 #' @importFrom nnet multinom
 #' @importFrom splines bs
-#' @importFrom pscl zeroinfl
 #' @importFrom xtable xtable print.xtable
 #' @importFrom ggplot2 ggplot geom_point aes geom_segment 
 #' theme_bw labs ggtitle geom_hline geom_ribbon geom_line
