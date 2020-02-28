@@ -5963,7 +5963,7 @@ outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson
 #' @export
 #' 
 #' @examples
-#' 
+#' library(MASS)
 #' data(france)
 #' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 #' typical.france <- data.frame(

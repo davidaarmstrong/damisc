@@ -20,7 +20,7 @@ specification of the \code{plot} argument.
 Takes the output from \code{\link{ordChange}} and turns it into a plot.
 }
 \examples{
-
+library(MASS)
 data(france)
 polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 typical.france <- data.frame(
