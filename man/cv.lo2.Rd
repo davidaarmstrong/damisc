@@ -4,15 +4,8 @@
 \alias{cv.lo2}
 \title{Cross-validating Loess curve}
 \usage{
-cv.lo2(
-  span,
-  form,
-  data,
-  cost = function(y, yhat) mean((y - yhat)^2, na.rm = TRUE),
-  K = n,
-  numiter = 100,
-  which = c("corrected", "raw")
-)
+cv.lo2(span, form, data, cost = function(y, yhat) mean((y - yhat)^2,
+  na.rm = TRUE), K = n, numiter = 100, which = c("corrected", "raw"))
 }
 \arguments{
 \item{span}{The span of the loess smoother.}

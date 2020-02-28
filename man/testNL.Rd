@@ -18,13 +18,16 @@ will be tested.}
 
 \item{var}{String giving name of variable to be tested.}
 
-\item{transPower}{The name value of the power used in the transformation.}
+\item{transPower}{The power used in the transformation.  For transformations
+in the range (-0.01, 0.01), the log transformation is used.}
 
 \item{polyOrder}{The order of the polynomial to be used.}
 
 \item{plot}{Logical indicating whether the effects should be plotted}
 
 \item{...}{Currently not implemented.}
+
+\item{transPower}{The name value of the power used in the transformation.}
 }
 \value{
 A plot or a data frame giving the results of the tests identified

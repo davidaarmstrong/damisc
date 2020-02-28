@@ -4,16 +4,8 @@
 \alias{NKnotsTest}
 \title{Test of functional form assumption using B-splines}
 \usage{
-NKnotsTest(
-  form,
-  var,
-  data,
-  targetdf = 1,
-  degree = 3,
-  min.knots = 1,
-  max.knots = 10,
-  adjust = "none"
-)
+NKnotsTest(form, var, data, targetdf = 1, degree = 3, min.knots = 1,
+  max.knots = 10, adjust = "none")
 }
 \arguments{
 \item{form}{A formula detailing the model for which smoothing is to be

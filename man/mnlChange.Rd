@@ -4,14 +4,8 @@
 \alias{mnlChange}
 \title{Maximal First Differences for Multinomial Logistic Regression Models}
 \usage{
-mnlChange(
-  obj,
-  data,
-  typical.dat = NULL,
-  diffchange = c("range", "sd", "unit"),
-  sim = TRUE,
-  R = 1500
-)
+mnlChange(obj, data, typical.dat = NULL, diffchange = c("range", "sd",
+  "unit"), sim = TRUE, R = 1500)
 }
 \arguments{
 \item{obj}{A model object of class \code{multinom}.}

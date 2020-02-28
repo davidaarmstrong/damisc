@@ -4,14 +4,8 @@
 \alias{glmChange}
 \title{Maximal First Differences for Generalized Linear Models}
 \usage{
-glmChange(
-  obj,
-  data,
-  typical.dat = NULL,
-  diffchange = c("range", "sd", "unit"),
-  sim = FALSE,
-  R = 1000
-)
+glmChange(obj, data, typical.dat = NULL, diffchange = c("range", "sd",
+  "unit"), sim = FALSE, R = 1000)
 }
 \arguments{
 \item{obj}{A model object of class \code{glm}.}

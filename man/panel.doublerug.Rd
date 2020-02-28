@@ -4,16 +4,9 @@
 \alias{panel.doublerug}
 \title{Lattice panel function for two rug plots}
 \usage{
-panel.doublerug(
-  xa = NULL,
-  xb = NULL,
-  regular = TRUE,
-  start = if (regular) 0 else 0.97,
-  end = if (regular) 0.03 else 1,
-  x.units = rep("npc", 2),
-  lty = 1,
-  lwd = 1
-)
+panel.doublerug(xa = NULL, xb = NULL, regular = TRUE, start = if
+  (regular) 0 else 0.97, end = if (regular) 0.03 else 1,
+  x.units = rep("npc", 2), lty = 1, lwd = 1)
 }
 \arguments{
 \item{xa, xb}{Numeric vectors to be plotted.}

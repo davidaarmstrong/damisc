@@ -4,17 +4,8 @@
 \alias{DAintfun}
 \title{Surface Plots for Two-Way Interactions}
 \usage{
-DAintfun(
-  obj,
-  varnames,
-  theta = 45,
-  phi = 10,
-  xlab = NULL,
-  ylab = NULL,
-  zlab = NULL,
-  hcols = NULL,
-  ...
-)
+DAintfun(obj, varnames, theta = 45, phi = 10, xlab = NULL,
+  ylab = NULL, zlab = NULL, hcols = NULL, ...)
 }
 \arguments{
 \item{obj}{A model object of class \code{lm}}

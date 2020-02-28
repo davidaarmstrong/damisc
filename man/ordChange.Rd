@@ -5,14 +5,8 @@
 \alias{print.ordChange}
 \title{Maximal First Differences for Proportional Odds Logistic Regression Models}
 \usage{
-ordChange(
-  obj,
-  data,
-  typical.dat = NULL,
-  diffchange = c("range", "sd", "unit"),
-  sim = TRUE,
-  R = 1500
-)
+ordChange(obj, data, typical.dat = NULL, diffchange = c("range", "sd",
+  "unit"), sim = TRUE, R = 1500)
 }
 \arguments{
 \item{obj}{A model object of class \code{polr}.}
