@@ -60,8 +60,8 @@ data(france)
 mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
 typical.france <- data.frame(
 	age = 35, 
-	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
-	)
+	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
+	stringsAsFactors=TRUE)
 mnlChange(mnl.mod, data=france, typical.dat=typical.france)	
 
 }
