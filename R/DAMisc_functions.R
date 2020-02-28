@@ -1479,7 +1479,7 @@ mnlChange2 <-
 #' calculates the change in predictions for a change from the level with the
 #' smallest prediction to the level with the largest prediction.
 #' 
-#' @aliases ordChange print.ordChange
+#' @aliases ordChange 
 #' 
 #' @param obj A model object of class \code{polr}.
 #' @param data Data frame used to fit \code{object}.
@@ -3100,7 +3100,7 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=TRUE){
 #' conditioning variable.
 #' 
 #' 
-#' @aliases intQualQuant print.iqq
+#' @aliases intQualQuant 
 #' @param obj An object of class \code{lm}.
 #' @param vars A vector of two variable names giving the two quantitative
 #' variables involved in the interaction.  These variables must be involved in
@@ -3857,7 +3857,7 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 #' observed values, for objects of class \code{glm}.  This function works with
 #' polynomials specified with the \code{poly} function.
 #' 
-#' @aliases glmChange2 print.glmc2
+#' @aliases glmChange2
 #' @param obj A model object of class \code{glm}.
 #' @param varname Character string giving the variable name for which average
 #' effects are to be calculated.
@@ -4947,7 +4947,7 @@ else{
 ##' Summry method for Bayesian ALSOS
 ##' 
 ##' @description summary method for objects of class \code{balsos}
-##' @param x Object of class \code{balsos}
+##' @param object Object of class \code{balsos}
 ##' @param ... Other arguments, currently unimplemented
 ##' 
 ##' @export
@@ -5619,7 +5619,7 @@ central.numeric <- function(x, type=c("median", "mean"), ...){
 #' The function uses a parametric bootstrap to calculate the sampling
 #' distribution of the second difference.
 #' 
-#' @aliases secondDiff summary.secdiff plot.secdiff
+#' @aliases secondDiff 
 #' 
 #' @param obj An object of class \code{glm} that will be used to find the
 #' cross-derivative.
@@ -6171,7 +6171,6 @@ tscslag <- function(dat, x, id, time, lagLength=1){
 #' @param var String giving name of variable to be tested.
 #' @param transPower The power used in the transformation.  For transformations
 #' in the range (-0.01, 0.01), the log transformation is used.
-#' @param transPower The name value of the power used in the transformation.
 #' @param polyOrder The order of the polynomial to be used.
 #' @param plot Logical indicating whether the effects should be plotted
 #' @param ... Currently not implemented.

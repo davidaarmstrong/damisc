@@ -26,8 +26,6 @@ in the range (-0.01, 0.01), the log transformation is used.}
 \item{plot}{Logical indicating whether the effects should be plotted}
 
 \item{...}{Currently not implemented.}
-
-\item{transPower}{The name value of the power used in the transformation.}
 }
 \value{
 A plot or a data frame giving the results of the tests identified

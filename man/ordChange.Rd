@@ -2,7 +2,6 @@
 % Please edit documentation in R/DAMisc_functions.R
 \name{ordChange}
 \alias{ordChange}
-\alias{print.ordChange}
 \title{Maximal First Differences for Proportional Odds Logistic Regression Models}
 \usage{
 ordChange(obj, data, typical.dat = NULL, diffchange = c("range", "sd",

@@ -2,7 +2,6 @@
 % Please edit documentation in R/DAMisc_functions.R
 \name{intQualQuant}
 \alias{intQualQuant}
-\alias{print.iqq}
 \title{Predictions for Factor-Numeric Interactions in Linear Models}
 \usage{
 intQualQuant(obj, vars, level = 0.95, varcov = NULL, labs = NULL,
