@@ -21,7 +21,7 @@ Takes the output from \code{\link{ordChange}} and turns it into a plot.
 }
 \examples{
 
-library(MASS)
+\dontrun{library(MASS)
 data(france)
 polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 typical.france <- data.frame(
@@ -30,7 +30,7 @@ typical.france <- data.frame(
 	)
 oc.res <- ordChange(polr.mod, data=france, typical.dat=typical.france, sim=TRUE)	
 oc2plot(oc.res)
-
+}
 }
 \author{
 Dave Armstrong

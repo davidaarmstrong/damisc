@@ -5964,7 +5964,7 @@ outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson
 #' 
 #' @examples
 #' 
-#' library(MASS)
+#' \dontrun{library(MASS)
 #' data(france)
 #' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 #' typical.france <- data.frame(
@@ -5973,7 +5973,7 @@ outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson
 #' 	)
 #' oc.res <- ordChange(polr.mod, data=france, typical.dat=typical.france, sim=TRUE)	
 #' oc2plot(oc.res)
-#' 
+#' }
 oc2plot <- function(ordc, plot=TRUE){
     tmpdat <- data.frame(
         var = rep(rownames(ordc$diffs$mean), ncol(ordc$diffs$mean)),
