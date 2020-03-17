@@ -6037,6 +6037,7 @@ probgroup <- function(obj, ...){
 }
 
 ##' @method probgroup polr
+##' @export
 probgroup.polr <- function(obj, ...){
     pr <- predict(obj, type="probs")
     y <- model.response(model.frame(obj))
@@ -6050,6 +6051,7 @@ probgroup.polr <- function(obj, ...){
 }
 
 ##' @method probgroup multinom
+##' @export
 probgroup.multinom <- function(obj, ...){
     pr <- predict(obj, type="probs")
     y <- model.response(model.frame(obj))
@@ -6087,11 +6089,19 @@ probgroup.multinom <- function(obj, ...){
 #' Using Stata, 2nd ed.  College Station, TX: Stata Press.
 poisfit <- function(obj){
 	y <- model.response(model.frame(obj))
-	r2_mcf <- 1-(logLik(obj)/logLik(update(obj, y~1)))
-	r2_mcfa <- 1-((logLik(obj) - obj$rank)/logLik(update(obj, y~1)))
-	g2 <- -2*(logLik(update(obj, y~1)) - logLik(obj))
+	if(family(mod)$family == "poisson"){
+	  nullMod <- glm(y ~ 1, family=poisson)
+	}else if(inherits(obj, "negbin")){
+	  nullMod <- glm.nb(y ~ 1)
+	} else{
+	  stop("Model must be either poisson or negative binomial")
+	}
+	llNull <- logLik(nullMod)
+	r2_mcf <- 1-(logLik(obj)/llNull)
+	r2_mcfa <- 1-((logLik(obj) - obj$rank)/llNull)
+	g2 <- -2*(llNull - logLik(obj))
 	r2_ml <- 1-exp(-g2/length(y))
-    r2cu <- (r2_ml)/(1-exp(2*logLik(update(obj, y~1))/length(y)))
+    r2cu <- (r2_ml)/(1-exp(2*llNull/length(y)))
 	res <- matrix(nrow=6, ncol=2)
 	colnames(res) <- c("Estimate", "p-value")
 	rownames(res) <- c("GOF (Pearson)", "GOF (Deviance)", "ML R2", "McFadden R2", "McFadden R2 (Adj)", "Cragg-Uhler(Nagelkerke) R2")

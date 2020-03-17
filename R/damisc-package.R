@@ -78,7 +78,7 @@ NULL
 #' @importFrom VGAM pgumbel
 #' @importFrom effects Effect effect
 #' @importFrom rstan stan
-#' @importFrom MASS mvrnorm polr kde2d
+#' @importFrom MASS mvrnorm polr kde2d glm.nb
 #' @importFrom nnet multinom
 #' @importFrom splines bs
 #' @importFrom pscl zeroinfl
