@@ -7,9 +7,9 @@
 \method{summary}{balsos}(object, ...)
 }
 \arguments{
-\item{...}{Other arguments, currently unimplemented}
+\item{object}{Object of class \code{balsos}}
 
-\item{x}{Object of class \code{balsos}}
+\item{...}{Other arguments, currently unimplemented}
 }
 \description{
 summary method for objects of class \code{balsos}

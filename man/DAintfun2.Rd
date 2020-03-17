@@ -4,22 +4,10 @@
 \alias{DAintfun2}
 \title{Conditional Effects Plots for Interactions in Linear Models}
 \usage{
-DAintfun2(
-  obj,
-  varnames,
-  varcov = NULL,
-  rug = TRUE,
-  ticksize = -0.03,
-  hist = FALSE,
-  hist.col = "gray75",
-  nclass = c(10, 10),
-  scale.hist = 0.5,
-  border = NA,
-  name.stem = "cond_eff",
-  xlab = NULL,
-  ylab = NULL,
-  plot.type = "screen"
-)
+DAintfun2(obj, varnames, varcov = NULL, rug = TRUE, ticksize = -0.03,
+  hist = FALSE, hist.col = "gray75", nclass = c(10, 10),
+  scale.hist = 0.5, border = NA, name.stem = "cond_eff",
+  xlab = NULL, ylab = NULL, plot.type = "screen")
 }
 \arguments{
 \item{obj}{A model object of class \code{lm}}

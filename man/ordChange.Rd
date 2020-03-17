@@ -2,17 +2,10 @@
 % Please edit documentation in R/DAMisc_functions.R
 \name{ordChange}
 \alias{ordChange}
-\alias{print.ordChange}
 \title{Maximal First Differences for Proportional Odds Logistic Regression Models}
 \usage{
-ordChange(
-  obj,
-  data,
-  typical.dat = NULL,
-  diffchange = c("range", "sd", "unit"),
-  sim = TRUE,
-  R = 1500
-)
+ordChange(obj, data, typical.dat = NULL, diffchange = c("range", "sd",
+  "unit"), sim = TRUE, R = 1500)
 }
 \arguments{
 \item{obj}{A model object of class \code{polr}.}
@@ -67,8 +60,8 @@ data(france)
 polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 typical.france <- data.frame(
 	age = 35, 
-	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
-	)
+	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
+	stringsAsFactors=TRUE)
 ordChange(polr.mod, data=france, typical.dat=typical.france, sim=FALSE)	
 
 }

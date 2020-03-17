@@ -4,7 +4,8 @@
 \alias{alsosDV}
 \title{Alternating Least Squares Optimal Scaling}
 \usage{
-alsosDV(form, data, maxit = 30, level = 2, process = 1, starts = NULL, ...)
+alsosDV(form, data, maxit = 30, level = 2, process = 1,
+  starts = NULL, ...)
 }
 \arguments{
 \item{form}{A formula with a dependent variable that will be optimally

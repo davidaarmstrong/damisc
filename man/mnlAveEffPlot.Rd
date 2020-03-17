@@ -4,7 +4,8 @@
 \alias{mnlAveEffPlot}
 \title{Average Effects Plot for Multinomial Logistic Regression}
 \usage{
-mnlAveEffPlot(obj, varname, data, R = 1500, nvals = 25, plot = TRUE, ...)
+mnlAveEffPlot(obj, varname, data, R = 1500, nvals = 25, plot = TRUE,
+  ...)
 }
 \arguments{
 \item{obj}{An object of class \code{multinom}.}

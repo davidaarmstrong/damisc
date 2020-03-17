@@ -4,15 +4,8 @@
 \alias{plot.loess}
 \title{Plot LOESS curve.}
 \usage{
-\method{plot}{loess}(
-  x,
-  ...,
-  ci = TRUE,
-  level = 0.95,
-  linear = FALSE,
-  addPoints = FALSE,
-  col.alpha = 0.5
-)
+\method{plot}{loess}(x, ..., ci = TRUE, level = 0.95, linear = FALSE,
+  addPoints = FALSE, col.alpha = 0.5)
 }
 \arguments{
 \item{x}{An object of class \code{loess}.}

@@ -2,7 +2,6 @@
 % Please edit documentation in R/DAMisc_functions.R
 \name{glmChange2}
 \alias{glmChange2}
-\alias{print.glmc2}
 \title{Maximal First Differences for Generalized Linear Models}
 \usage{
 glmChange2(obj, varname, data, change = c("unit", "sd"), R = 1500)

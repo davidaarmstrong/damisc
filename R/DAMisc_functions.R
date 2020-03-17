@@ -1,4 +1,3 @@
-## definition of pGumbel function taken from QRM 0.4-13
 pGumbel <- function (q, mu = 0, sigma = 1){
   stopifnot(sigma > 0)
   exp(-exp(-((q - mu)/sigma)))
@@ -61,7 +60,7 @@ function (mod)
         paste("LR(", mod$rank - 1, "):", sep = ""), "Prob > LR:",
         "McFadden's Adk R2:", "Cragg-Uhler (Nagelkerke) R2:",
         "Efron's R2:", "Adj Count R2:", "AIC:"), vals2 = sprintf("%3.3f",
-        res.col2))
+        res.col2), stringsAsFactors=TRUE)
     return(res.df)
 }
 
@@ -153,7 +152,7 @@ function (data, event, tvar, csunit, pad.ts = FALSE)
         }
     }
     sp <- lapply(1:length(sp), function(x) {
-        cbind(sp[[x]], data.frame(spell = spells(sp[[x]][[event]])))
+        cbind(sp[[x]], data.frame(spell = spells(sp[[x]][[event]])), stringsAsFactors=TRUE)
     })
     data <- do.call(rbind, sp)
     if (!pad.ts) {
@@ -616,7 +615,7 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
 #' 	poly(lrself, 2), data=france, family=binomial)
 #' typical.france <- data.frame(
 #' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
-#' 	age = 35
+#' 	age = 35, stringsAsFactors=TRUE
 #' 	)
 #' glmChange(left.mod, data=france, typical.dat=typical.france)
 #' 
@@ -675,8 +674,8 @@ function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), 
             meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE)
         }
     }
-    tmp.df <- do.call(data.frame, lapply(meds, function(x) rep(x,
-        length(meds) * 2)))
+    tmp.df <- do.call(data.frame, c(lapply(meds, function(x) rep(x,
+        length(meds) * 2)), stringsAsFactors=TRUE))
     if (!is.null(typical.dat)) {
         notin <- which(!(names(typical.dat) %in% names(tmp.df)))
         if (length(notin) > 0) {
@@ -700,8 +699,8 @@ function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), 
     diffs <- cbind(preds, apply(preds, 1, diff))
     colnames(diffs) <- c("min", "max", "diff")
     rownames(diffs) <- rn
-    minmax.mat <- do.call(data.frame, minmax)
-    minmax.mat <- rbind(do.call(data.frame, meds), minmax.mat)
+    minmax.mat <- do.call(data.frame, c(minmax, stringsAsFactors=TRUE))
+    minmax.mat <- rbind(do.call(data.frame, c(meds, stringsAsFactors=TRUE)), minmax.mat)
     rownames(minmax.mat) <- c("typical", "min", "max")
 	if(sim){
     preds <- predict(obj, newdata = tmp.df, type = "link", se.fit=TRUE)
@@ -912,7 +911,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     logit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     logit_t <- logitcc/logit_se
     out <- data.frame(int_eff = logitcc, linear = linear, phat = phat,
-        se_int_eff = logit_se, zstat = logit_t)
+        se_int_eff = logit_se, zstat = logit_t, stringsAsFactors=TRUE)
     invisible(out)
 }
 #' 
@@ -963,7 +962,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     logit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     logit_t <- logitcd/logit_se
     out <- data.frame(int_eff = logitcd, linear = linear, phat = phat,
-        se_int_eff = logit_se, zstat = logit_t)
+        se_int_eff = logit_se, zstat = logit_t, stringsAsFactors=TRUE)
     invisible(out)
 }
 #' 
@@ -1018,7 +1017,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     logit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     logit_t <- logitdd/logit_se
     out <- data.frame(int_eff = logitdd, linear = linear, phat = phat,
-        se_int_eff = logit_se, zstat = logit_t)
+        se_int_eff = logit_se, zstat = logit_t, stringsAsFactors=TRUE)
     invisible(out)
 }
 
@@ -1150,7 +1149,7 @@ mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 		mean = do.call("c", lapply(out.ci, function(x)x[1,])),
 		lower = do.call("c", lapply(out.ci, function(x)x[2,])),
 		upper = do.call("c", lapply(out.ci, function(x)x[3,])),
-		y = rep(ylev, length(out.ci))
+		y = rep(ylev, length(out.ci)), stringsAsFactors=TRUE
 		)
 	if(is.numeric(data[[varname]])){tmp$s <- rep(s, each=length(ylev))}
 	else{tmp$s <- factor(rep(1:length(s), each=length(ylev)), labels=s)}
@@ -1229,8 +1228,8 @@ mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 #' mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
 #' typical.france <- data.frame(
 #' 	age = 35, 
-#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
-#' 	)
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
+#' 	stringsAsFactors=TRUE)
 #' mnlChange(mnl.mod, data=france, typical.dat=typical.france)	
 #' 
 mnlChange <-
@@ -1286,8 +1285,8 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 		}
         meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE)
     }
-    tmp.df <- do.call(data.frame, lapply(meds, function(x) rep(x,
-        length(meds) * 2)))
+    tmp.df <- do.call(data.frame, c(lapply(meds, function(x) rep(x,
+        length(meds) * 2)), stringsAsFactors=TRUE))
     if (!is.null(typical.dat)) {
         notin <- which(!(names(typical.dat) %in% names(tmp.df)))
         if (length(notin) > 0) {
@@ -1333,8 +1332,8 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 	rownames(means) <- rownames(lower) <- rownames(upper) <- rownames(preds.min) <- rownames(preds.max) <- colnames(tmp.df)
 	diffs <- list(mean = means, lower=lower, upper=upper)
 }
-minmax.mat <- do.call(data.frame, minmax)
-minmax.mat <- rbind(do.call(data.frame, meds), minmax.mat)
+minmax.mat <- do.call(data.frame, c(minmax, stringsAsFactors=TRUE))
+minmax.mat <- rbind(do.call(data.frame, c(meds, stringsAsFactors=TRUE)), minmax.mat)
 rownames(minmax.mat) <- c("typical", "min", "max")
 
 ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min,
@@ -1480,7 +1479,7 @@ mnlChange2 <-
 #' calculates the change in predictions for a change from the level with the
 #' smallest prediction to the level with the largest prediction.
 #' 
-#' @aliases ordChange print.ordChange
+#' @aliases ordChange 
 #' 
 #' @param obj A model object of class \code{polr}.
 #' @param data Data frame used to fit \code{object}.
@@ -1513,8 +1512,8 @@ mnlChange2 <-
 #' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 #' typical.france <- data.frame(
 #' 	age = 35, 
-#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
-#' 	)
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
+#' 	stringsAsFactors=TRUE)
 #' ordChange(polr.mod, data=france, typical.dat=typical.france, sim=FALSE)	
 #' 
 ordChange <-
@@ -1572,8 +1571,8 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 		}
         meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE)
     }
-    tmp.df <- do.call(data.frame, lapply(meds, function(x) rep(x,
-        length(meds) * 2)))
+    tmp.df <- do.call(data.frame, c(lapply(meds, function(x) rep(x,
+        length(meds) * 2)), stringsAsFactors=TRUE))
     if (!is.null(typical.dat)) {
         notin <- which(!(names(typical.dat) %in% names(tmp.df)))
         if (length(notin) > 0) {
@@ -1651,8 +1650,8 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 	colnames(preds.min) <- colnames(preds.max) <- ylev
 	diffs <- list(mean = means, lower=lower, upper=upper)
 }
-minmax.mat <- do.call(data.frame, minmax)
-minmax.mat <- rbind(do.call(data.frame, meds), minmax.mat)
+minmax.mat <- do.call(data.frame, c(minmax, stringsAsFactors=TRUE))
+minmax.mat <- rbind(do.call(data.frame, c(meds, stringsAsFactors=TRUE)), minmax.mat)
 rownames(minmax.mat) <- c("typical", "min", "max")
 
 ret <- list(diffs = diffs, minmax = minmax.mat, minPred = preds.min,
@@ -1707,8 +1706,8 @@ invisible(ret)
 #' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 #' typical.france <- data.frame(
 #' 	age = 35, 
-#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
-#' 	)
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
+#' 	stringsAsFactors=TRUE)
 #' ordChange2(polr.mod, "age", data=france, diffchange="sd")	
 #' 
 ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
@@ -1920,7 +1919,7 @@ mnlfit <- function(obj, permute=FALSE){
 		Cg <- sum(c((obs-exp)^2/exp))
 		Cgrefdf <- (nlevels(g_fac)-2)*(ncol(pp)-1)
 		Cg_p <- pchisq(Cg, Cgrefdf, lower.tail=FALSE)
-		permres <- rbind(permres, data.frame(base = l[i], Cg = Cg, p = Cg_p))
+		permres <- rbind(permres, data.frame(base = l[i], Cg = Cg, p = Cg_p, stringsAsFactors=TRUE))
 		}
 	}
 
@@ -2041,7 +2040,7 @@ ordfit <- function(obj){
 	# for(i in 1:length(levels(pats))){
 	# 	w <- which(pats == levels(pats)[i])
 	# 	tmpg <- cut(s[w], breaks=2)
-	# 	tmpdat <- data.frame(obs = y[w], expect = predcat[w])
+	# 	tmpdat <- data.frame(obs = y[w], expect = predcat[w], stringsAsFactors=TRUE)
 	# 	m1 <- apply(tmpdat[which(tmpg == levels(tmpg)[1]), ], 2, function(x)table(factor(x, levels=levels(y))))
 	# 	combcountPR <- combcountPR + combcount(m1)
 	# 	lt51 <- sum(m1[,2] < 5)
@@ -2076,7 +2075,7 @@ ordfit <- function(obj){
 	# refdf <- (2*nlevels(pats) -1)*(ncol(pp)-1) - length(facs) - 1
 	# prchi2_p <- pchisq(prchi2, refdf, lower.tail=F)
 	# prD_p <- pchisq(prD, refdf, lower.tail=F)
-	# tmp <- data.frame(y = y, exp = predcat, g = g_fac)
+	# tmp <- data.frame(y = y, exp = predcat, g = g_fac, stringsAsFactors=TRUE)
 	# tabs <- by(tmp[,c("y", "exp")], list(tmp$g), apply, 2, function(x)table(factor(x, levels=levels(y))))
 	#
 	# combk <- sum(sapply(tabs, combcount))
@@ -2225,8 +2224,8 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, retur
 		mean = c(m),
 		lower = c(l),
 		upper = c(u),
-		y = rep(obj$lev, each = length(s))
-		)
+		y = rep(obj$lev, each = length(s)), 
+		stringsAsFactors=TRUE)
 	if(is.numeric(data[[varname]])){tmp$s <- s}
 	else{tmp$s <- factor(1:length(s), labels=s)}
 		if(plot){
@@ -2287,7 +2286,7 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, retur
 #' counts <- c(18,17,15,20,10,20,25,13,12)
 #' outcome <- gl(3,1,9)
 #' treatment <- gl(3,3)
-#' print(d.AD <- data.frame(treatment, outcome, counts))
+#' print(d.AD <- data.frame(treatment, outcome, counts, stringsAsFactors=TRUE))
 #' glm.D93 <- glm(counts ~ outcome + treatment, family=poisson())
 #' poisGOF(glm.D93)
 #' 
@@ -2625,7 +2624,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     probit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     probit_t <- probitcc/probit_se
     out <- data.frame(int_eff = probitcc, linear = linear, phat = phat,
-        se_int_eff = probit_se, zstat = probit_t)
+        se_int_eff = probit_se, zstat = probit_t, stringsAsFactors=TRUE)
     invisible(out)
 }
 #' 
@@ -2672,7 +2671,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     probit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     probit_t <- probitcd/probit_se
     out <- data.frame(int_eff = probitcd, linear = linear, phat = phat,
-        se_int_eff = probit_se, zstat = probit_t)
+        se_int_eff = probit_se, zstat = probit_t, stringsAsFactors=TRUE)
     invisible(out)
 }
 #' 
@@ -2729,7 +2728,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     probit_se <- sqrt(diag(mat123 %*% vcov(obj) %*% t(mat123)))
     probit_t <- probitdd/probit_se
     out <- data.frame(int_eff = probitdd, linear = linear, phat = phat,
-        se_int_eff = probit_se, zstat = probit_t)
+        se_int_eff = probit_se, zstat = probit_t, stringsAsFactors=TRUE)
     invisible(out)
 }
 
@@ -2772,7 +2771,7 @@ function (dat, str)
         vlat <- "variable.labels"
     }
     ind <- sort(union(grep(str, attr(dat, vlat), ignore.case = TRUE), grep(str, names(dat), ignore.case = TRUE)))
-    vldf <- data.frame(ind = ind, label = attr(dat, vlat)[ind])
+    vldf <- data.frame(ind = ind, label = attr(dat, vlat)[ind], stringsAsFactors=TRUE)
     rownames(vldf) <- names(dat)[ind]
     vldf
 }
@@ -2784,7 +2783,7 @@ function (dat, str)
 {
     vlat <- unlist(sapply(1:ncol(dat), function(i)attr(dat[[i]], "label")))
     ind <- sort(union(grep(str, vlat, ignore.case = TRUE), grep(str, names(dat), ignore.case = TRUE)))
-    vldf <- data.frame(ind = ind, label = vlat[ind])
+    vldf <- data.frame(ind = ind, label = vlat[ind], stringsAsFactors=TRUE)
     rownames(vldf) <- names(dat)[ind]
     vldf
 }
@@ -2867,20 +2866,6 @@ function (object, coefs, n.coef)
 #' 
 #' @export
 #' 
-#' @examples
-#' 
-#' library(pscl)
-#' ## Example from the help file for zeroinfl in the pscl package
-#' data("bioChemists", package = "pscl")
-#' fm_zinb <- zeroinfl(art ~ fem + mar + kid5 + phd + ment |
-#'     fem + mar + kid5 + phd + ment, data = bioChemists, dist = "negbin")
-#' typical.bioChem <- data.frame(
-#' 	kid5 = 2,
-#' 	mar = factor(1, levels=1:2, labels=levels(bioChemists$mar))
-#' 	)
-#' ziChange(fm_zinb, data=bioChemists, typical.dat=typical.bioChem, type="zero")	
-#' ziChange(fm_zinb, data=bioChemists, typical.dat=typical.bioChem, type="count")	
-#' 
 ziChange <-
 function (obj, data, typical.dat = NULL, type = "count")
 {
@@ -2930,8 +2915,8 @@ function (obj, data, typical.dat = NULL, type = "count")
         minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = TRUE)
         meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE)
     }
-    tmp.df <- do.call(data.frame, lapply(meds, function(x) rep(x,
-        length(meds) * 2)))
+    tmp.df <- do.call(data.frame, c(lapply(meds, function(x) rep(x,
+        length(meds) * 2)), stringsAsFactors=TRUE))
     if (!is.null(typical.dat)) {
         notin <- which(!(names(typical.dat) %in% names(tmp.df)))
         if (length(notin) > 0) {
@@ -3115,7 +3100,7 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=TRUE){
 #' conditioning variable.
 #' 
 #' 
-#' @aliases intQualQuant print.iqq
+#' @aliases intQualQuant 
 #' @param obj An object of class \code{lm}.
 #' @param vars A vector of two variable names giving the two quantitative
 #' variables involved in the interaction.  These variables must be involved in
@@ -3288,8 +3273,8 @@ dat <- data.frame(
 	fit = do.call("c", effs),
 	se.fit = do.call("c", se.effs),
 	x = rep(quantseq, length(A.list)),
-	contrast = rep(names(A.list), each=n)
-	)
+	contrast = rep(names(A.list), each=n), 
+	stringsAsFactors=TRUE)
 level <- level + ((1-level)/2)
 dat$lower <- dat$fit - qt(level,
 	obj$df.residual)*dat$se.fit
@@ -3361,7 +3346,7 @@ if(type == "slopes"){
 	colnames(qres) <- c("B", "SE(B)", "t-stat", "Pr(>|t|)")
 	rownames(qres) <- faclevs
 	names(qeff) <- faclevs
-	res <- list(out = data.frame(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv), varcor = qvar, mainvar = quantvar, givenvar = facvar)
+	res <- list(out = data.frame(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv, stringsAsFactors=TRUE), varcor = qvar, mainvar = quantvar, givenvar = facvar)
     class(res) <- "iqq"
 	print(res)
 }
@@ -3380,7 +3365,7 @@ if(plot){
 	le <- as.list(by(mf[[quantvar]], list(mf[[facvar]]), function(x)x))
 
 	edf <- data.frame(fit = e$fit, x = e$x[,quantvar],
-	   fac = e$x[,facvar], se = e$se)
+	   fac = e$x[,facvar], se = e$se, stringsAsFactors=TRUE)
 	edf$lower <- edf$fit - qt(.975, obj$df.residual)*edf$se
 	edf$upper <- edf$fit + qt(.975, obj$df.residual)*edf$se
 
@@ -3652,7 +3637,7 @@ crTest <- function(model, adjust.method="none", cat = 5, var=NULL, span.as = TRU
         }
     	if(!is.null(colnames(tmp.x))){colnames(tmp.x) <- "x"}
     	terms.list[[i]] <- data.frame(x=tmp.x,
-    		y = residuals.glm(model, "partial")[,terms[i]])
+    		y = residuals.glm(model, "partial")[,terms[i]], stringsAsFactors=TRUE)
     }
 if(!span.as){
     lo.mods <- lapply(terms.list, function(z)loess(y ~ x, data=z, span=span, ...))
@@ -3676,7 +3661,7 @@ out <- data.frame(
 	DFnum = sprintf("%.3f", num.df),
 	DFdenom = sprintf("%.3f", denom.df),
 	F = sprintf("%.3f", F.stats),
-	p = sprintf("%.3f", pvals))
+	p = sprintf("%.3f", pvals), stringsAsFactors=TRUE)
 rownames(out) <- terms
 return(out)
 }
@@ -3775,11 +3760,11 @@ if(length(num.ind) == 0){stop("No Numeric Variables in Data Frame")}
 num.dat <- data[,num.ind]
 nonnum.dat <- data[,nn.ind]
 if(is.null(dimnames(num.dat))){
-	num.dat <- data.frame(num.dat)
+	num.dat <- data.frame(num.dat, stringsAsFactors=TRUE)
 	names(num.dat) <- names(data)[num.ind]
 }
 if(is.null(dimnames(nonnum.dat))){
-	nonnum.dat <- data.frame(nonnum.dat)
+	nonnum.dat <- data.frame(nonnum.dat, stringsAsFactors=TRUE)
 	names(nonnum.dat) <- names(data)[nn.ind]
 }
 newdat <- cbind(as.data.frame(scale(num.dat)), as.data.frame(nonnum.dat))
@@ -3872,7 +3857,7 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 #' observed values, for objects of class \code{glm}.  This function works with
 #' polynomials specified with the \code{poly} function.
 #' 
-#' @aliases glmChange2 print.glmc2
+#' @aliases glmChange2
 #' @param obj A model object of class \code{glm}.
 #' @param varname Character string giving the variable name for which average
 #' effects are to be calculated.
@@ -4602,13 +4587,13 @@ return(ret)
 #' @author Dave Armstrong
 plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE, col.alpha=.5){
     alpha <- (1-level)/2
-    tmp <- data.frame(x=x$x, y=x$y)
+    tmp <- data.frame(x=x$x, y=x$y, stringsAsFactors=TRUE)
     xn <- as.character(formula(x$call)[[3]])
     yn <- as.character(formula(x$call)[[2]])
     names(tmp) <- c(xn, yn)
 #    plot(formula(x$call), data=tmp, ...)
     xs <- seq(min(x$x), max(x$x), length=100)
-    tmp2 <- data.frame(x=xs, y=rep(0, length(xs)))
+    tmp2 <- data.frame(x=xs, y=rep(0, length(xs)), stringsAsFactors=TRUE)
     names(tmp2) <- names(tmp)
     preds <- predict(x, newdata=tmp2, se=TRUE)
     crit <- abs(qnorm(alpha))
@@ -4616,7 +4601,7 @@ plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE
         lower=preds$fit - crit*preds$se.fit,
         upper = preds$fit + crit*preds$se.fit,
         x = xs,
-        g = "loess")
+        g = "loess", stringsAsFactors=TRUE)
     if(!linear){
      p <-    xyplot(fit ~ x, data=plot.dat, groups=plot.dat$g, ...,
             lower=plot.dat$lower,
@@ -4662,7 +4647,7 @@ plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE
 #' 
 #' @author Dave Armstrong
 loessDeriv <- function(obj, delta=.00001){
-    newdf <- data.frame(y = obj$y)
+    newdf <- data.frame(y = obj$y, stringsAsFactors=TRUE)
     newdf[[obj$xnames[1]]] <- obj$x
     fit1 <- predict(obj, newdata=newdf, se=TRUE)
     newdf[[obj$xnames[1]]] <- obj$x + delta
@@ -4937,7 +4922,7 @@ newdf <- data.frame(
     os = s$statistics[,1],
     lower = s$quantiles[,1],
     upper = s$quantiles[,5],
-    orig = sort(unique(x$y))
+    orig = sort(unique(x$y), stringsAsFactors=TRUE)
 )
 tp <- trellis.par.get()$superpose.symbol
 if(!freq){
@@ -4962,7 +4947,7 @@ else{
 ##' Summry method for Bayesian ALSOS
 ##' 
 ##' @description summary method for objects of class \code{balsos}
-##' @param x Object of class \code{balsos}
+##' @param object Object of class \code{balsos}
 ##' @param ... Other arguments, currently unimplemented
 ##' 
 ##' @export
@@ -5187,7 +5172,7 @@ probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=
         others <- av[-which(av %in% vn)]
         othervals <- lapply(1:length(others), function(i)central(data[[others[i]]]))
         names(othervals) <- others
-        otherdat <- do.call(data.frame, othervals)
+        otherdat <- do.call(data.frame, c(othervals, stringsAsFactors=TRUE))
         alldat <- do.call(expand.grid, c(vals, otherdat))
         X <- model.matrix(formula(obj), data=alldat)
         probs <- t(family(obj)$linkinv(X %*% bmat))
@@ -5634,7 +5619,7 @@ central.numeric <- function(x, type=c("median", "mean"), ...){
 #' The function uses a parametric bootstrap to calculate the sampling
 #' distribution of the second difference.
 #' 
-#' @aliases secondDiff summary.secdiff plot.secdiff
+#' @aliases secondDiff 
 #' 
 #' @param obj An object of class \code{glm} that will be used to find the
 #' cross-derivative.
@@ -5758,12 +5743,12 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
     indp <- apply(secdiff, 1, function(x)mean(x > 0))
     indp <- ifelse(indp > .5, 1-indp, indp)
     indci <- t(apply(secdiff, 1, quantile, c(.025,.975)))
-    ret <- list(ave = avesecdiff, ind=data.frame(secddiff = indsecdiff, pval = indp, lower=indci[,1], upper=indci[,2]))
+    ret <- list(ave = avesecdiff, ind=data.frame(secddiff = indsecdiff, pval = indp, lower=indci[,1], upper=indci[,2], stringsAsFactors=TRUE))
   }
   else{
     v <- all.vars(formula(obj))[-1]
     rn <- v
-    tmp.df <- do.call(data.frame, lapply(v, function(x)central(data[[x]])))
+    tmp.df <- do.call(data.frame, c(lapply(v, function(x)central(data[[x]])), stringsAsFactors=TRUE))
     names(tmp.df) <- v
     if(!is.null(typical)){
         for(i in 1:length(typical)){
@@ -5840,7 +5825,7 @@ plot.secdiff <- function(x, level=.95, ...){
   ul <- 1-ll
   type <- ifelse("ind" %in% names(x), "Average Marginal Effect", "Marginal Effect at Typical Values")
   s <- c(mean(x$ave), quantile(x$ave, c(ll, ul)))
-  ave.df <- data.frame(difference = s[1], lower=s[2], upper=s[3])
+  ave.df <- data.frame(difference = s[1], lower=s[2], upper=s[3], stringsAsFactors=TRUE)
   if(!("ind" %in% names(x))){
     ave.df$x <- factor(1, levels=1, labels="Average")
     g <- ggplot(ave.df) + 
@@ -5856,7 +5841,7 @@ plot.secdiff <- function(x, level=.95, ...){
     ind.df$obs <- 1:nrow(ind.df)
     d <- abs(ave.df$difference - ind.df$secddiff)
     w <- which.min(d)
-    ave.df <- data.frame(secddiff = s[1], lower=s[2], upper=s[3], obs=w)
+    ave.df <- data.frame(secddiff = s[1], lower=s[2], upper=s[3], obs=w, stringsAsFactors=TRUE)
     g <- ggplot(ind.df) + 
       geom_point(aes_string(y="secddiff", x="obs"), size=.5) + 
       geom_segment(aes_string(x="obs", xend="obs", y="lower", yend="upper"), 
@@ -5978,24 +5963,23 @@ outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson
 #' @export
 #' 
 #' @examples
-#' 
 #' library(MASS)
 #' data(france)
 #' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 #' typical.france <- data.frame(
 #' 	age = 35, 
-#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
-#' 	)
+#' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
+#' 	stringsAsFactors=TRUE)
 #' oc.res <- ordChange(polr.mod, data=france, typical.dat=typical.france, sim=TRUE)	
 #' oc2plot(oc.res)
-#' 
 oc2plot <- function(ordc, plot=TRUE){
     tmpdat <- data.frame(
         var = rep(rownames(ordc$diffs$mean), ncol(ordc$diffs$mean)),
         lev = rep(colnames(ordc$diffs$mean), each = nrow(ordc$diffs$mean)),
         mean = c(ordc$diffs$mean),
         lower=c(ordc$diffs$lower),
-        upper = c(ordc$diffs$upper))
+        upper = c(ordc$diffs$upper), 
+        stringsAsFactors=TRUE)
     p1 <- xyplot(mean ~ lev | var, data=tmpdat,
         xlab = "", ylab = "Predicted Change in Pr(y=m)",
         lower = tmpdat$lower, upper=tmpdat$upper,
@@ -6043,7 +6027,8 @@ probgroup.polr <- function(obj, ...){
     y <- model.response(model.frame(obj))
     pr2 <- pr[cbind(1:nrow(pr), as.numeric(y))]
     tmpdat <- data.frame(probs=c(pr2),
-        y = factor(as.numeric(y), labels=obj$lev))
+        y = factor(as.numeric(y), labels=obj$lev), 
+        stringsAsFactors=TRUE)
     ly <- length(table(y))
     return(histogram(~probs | y, data=tmpdat, col="gray75", ylim = c(0, 100),
         layout=c(ly,1), xlab="Predicted Probabilities",
@@ -6058,7 +6043,7 @@ probgroup.multinom <- function(obj, ...){
     pr2 <- pr[cbind(1:nrow(pr), as.numeric(y))]
 
     tmpdat <- data.frame(probs=c(pr2),
-        y = y)
+        y = y, stringsAsFactors=TRUE)
     ly <- length(table(y))
     return(histogram(~probs | y, data=tmpdat, col="gray75", ylim = c(0, 100),
         layout=c(ly,1), xlab="Predicted Probabilities",
@@ -6143,7 +6128,7 @@ makeHypSurv <- function(l,obj, ...){
     type="quantile", p=p)
     plot.data <- data.frame(
         p.fail = rep(p, each=nrow(preds)),
-        time = c(preds))
+        time = c(preds), stringsAsFactors=TRUE)
     plot.data <- cbind(plot.data, tmp[rep(1:3, nrow(plot.data)/3), ])
     rownames(plot.data) <- NULL
     return(plot.data)
@@ -6196,7 +6181,6 @@ tscslag <- function(dat, x, id, time, lagLength=1){
 #' @param var String giving name of variable to be tested.
 #' @param transPower The power used in the transformation.  For transformations
 #' in the range (-0.01, 0.01), the log transformation is used.
-#' @param transPower The name value of the power used in the transformation.
 #' @param polyOrder The order of the polynomial to be used.
 #' @param plot Logical indicating whether the effects should be plotted
 #' @param ... Currently not implemented.
@@ -6236,7 +6220,7 @@ testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
   res <- data.frame(Model1 = c("Original", "Original", "Power Transform"),
                     Model2 = c("Power Transform", "Polynomial", "Polynomial"),
                     pval = NA,
-                    preferred = NA)
+                    preferred = NA, stringsAsFactors=TRUE)
 
   form1 <- glue("~ . -{var} + powerTrans({var}, {transPower})")
   form2 <- glue("~ . -{var} + poly({var}, {polyOrder}, raw=TRUE)")
@@ -6294,19 +6278,19 @@ testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
   }
   if(plot){
     e1 <- Effect(var, obj, xlevels=xl)
-    se1 <- do.call(data.frame, summary(e1)[c("effect", "lower", "upper")])
+    se1 <- do.call(data.frame, c(summary(e1)[c("effect", "lower", "upper")], stringsAsFactors=TRUE))
     se1$model <- factor(1, levels=1:3,
                         labels=c("Original", "Power", "Polynomial"))
     se1$x <- e1$x[[var]]
 
     e2 <- Effect(var, o1, xlevels=xl)
-    se2 <- do.call(data.frame, summary(e2)[c("effect", "lower", "upper")])
+    se2 <- do.call(data.frame, c(summary(e2)[c("effect", "lower", "upper")], stringsAsFactors=TRUE))
     se2$model <- factor(2, levels=1:3,
                         labels=c("Original", "Power", "Polynomial"))
     se2$x <- e2$x[[var]]
 
     e3 <- Effect(var, o2, xlevels=xl)
-    se3 <- do.call(data.frame, summary(e3)[c("effect", "lower", "upper")])
+    se3 <- do.call(data.frame, c(summary(e3)[c("effect", "lower", "upper")], stringsAsFactors=TRUE))
     se3$model <- factor(3, levels=1:3,
                         labels=c("Original", "Power", "Polynomial"))
     se3$x <- e3$x[[var]]

@@ -2,25 +2,11 @@
 % Please edit documentation in R/DAMisc_functions.R
 \name{intQualQuant}
 \alias{intQualQuant}
-\alias{print.iqq}
 \title{Predictions for Factor-Numeric Interactions in Linear Models}
 \usage{
-intQualQuant(
-  obj,
-  vars,
-  level = 0.95,
-  varcov = NULL,
-  labs = NULL,
-  n = 10,
-  onlySig = FALSE,
-  type = c("facs", "slopes"),
-  plot = TRUE,
-  vals = NULL,
-  rug = TRUE,
-  ci = TRUE,
-  digits = 3,
-  ...
-)
+intQualQuant(obj, vars, level = 0.95, varcov = NULL, labs = NULL,
+  n = 10, onlySig = FALSE, type = c("facs", "slopes"), plot = TRUE,
+  vals = NULL, rug = TRUE, ci = TRUE, digits = 3, ...)
 }
 \arguments{
 \item{obj}{An object of class \code{lm}.}

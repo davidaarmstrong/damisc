@@ -4,14 +4,8 @@
 \alias{mnlChange}
 \title{Maximal First Differences for Multinomial Logistic Regression Models}
 \usage{
-mnlChange(
-  obj,
-  data,
-  typical.dat = NULL,
-  diffchange = c("range", "sd", "unit"),
-  sim = TRUE,
-  R = 1500
-)
+mnlChange(obj, data, typical.dat = NULL, diffchange = c("range", "sd",
+  "unit"), sim = TRUE, R = 1500)
 }
 \arguments{
 \item{obj}{A model object of class \code{multinom}.}
@@ -66,8 +60,8 @@ data(france)
 mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
 typical.france <- data.frame(
 	age = 35, 
-	retnat = factor(1, levels=1:3, labels=levels(france$retnat))
-	)
+	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
+	stringsAsFactors=TRUE)
 mnlChange(mnl.mod, data=france, typical.dat=typical.france)	
 
 }

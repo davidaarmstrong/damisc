@@ -4,7 +4,8 @@
 \alias{print.diffci}
 \title{Print Confidence Intervals for Predicted Probabilities and Their Differences}
 \usage{
-\method{print}{diffci}(x, ..., digits = 4, filter = NULL, const = NULL, onlySig = FALSE)
+\method{print}{diffci}(x, ..., digits = 4, filter = NULL,
+  const = NULL, onlySig = FALSE)
 }
 \arguments{
 \item{x}{A object of class \code{diffci} produced by \code{\link{probci}}.}

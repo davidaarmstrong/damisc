@@ -4,14 +4,8 @@
 \alias{glmChange}
 \title{Maximal First Differences for Generalized Linear Models}
 \usage{
-glmChange(
-  obj,
-  data,
-  typical.dat = NULL,
-  diffchange = c("range", "sd", "unit"),
-  sim = FALSE,
-  R = 1000
-)
+glmChange(obj, data, typical.dat = NULL, diffchange = c("range", "sd",
+  "unit"), sim = FALSE, R = 1000)
 }
 \arguments{
 \item{obj}{A model object of class \code{glm}.}
@@ -63,7 +57,7 @@ left.mod <- glm(voteleft ~ male + age + retnat +
 	poly(lrself, 2), data=france, family=binomial)
 typical.france <- data.frame(
 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
-	age = 35
+	age = 35, stringsAsFactors=TRUE
 	)
 glmChange(left.mod, data=france, typical.dat=typical.france)
 
