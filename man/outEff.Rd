@@ -4,8 +4,15 @@
 \alias{outEff}
 \title{Plot Effects of Removing Outliers}
 \usage{
-outEff(obj, var, data, stat = c("cooksD", "hat", "deviance", "pearson"),
-  nOut = 10, whichOut = NULL, cumulative = FALSE)
+outEff(
+  obj,
+  var,
+  data,
+  stat = c("cooksD", "hat", "deviance", "pearson"),
+  nOut = 10,
+  whichOut = NULL,
+  cumulative = FALSE
+)
 }
 \arguments{
 \item{obj}{An object of class \code{glm} that will be used to plot the

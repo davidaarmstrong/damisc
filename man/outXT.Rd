@@ -4,9 +4,18 @@
 \alias{outXT}
 \title{Create LaTeX or CSV versions of an Object Produced by CrossTable}
 \usage{
-outXT(obj, count = TRUE, prop.r = TRUE, prop.c = TRUE,
-  prop.t = TRUE, col.marg = TRUE, row.marg = TRUE, digits = 3,
-  type = "word", file = NULL)
+outXT(
+  obj,
+  count = TRUE,
+  prop.r = TRUE,
+  prop.c = TRUE,
+  prop.t = TRUE,
+  col.marg = TRUE,
+  row.marg = TRUE,
+  digits = 3,
+  type = "word",
+  file = NULL
+)
 }
 \arguments{
 \item{obj}{A list returned by \code{CrossTable} from the \code{gmodels}

@@ -4,8 +4,14 @@
 \alias{secondDiff}
 \title{Calculate Cross-Derivative and its Variability}
 \usage{
-secondDiff(obj, vars, data, method = c("AME", "MER"), vals = NULL,
-  typical = NULL)
+secondDiff(
+  obj,
+  vars,
+  data,
+  method = c("AME", "MER"),
+  vals = NULL,
+  typical = NULL
+)
 }
 \arguments{
 \item{obj}{An object of class \code{glm} that will be used to find the

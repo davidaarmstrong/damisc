@@ -4,8 +4,13 @@
 \alias{crSpanTest}
 \title{Test of Span Parameter in linearity for Component + Residual Plots}
 \usage{
-crSpanTest(model, spfromto, n = 10, adjust.method = "none",
-  adjust.type = c("none", "across", "within", "both"))
+crSpanTest(
+  model,
+  spfromto,
+  n = 10,
+  adjust.method = "none",
+  adjust.type = c("none", "across", "within", "both")
+)
 }
 \arguments{
 \item{model}{A model object of class \code{lm}}

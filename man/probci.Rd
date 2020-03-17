@@ -4,8 +4,16 @@
 \alias{probci}
 \title{Confidence Intervals for Predicted Probabilities and Their Differences}
 \usage{
-probci(obj, data, .b = NULL, .vcov = NULL, changeX = NULL,
-  numQuantVals = 5, xvals = NULL, type = c("aveEff", "aveCase"))
+probci(
+  obj,
+  data,
+  .b = NULL,
+  .vcov = NULL,
+  changeX = NULL,
+  numQuantVals = 5,
+  xvals = NULL,
+  type = c("aveEff", "aveCase")
+)
 }
 \arguments{
 \item{obj}{A model of class \code{glm}, particularly those with

@@ -4,8 +4,13 @@
 \alias{mnlSig}
 \title{Print Statistically Significant MNL Coefficients}
 \usage{
-mnlSig(obj, pval = 0.05, two.sided = TRUE, flag.sig = TRUE,
-  insig.blank = FALSE)
+mnlSig(
+  obj,
+  pval = 0.05,
+  two.sided = TRUE,
+  flag.sig = TRUE,
+  insig.blank = FALSE
+)
 }
 \arguments{
 \item{obj}{A model object of class \code{multinom}.}

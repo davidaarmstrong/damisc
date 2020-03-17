@@ -4,8 +4,17 @@
 \alias{ordAveEffPlot}
 \title{Plot Average Effects of Variables in Proportional Odds Logistic Regression}
 \usage{
-ordAveEffPlot(obj, varname, data, R = 1500, nvals = 25, plot = TRUE,
-  returnInd = FALSE, returnMprob = FALSE, ...)
+ordAveEffPlot(
+  obj,
+  varname,
+  data,
+  R = 1500,
+  nvals = 25,
+  plot = TRUE,
+  returnInd = FALSE,
+  returnMprob = FALSE,
+  ...
+)
 }
 \arguments{
 \item{obj}{An object of class \code{polr}}

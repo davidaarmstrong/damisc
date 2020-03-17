@@ -4,8 +4,15 @@
 \alias{DAintfun3}
 \title{Conditional Effects Plots for Interactions in Linear Models}
 \usage{
-DAintfun3(obj, varnames, varcov = NULL, name.stem = "cond_eff",
-  xlab = NULL, ylab = NULL, plot.type = "screen")
+DAintfun3(
+  obj,
+  varnames,
+  varcov = NULL,
+  name.stem = "cond_eff",
+  xlab = NULL,
+  ylab = NULL,
+  plot.type = "screen"
+)
 }
 \arguments{
 \item{obj}{A model object of class \code{lm}}

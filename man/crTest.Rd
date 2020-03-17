@@ -4,8 +4,15 @@
 \alias{crTest}
 \title{Test of linearity for Component + Residual Plots}
 \usage{
-crTest(model, adjust.method = "none", cat = 5, var = NULL,
-  span.as = TRUE, span = 0.75, ...)
+crTest(
+  model,
+  adjust.method = "none",
+  cat = 5,
+  var = NULL,
+  span.as = TRUE,
+  span = 0.75,
+  ...
+)
 }
 \arguments{
 \item{model}{A model object of class \code{lm}}

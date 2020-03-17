@@ -4,8 +4,14 @@
 \alias{balsos}
 \title{Bayesian Alternating Least Squares Optimal Scaling}
 \usage{
-balsos(formula, data, iter = 2500, chains = 1, alg = c("NUTS", "HMC",
-  "Fixed_param"), ...)
+balsos(
+  formula,
+  data,
+  iter = 2500,
+  chains = 1,
+  alg = c("NUTS", "HMC", "Fixed_param"),
+  ...
+)
 }
 \arguments{
 \item{formula}{A formula with a dependent variable that will be optimally

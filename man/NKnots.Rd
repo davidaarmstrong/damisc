@@ -4,9 +4,19 @@
 \alias{NKnots}
 \title{AIC and BIC selection of number of spline knots}
 \usage{
-NKnots(form, var, data, degree = 3, min.knots = 1, max.knots = 10,
-  includePoly = FALSE, plot = FALSE, criterion = c("AIC", "BIC",
-  "CV"), cvk = 10, cviter = 10)
+NKnots(
+  form,
+  var,
+  data,
+  degree = 3,
+  min.knots = 1,
+  max.knots = 10,
+  includePoly = FALSE,
+  plot = FALSE,
+  criterion = c("AIC", "BIC", "CV"),
+  cvk = 10,
+  cviter = 10
+)
 }
 \arguments{
 \item{form}{A formula detailing the model for which smoothing is to be

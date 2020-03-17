@@ -4,8 +4,16 @@
 \alias{aveEffPlot}
 \title{Average Effect Plot for Generalized Linear Models}
 \usage{
-aveEffPlot(obj, varname, data, R = 1500, nvals = 25, plot = TRUE,
-  returnSim = FALSE, ...)
+aveEffPlot(
+  obj,
+  varname,
+  data,
+  R = 1500,
+  nvals = 25,
+  plot = TRUE,
+  returnSim = FALSE,
+  ...
+)
 }
 \arguments{
 \item{obj}{A model object of class \code{glm}.}
