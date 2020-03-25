@@ -6074,7 +6074,7 @@ probgroup.multinom <- function(obj, ...){
 #' Using Stata, 2nd ed.  College Station, TX: Stata Press.
 poisfit <- function(obj){
 	y <- model.response(model.frame(obj))
-	if(family(mod)$family == "poisson"){
+	if(family(obj)$family == "poisson"){
 	  nullMod <- glm(y ~ 1, family=poisson)
 	}else if(inherits(obj, "negbin")){
 	  nullMod <- glm.nb(y ~ 1)
@@ -6097,7 +6097,7 @@ poisfit <- function(obj){
 	res[4,1] <- r2_mcf
 	res[5,1] <- r2_mcfa
 	res[6,1] <- r2cu
-	if("negbin" %in% class(obj)){res <- res[-(1:2), ]}
+	if(inherits(obj, "negbin")){res <- res[-(1:2), ]}
 	pres <- matrix(apply(res, 2, function(x)sprintf("%.3f", x)), ncol=2)
 	dimnames(pres) <- dimnames(res)
 	print(pres, quote=FALSE)
