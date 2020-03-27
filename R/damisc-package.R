@@ -57,7 +57,7 @@ NULL
 #' postscript rgb setEPS
 #' @importFrom graphics abline axis lines par persp
 #' plot points polygon box segments strwidth
-#' @importFrom stats AIC BIC alias anova as.formula
+#' @importFrom stats poisson AIC BIC alias anova as.formula
 #' coef coefficients contrasts deviance dnorm
 #' family fitted formula lm loess logLik
 #' median model.frame model.matrix model.response
