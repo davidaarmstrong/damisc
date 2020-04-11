@@ -2618,6 +2618,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) b[int.var] * d2f * x +
         b1b4x2 * b2b4x1 * x * d3f)
+    nn <- array(nn, dim=dim(others))
+    dimnames(nn) <- dimnames(others)
     mat123 <- cbind(deriv11, deriv22, deriv44, nn, derivcc)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
     mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
@@ -2665,6 +2667,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) ((b[cont] + b[int.var]) *
         d2f1 - b[cont] * d2f2) * x)
+    nn <- array(nn, dim=dim(others))
+    dimnames(nn) <- dimnames(others)
     mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
     mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
@@ -2722,6 +2726,8 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         names(b)))]
     nn <- apply(others, 2, function(x) ((phi11 - phi01) - (phi10 -
         phi00)) * x)
+    nn <- array(nn, dim=dim(others))
+    dimnames(nn) <- dimnames(others)
     mat123 <- cbind(deriv1, deriv2, deriv3, nn, deriv0)[,,drop=F]
     colnames(mat123) <- c(vars, int.var, colnames(nn), "(Intercept)")
     mat123 <- mat123[, match(colnames(X), colnames(mat123)), drop=F]
