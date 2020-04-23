@@ -6358,3 +6358,156 @@ effect_logistf <- function(var, obj, data, ...){
   return(e)
 }
 
+
+#' PDF of the Gumbel Distribution
+#' 
+#' Returns the PDF of the Gumbel distribution. 
+#' 
+#' This code and the details of the help file were taken from the \code{VGAM} package.  
+#' 
+#' @param q Vector of quantiles
+#' @param location The location parameter, \eqn{mu}.  This is not the mean of the Gumbel distribution.  
+#' @param scale The scale parameter \eqn{sigma}. 
+#' @param log.p Logical, if \code{TRUE} probabilities are given in their log. 
+#' @param lower.tail Logical, whether lower, if \code{TRUE} or upper, if \code{FALSE}, tail probabilities should be returned. 
+#' 
+#' @details The Gumbel distribution is a special case of the \emph{generalized extreme value} 
+#' (GEV) distribution where the shape parameter \eqn{\xi}{xi} = 0. The latter has 3 parameters, so 
+#' the Gumbel distribution has two.  The Gumbel distribution function is 
+#' \deqn{G(y) = \exp \left( - \exp \left[ - \frac{y-\mu}{\sigma} \right]\right) }
+#' where \eqn{-\infty<y<\infty}, \eqn{-\infty<\mu<\infty}and \eqn{\sigma>0}.
+#' Its mean is
+#' \deqn{\mu - \sigma * \gamma}
+#' and its variance is
+#' \deqn{\sigma^2 * \pi^2 / 6}
+#' where \eqn{\gamma}{gamma} is Euler's constant (which can be obtained as \code{-digamma(1)}).
+#' 
+#' @return A vector of probabilities
+#' 
+#' @author Thomas Yee
+#' 
+#' @export
+#' 
+pgumbel <- function (q, location = 0, scale = 1, lower.tail = TRUE, log.p = FALSE) 
+{
+  if (!is.logical(lower.tail) || length(lower.tail) != 1) 
+    stop("bad input for argument 'lower.tail'")
+  if (!is.logical(log.p) || length(log.p) != 1) 
+    stop("bad input for argument 'log.p'")
+  if (lower.tail) {
+    if (log.p) {
+      ans <- -exp(-(q - location)/scale)
+      ans[q <= -Inf] <- -Inf
+      ans[q == Inf] <- 0
+    }
+    else {
+      ans <- exp(-exp(-(q - location)/scale))
+      ans[q <= -Inf] <- 0
+      ans[q == Inf] <- 1
+    }
+  }
+  else {
+    if (log.p) {
+      ans <- log(-expm1(-exp(-(q - location)/scale)))
+      ans[q <= -Inf] <- 0
+      ans[q == Inf] <- -Inf
+    }
+    else {
+      ans <- -expm1(-exp(-(q - location)/scale))
+      ans[q <= -Inf] <- 1
+      ans[q == Inf] <- 0
+    }
+  }
+  ans[scale <= 0] <- NaN
+  ans
+}
+
+#' Yeo-Johnson Transformation
+#' 
+#' Computes the normalizing Yeo-Johnson transformation. #' This code and the details of the help file were taken from the \code{VGAM} package.  
+#' 
+#' @param y Numeric, a vector or matrix. 
+#' @param lambda Numeric. It is recycled to the same length as \code{y} 
+#' if necessary. 
+#' @param derivative Non-negative integer. The default is the ordinary function 
+#' evaluation, otherwise the derivative with respect to \code{lambda}.
+#' @param epsilon  Numeric and positive value. The tolerance given to values of 
+#' \code{lambda} when comparing it to 0 or 2. 
+#' @param inverse  Logical. Return the inverse transformation?
+#' 
+#' @details   The Yeo-Johnson transformation can be thought of as an extension 
+#' of the Box-Cox transformation. It handles both positive and negative values, 
+#' whereas the Box-Cox transformation only handles positive values. Both can be 
+#' used to transform the data so as to improve normality. They can be used to 
+#' perform LMS quantile regression.
+#' 
+#' @return A vector of transformed values. 
+#' 
+#' @author Thomas Yee
+#' 
+#' @export
+yeo.johnson <- function (y, lambda, derivative = 0, epsilon = sqrt(.Machine$double.eps), 
+          inverse = FALSE) 
+{
+  if (!is.Numeric(derivative, length.arg = 1, integer.valued = TRUE) || 
+      derivative < 0) 
+    stop("argument 'derivative' must be a non-negative integer")
+  ans <- y
+  if (!is.Numeric(epsilon, length.arg = 1, positive = TRUE)) 
+    stop("argument 'epsilon' must be a single positive number")
+  L <- max(length(lambda), length(y))
+  if (length(y) != L) 
+    y <- rep_len(y, L)
+  if (length(lambda) != L) 
+    lambda <- rep_len(lambda, L)
+  if (inverse) {
+    if (derivative != 0) 
+      stop("argument 'derivative' must 0 when inverse = TRUE")
+    if (any(index <- y >= 0 & abs(lambda) > epsilon)) 
+      ans[index] <- (y[index] * lambda[index] + 1)^(1/lambda[index]) - 
+        1
+    if (any(index <- y >= 0 & abs(lambda) <= epsilon)) 
+      ans[index] <- expm1(y[index])
+    if (any(index <- y < 0 & abs(lambda - 2) > epsilon)) 
+      ans[index] <- 1 - (-(2 - lambda[index]) * y[index] + 
+                           1)^(1/(2 - lambda[index]))
+    if (any(index <- y < 0 & abs(lambda - 2) <= epsilon)) 
+      ans[index] <- -expm1(-y[index])
+    return(ans)
+  }
+  if (derivative == 0) {
+    if (any(index <- y >= 0 & abs(lambda) > epsilon)) 
+      ans[index] <- ((y[index] + 1)^(lambda[index]) - 1)/lambda[index]
+    if (any(index <- y >= 0 & abs(lambda) <= epsilon)) 
+      ans[index] <- log1p(y[index])
+    if (any(index <- y < 0 & abs(lambda - 2) > epsilon)) 
+      ans[index] <- -((-y[index] + 1)^(2 - lambda[index]) - 
+                        1)/(2 - lambda[index])
+    if (any(index <- y < 0 & abs(lambda - 2) <= epsilon)) 
+      ans[index] <- -log1p(-y[index])
+  }
+  else {
+    psi <- Recall(y = y, lambda = lambda, derivative = derivative - 
+                    1, epsilon = epsilon, inverse = inverse)
+    if (any(index <- y >= 0 & abs(lambda) > epsilon)) 
+      ans[index] <- ((y[index] + 1)^(lambda[index]) * (log1p(y[index]))^(derivative) - 
+                       derivative * psi[index])/lambda[index]
+    if (any(index <- y >= 0 & abs(lambda) <= epsilon)) 
+      ans[index] <- (log1p(y[index]))^(derivative + 1)/(derivative + 
+                                                          1)
+    if (any(index <- y < 0 & abs(lambda - 2) > epsilon)) 
+      ans[index] <- -((-y[index] + 1)^(2 - lambda[index]) * 
+                        (-log1p(-y[index]))^(derivative) - derivative * 
+                        psi[index])/(2 - lambda[index])
+    if (any(index <- y < 0 & abs(lambda - 2) <= epsilon)) 
+      ans[index] <- (-log1p(-y[index]))^(derivative + 1)/(derivative + 
+                                                            1)
+  }
+  ans
+}
+    
+
+is.Numeric <- function (x, length.arg = Inf, integer.valued = FALSE, positive = FALSE) 
+  if (all(is.numeric(x)) && all(is.finite(x)) && (if (is.finite(length.arg)) length(x) == 
+                                                  length.arg else TRUE) && (if (integer.valued) all(x == round(x)) else TRUE) && 
+      (if (positive) all(x > 0) else TRUE)) TRUE else FALSE

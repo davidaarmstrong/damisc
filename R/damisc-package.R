@@ -72,10 +72,8 @@ NULL
 #' @importFrom latticeExtra useOuterStrips
 #' @importFrom AICcmodavg AICc
 #' @importFrom fANCOVA loess.as
-#' @importFrom VGAM yeo.johnson
 #' @importFrom optiscale opscale
 #' @importFrom utils combn
-#' @importFrom VGAM pgumbel
 #' @importFrom effects Effect effect
 #' @importFrom rstan stan
 #' @importFrom MASS mvrnorm polr kde2d glm.nb
