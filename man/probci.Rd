@@ -12,7 +12,8 @@ probci(
   changeX = NULL,
   numQuantVals = 5,
   xvals = NULL,
-  type = c("aveEff", "aveCase")
+  type = c("aveEff", "aveCase"),
+  returnProbs = FALSE
 )
 }
 \arguments{
@@ -44,6 +45,9 @@ in the list should correspond with the variable names specified in
 average first difference across all observed values of \code{X}, while
 \code{aveCase} gives the first difference holding all other variables
 constant at typical values.}
+
+\item{returnProbs}{Whether or not the vecot/matrix of predicted probabilities
+should be returned as well.}
 }
 \value{
 An data frame with the following variables: \item{variables}{The

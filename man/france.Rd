@@ -4,7 +4,8 @@
 \name{france}
 \alias{france}
 \title{Example data for factorplot function}
-\format{A data frame with 542 observations on the following 5 variables.
+\format{
+A data frame with 542 observations on the following 5 variables.
 \describe{ \item{lrself}{respondent's left-right self-placement on a
 1(left)-10(right) scale} \item{male}{a dummy variable coded 1 for
 males and 0 for females} \item{age}{respondent's age}
@@ -12,7 +13,8 @@ males and 0 for females} \item{age}{respondent's age}
 Green, RPR and UDF} \item{retnat}{a factor indicating the
 respondent's retrospective national economic evaluation with levels Better,
 Same and Worse} \item{voteleft}{a dichotomous variable where 1
-indicates a vote for a left party, 0 otherwise} }}
+indicates a vote for a left party, 0 otherwise} }
+}
 \description{
 A subset of data from the 1994 Eurobarometer for France
 }

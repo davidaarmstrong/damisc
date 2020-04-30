@@ -4,13 +4,15 @@
 \name{aclp}
 \alias{aclp}
 \title{Example data for btscs function}
-\format{A data frame with 4126 observations on the following 7 variables.
+\format{
+A data frame with 4126 observations on the following 7 variables.
 \describe{ \item{cname}{Country name} \item{country}{Numeric
 country identifier} \item{year}{Year of observation}
 \item{reg}{A dichotomous variable coded 1 for dictatorship, 0 for
 democracy} \item{gdpw}{GDP/worker, 1985 prices}
 \item{popg}{Population growth} \item{democ}{A dichotomous
-variable coded 1 for democracy, 0 for dictatorship, (1-\code{reg})} }}
+variable coded 1 for democracy, 0 for dictatorship, (1-\code{reg})} }
+}
 \description{
 A subset of data from Alvarez et. al. (1996).
 }

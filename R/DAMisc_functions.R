@@ -5111,6 +5111,8 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
 #' average first difference across all observed values of \code{X}, while
 #' \code{aveCase} gives the first difference holding all other variables
 #' constant at typical values.
+#' @param returnProbs Whether or not the vecot/matrix of predicted probabilities
+#' should be returned as well. 
 #' @return An data frame with the following variables: \item{variables}{The
 #' variables and the values at which they are held constant.  For example,
 #' \code{tmp1} would be the first value of \code{tmp} used in the probability
@@ -5137,7 +5139,7 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
 #'     xvals = list(lrself = c(1,10)))
 #' out3
 #' 
-probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase")){
+probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase"), returnProbs=FALSE){
     type <- match.arg(type)
     vn <- changeX
     if(length(vn) == 0){stop("Need at least one variable to change")}
@@ -5252,6 +5254,9 @@ probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=
     }
     rownames(diffci) <- NULL
     res <- list("Predicted Probabilities"=probci, "Difference in Predicted Probabilities"=diffci, plot.data = cbind(egvals, probci))
+    if(returnProbs){
+      res$probs <- probs
+    }
     class(res) <- "diffci"
     return(res)
 }
