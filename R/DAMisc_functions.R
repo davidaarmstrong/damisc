@@ -1269,7 +1269,8 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
         }
     }
     vars <- vars[sapply(minmax, function(x) is.na(x[1]))]
-	mmc <- match.arg(diffchange)
+	if(length(vars) > 0){
+    mmc <- match.arg(diffchange)
     for (i in 1:length(vars)) {
 		if(mmc == "range"){
         minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = TRUE)
@@ -1285,6 +1286,7 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 		}
         meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE)
     }
+	}
     tmp.df <- do.call(data.frame, c(lapply(meds, function(x) rep(x,
         length(meds) * 2)), stringsAsFactors=TRUE))
     if (!is.null(typical.dat)) {
@@ -1301,6 +1303,7 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
                 j])
         }
     }
+	
     inds <- seq(1, nrow(tmp.df), by = 2)
     for (j in 1:length(minmax)) {
         tmp.df[inds[j]:(inds[j] + 1), j] <- minmax[[j]]
