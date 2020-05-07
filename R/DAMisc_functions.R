@@ -6600,14 +6600,21 @@ sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
 #' @export
 sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
   d <- svydesign(ids=~1, strata=NULL, weights=~1, data=data, digits=3)
-  sumStats(d)
+  sumStats(data=d, vars=vars, byvar=byvar, convertFactors=convertFactors)
   
 }
 
 #' @method sumStats survey.design
 #' @export
 sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE){
-  data <- d
+  d <- data
+  if(convertFactors){
+    for(i in 1:length(vars)){
+      if(is.factor(d$variables[[vars[i]]])){
+        d$variables[[vars[i]]] <- as.numeric(d$variables[[vars[i]]])
+      }
+    }
+  }
   if(is.null(byvar)){
     out <- vector(mode="list", length=1)
     forms <- lapply(vars, function(x)as.formula(paste0("~", x)))
@@ -6617,9 +6624,9 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
     iqr <- qtiles[,4]-qtiles[,2]
     obs.mat <- as.matrix(!is.na(as.matrix(d$variables[,vars])))
     obs.mat <- apply(obs.mat, 2, as.numeric)
-    wtvec <- as.numeric(as.vector(d$variables$weight))
+    wtvec <- d$prob
     n <- ceiling(c(wtvec %*% obs.mat))
-    na <- sum(d$variables$weight) - n
+    na <- ceiling(wtvec %*% rep(1, length(obs.mat))) - n
     tmpdf <- data.frame(group = "All Observations", variable= vars)
     out[[1]] <- as.data.frame(cbind(means, sds, iqr, qtiles, n, na))
     names(out[[1]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
@@ -6684,7 +6691,8 @@ xt.survey.design <- function(data, var, byvar=NULL){
       adorn_totals("row") %>%
       adorn_percentages("col") %>% 
       adorn_pct_formatting(rounding = "half up", digits = 0) %>%
-      adorn_ns() 
+      adorn_ns()
+    chi2 <- NULL
   } else{
     tab <- floor(svytable(as.formula(paste0("~", var, "+", byvar)), d))
     chi2 <- svychisq(as.formula(paste0("~", var, "+", byvar)), d)
@@ -6705,7 +6713,7 @@ xt.survey.design <- function(data, var, byvar=NULL){
   res
 }
 
-#' @method xt survey.design
+#' @method xt data.frame
 #' @export
 xt.data.frame <- function(data, var, byvar=NULL){
   d <- svydesign(ids=~1, weights=~1, data=data, digits=3)
