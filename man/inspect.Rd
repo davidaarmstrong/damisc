@@ -6,12 +6,14 @@
 \alias{inspect.tbl_df}
 \title{Inspect a Variable in a Data Frame}
 \usage{
-inspect(data, x, ...)
+inspect(data, x, includeLabels = FALSE, ...)
 }
 \arguments{
 \item{data}{A data frame of class \code{data.frame} or \code{tbl_df}.}
 
 \item{x}{A string identifying the name of the variable to be inspected.}
+
+\item{includeLabels}{Logical indicating whether value labels should also be included.}
 
 \item{...}{Other arguments to be passed down, currently unimplemented.}
 }

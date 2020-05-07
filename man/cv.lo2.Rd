@@ -4,7 +4,7 @@
 \alias{cv.lo2}
 \title{Cross-validating Loess curve}
 \usage{
-cv.lo2(
+\method{cv}{lo2}(
   span,
   form,
   data,

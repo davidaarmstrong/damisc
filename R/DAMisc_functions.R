@@ -1,3 +1,4 @@
+
 pGumbel <- function (q, mu = 0, sigma = 1){
   stopifnot(sigma > 0)
   exp(-exp(-((q - mu)/sigma)))
@@ -4349,6 +4350,7 @@ else{
 #' @aliases inspect inspect.data.frame inspect.tbl_df
 #' @param data A data frame of class \code{data.frame} or \code{tbl_df}.
 #' @param x A string identifying the name of the variable to be inspected.
+#' @param includeLabels Logical indicating whether value labels should also be included.
 #' @param ... Other arguments to be passed down, currently unimplemented.
 #' @return A list with a variable label (if present), factor levels/value
 #' labels (if present) and a frequency distribution
@@ -4361,30 +4363,43 @@ else{
 #' data(france)
 #' inspect(france, "vote")
 #' 
-inspect <- function(data, x, ...)UseMethod("inspect")
+inspect <- function(data, x, includeLabels=FALSE, ...)UseMethod("inspect")
 
 #' @method inspect tbl_df
 #' @export
-inspect.tbl_df <- function(data, x, ...){
+inspect.tbl_df <- function(data, x, includeLabels = FALSE, ...){
   tmp <- data[[as.character(x)]]
+  if(is.labelled(tmp)){
+    tmp <- as_factor(tmp)
+  }
   var.lab <- attr(tmp, "label")
   if(is.null(var.lab)){var.lab <- "No Label Found"}
   val.labs <- attr(tmp, "labels")
   if(is.null(val.labs)){val.labs <- sort(unique(tmp))}
   tab <- cbind(freq = table(tmp), prop = round(table(tmp)/sum(table(tmp), na.rm=TRUE), 3))
-  out <- list(variable_label = var.lab, value_labels=t(t(val.labs)), freq_dist = tab)
+  out <- list(variable_label = var.lab, freq_dist = tab)
+  if(includeLabels){
+    out$value_labels <- t(t(val.labs))
+  }
   return(out)
 }
 
 ##' @method inspect data.frame
 ##' @export
-inspect.data.frame <- function(data, x, ...){
+inspect.data.frame <- function(data, x, includeLabels=FALSE, ...){
+  tmp <- data[[as.character(x)]]
+  if(is.labelled(tmp)){
+    data[[x]] <- as_factor(data[[x]])
+  }
   var.lab <- attr(data, "var.label")[which(names(data) == x)]
   if(is.null(var.lab)){var.lab <- "No Label Found"}
   val.labs <- if(!is.null(levels(data[[x]]))){levels(data[[x]])}
     else {sort(unique(data[[x]]))}
   tab <- cbind(freq = table(data[[x]]), prop = round(table(data[[x]])/sum(table(data[[x]]), na.rm=TRUE), 3))
-  out <- list(variable_label = var.lab, value_labels=t(t(val.labs)), freq_dist = tab)
+  out <- list(variable_label = var.lab, freq_dist = tab)
+  if(includeLabels){
+    out$value_labels <- t(t(val.labs))
+  }
   return(out)
 }
 
@@ -6519,3 +6534,187 @@ is.Numeric <- function (x, length.arg = Inf, integer.valued = FALSE, positive = 
   if (all(is.numeric(x)) && all(is.finite(x)) && (if (is.finite(length.arg)) length(x) == 
                                                   length.arg else TRUE) && (if (integer.valued) all(x == round(x)) else TRUE) && 
       (if (positive) all(x > 0) else TRUE)) TRUE else FALSE
+
+#' Summary Statistics 
+#' 
+#' Provides summary statistics (mean, sd, quartiles, IQR, missing n, valid n)
+#' for the variables in a data frame. 
+#' 
+#' @aliases sumStats sumStats.data.frame sumStats.survey.design
+#' @param data A data frame from which variables will be extracted. 
+#' @param vars A character vector of variable names. 
+#' @param byvar A character string giving a variable name of a stratifying variable.  The summaries of the \code{vars} will be provided for each level of \code{byvar}. 
+#' @param convertFactors Logical indicating whether factors should be converted to numeric first and then summarised. 
+#' 
+#' @export
+#' 
+#' @return a vector of summary statistics for each variable or variable-group combination.
+sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE){
+  UseMethod("sumStats")
+}
+
+#' @method sumStats data.frame
+#' @export
+sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
+  if(is.null(byvar)){
+    X <- data[,vars, drop=FALSE]
+    if(convertFactors){
+      for(i in 1:ncol(X)){
+        if(is.factor(X[[i]]))X[[i]] <- as.numeric(X[[i]])
+      }
+    }
+    means <- colMeans(X, na.rm=T)
+    sds <- apply(X, 2, sd, na.rm=T)
+    qtiles <- t(apply(X, 2, quantile, probs = c(0,.25,.5,.75,1), na.rm=TRUE))[,,drop=FALSE]
+    iqr <- qtiles[,4]-qtiles[,2]
+    n <- apply(X, 2, function(x)sum(!is.na(x)))
+    na <- apply(X, 2, function(x)sum(is.na(x)))
+    out <- cbind(means, sds, iqr, qtiles, n, na)
+    colnames(out) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
+  }
+  else{
+    unvals <- unique(na.omit(data[[byvar]]))
+    out <- vector(mode="list", length=length(unvals))
+    for(i in 1:length(unvals)){
+      X <- data[which(data[[byvar]] == unvals[i]),vars, drop=FALSE]
+      if(convertFactors){
+        for(i in 1:ncol(X)){
+          if(is.factor(X[[i]]))X[[i]] <- as.numeric(X[[i]])
+        }
+      }
+      means <- colMeans(X, na.rm=T)
+      sds <- apply(X, 2, sd, na.rm=T)
+      qtiles <- t(apply(X, 2, quantile, probs = c(0,.25,.5,.75,1), na.rm=TRUE))[,,drop=FALSE]
+      iqr <- qtiles[,4]-qtiles[,2]
+      n <- apply(X, 2, function(x)sum(!is.na(x)))
+      na <- apply(X, 2, function(x)sum(is.na(x)))
+      out[[i]] <- cbind(means, sds, iqr, qtiles, n, na)
+      colnames(out[[i]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
+      names(out)[[i]] <- paste(byvar, " = ", unvals[i], sep="")
+    }
+  }
+  out
+}
+
+#' @method sumStats data.frame
+#' @export
+sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
+  d <- svydesign(ids=~1, strata=NULL, weights=~1, data=data, digits=3)
+  sumStats(d)
+  
+}
+
+#' @method sumStats survey.design
+#' @export
+sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE){
+  data <- d
+  if(is.null(byvar)){
+    out <- vector(mode="list", length=1)
+    forms <- lapply(vars, function(x)as.formula(paste0("~", x)))
+    means <- sapply(forms, function(x)as.vector(svymean(x, d, na.rm=TRUE)))
+    sds <- sapply(forms, function(x)sqrt(svyvar(x, d, na.rm=TRUE)[1]))
+    qtiles <- t(sapply(forms, function(x)svyquantile(x, d, quantiles=c(0,.25,.5,.75,1), na.rm=TRUE)))
+    iqr <- qtiles[,4]-qtiles[,2]
+    obs.mat <- as.matrix(!is.na(as.matrix(d$variables[,vars])))
+    obs.mat <- apply(obs.mat, 2, as.numeric)
+    wtvec <- as.numeric(as.vector(d$variables$weight))
+    n <- ceiling(c(wtvec %*% obs.mat))
+    na <- sum(d$variables$weight) - n
+    tmpdf <- data.frame(group = "All Observations", variable= vars)
+    out[[1]] <- as.data.frame(cbind(means, sds, iqr, qtiles, n, na))
+    names(out[[1]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
+    out[[1]] <- cbind(tmpdf, out[[1]])
+    rownames(out[[1]]) <- NULL
+  }
+  else{
+    if(!is.factor(d$variables[[byvar]])){
+      d$variables[[byvar]] <- as.factor(d$variables[[byvar]])
+    }
+    out <- vector(mode="list", length=length(vars))
+    forms <- lapply(vars, function(x)as.formula(paste0("~", x)))
+    byform <- as.formula(paste0("~", byvar))
+    means <- lapply(forms, function(x)svyby(x, byform, d, svymean, na.rm=TRUE))
+    sds <- lapply(forms, function(x)svyby(x, byform, d, svyvar, na.rm=TRUE))
+    qtiles <- lapply(forms, function(x)svyby(x, byform, d, svyquantile, 
+                                             quantiles=c(0,.25,.5,.75,1), na.rm=TRUE, keep.var=FALSE))
+    iqr <- lapply(qtiles, function(x)x[,4]-x[,2])
+    n <- lapply(vars, function(x)svytable(byform, 
+                                          subset(d, !is.na(eval(parse(text=x))))))
+    n <- lapply(n, function(x){names(x) <- NULL; c(x)})
+    allobs <- svytable(byform, d)
+    na <- lapply(n, function(x)allobs - x)
+    na <- lapply(na, function(x){names(x) <- NULL; c(x)})
+    for(i in 1:length(out)){
+      out[[i]] <- cbind(means[[i]][,2], sds[[i]][,2], iqr[[i]], qtiles[[i]][,-1], n[[i]][], na[[i]][])
+      colnames(out[[i]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", 
+                              "75%", "100%", "n", "NA")
+      tmpdf <- data.frame(group = factor(1:length(rownames(means[[1]])), labels=rownames(means[[1]])), 
+                          variable= vars)
+      out[[i]] <- cbind(tmpdf, as.data.frame(out[[i]]))
+      rownames(out[[i]]) <- NULL
+    }
+  }
+  out <- do.call(rbind, out)
+  out
+}
+
+#' Cross-Tabulation of Weighted or Unweighted Data
+#' 
+#' @aliases xt xt.data.frame xt.survey.design print.xt
+#' @param data Either a data frame or a survey design object. 
+#' @param var Row variable for the cross-tabular. 
+#' @param byvar Optional column variable for the cross-tabulation.  If \code{NULL}, a frequency and relative frequency distribution of \code{var} will be produced. 
+#' 
+#' Produces a cross-tabulation and Chi-square statistic for weighted or unweighted data. 
+#' 
+#' @return A list with two elements - table of class \code{tabyl} and the returned results from \code{svychisq}.
+#' 
+#' @export
+#' 
+#' 
+xt <- function(data, var, byvar=NULL){UseMethod("xt")}
+
+#' @method xt survey.design
+#' @export
+xt.survey.design <- function(data, var, byvar=NULL){
+  d <- data
+  if(is.null(byvar)){
+    tab <- floor(svytable(as.formula(paste0("~", var)), d))
+    tab <- tab %>% as.data.frame() %>% 
+      adorn_totals("row") %>%
+      adorn_percentages("col") %>% 
+      adorn_pct_formatting(rounding = "half up", digits = 0) %>%
+      adorn_ns() 
+  } else{
+    tab <- floor(svytable(as.formula(paste0("~", var, "+", byvar)), d))
+    chi2 <- svychisq(as.formula(paste0("~", var, "+", byvar)), d)
+    tab <- tab %>% 
+      as_tibble() %>% 
+      pivot_wider(names_from=byvar, values_from = "n") %>% 
+      as.data.frame  
+    attr(tab, "var_names") <- list(row = var, col = byvar)
+    tab <- tab %>% 
+      adorn_totals(c("row", "col")) %>%
+      adorn_percentages("col") %>% 
+      adorn_pct_formatting(rounding = "half up", digits = 0) %>%
+      adorn_ns() %>%
+      adorn_title("combined") 
+  } 
+  res <- list(tab=tab, chisq=chi2)
+  class(res) <- "xt"
+  res
+}
+
+#' @method xt survey.design
+#' @export
+xt.data.frame <- function(data, var, byvar=NULL){
+  d <- svydesign(ids=~1, weights=~1, data=data, digits=3)
+  xt(d, var, byvar)
+  }
+
+#' @method print xt
+#' @export
+print.xt <- function(x, ...){
+  print.data.frame(x[[1]], row.names=FALSE)
+  print(x[[2]])
+}

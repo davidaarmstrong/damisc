@@ -90,8 +90,16 @@ NULL
 #' panel.lines panel.points panel.polygon panel.rug panel.segments 
 #' panel.superpose simpleKey trellis.focus trellis.par.get 
 #' trellis.unfocus xyplot
-NULL
+#' @importFrom haven is.labelled as_factor
+#' @importFrom survey svymean svyvar svyquantile svyby svytable svychisq
+#' svydesign cv
+#' @importFrom janitor adorn_totals adorn_percentages adorn_pct_formatting 
+#' adorn_ns adorn_title
+#' @importFrom tibble as_tibble
+#' @importFrom tidyr pivot_wider
+#' @importFrom magrittr "%>%"
 
+NULL
 
 
 
