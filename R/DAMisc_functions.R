@@ -6545,68 +6545,30 @@ is.Numeric <- function (x, length.arg = Inf, integer.valued = FALSE, positive = 
 #' @param vars A character vector of variable names. 
 #' @param byvar A character string giving a variable name of a stratifying variable.  The summaries of the \code{vars} will be provided for each level of \code{byvar}. 
 #' @param convertFactors Logical indicating whether factors should be converted to numeric first and then summarised. 
-#' 
+#' @param weight If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the summary. 
+
 #' @export
 #' 
 #' @return a vector of summary statistics for each variable or variable-group combination.
-sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE){
+sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL){
   UseMethod("sumStats")
 }
 
 #' @method sumStats data.frame
 #' @export
-sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
-  if(is.null(byvar)){
-    X <- data[,vars, drop=FALSE]
-    if(convertFactors){
-      for(i in 1:ncol(X)){
-        if(is.factor(X[[i]]))X[[i]] <- as.numeric(X[[i]])
-      }
-    }
-    means <- colMeans(X, na.rm=T)
-    sds <- apply(X, 2, sd, na.rm=T)
-    qtiles <- t(apply(X, 2, quantile, probs = c(0,.25,.5,.75,1), na.rm=TRUE))[,,drop=FALSE]
-    iqr <- qtiles[,4]-qtiles[,2]
-    n <- apply(X, 2, function(x)sum(!is.na(x)))
-    na <- apply(X, 2, function(x)sum(is.na(x)))
-    out <- cbind(means, sds, iqr, qtiles, n, na)
-    colnames(out) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
+sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL){
+  if(is.null(weight)){
+    d <- svydesign(ids = ~1, strata=NULL, weights=~1, data=data, digits=3)
+  }else{
+    wform <- as.formula(paste0("~", weight))
+    d <- svydesign(ids = ~1, strata=NULL, weights=wform, data=data, digits=3)
   }
-  else{
-    unvals <- unique(na.omit(data[[byvar]]))
-    out <- vector(mode="list", length=length(unvals))
-    for(i in 1:length(unvals)){
-      X <- data[which(data[[byvar]] == unvals[i]),vars, drop=FALSE]
-      if(convertFactors){
-        for(i in 1:ncol(X)){
-          if(is.factor(X[[i]]))X[[i]] <- as.numeric(X[[i]])
-        }
-      }
-      means <- colMeans(X, na.rm=T)
-      sds <- apply(X, 2, sd, na.rm=T)
-      qtiles <- t(apply(X, 2, quantile, probs = c(0,.25,.5,.75,1), na.rm=TRUE))[,,drop=FALSE]
-      iqr <- qtiles[,4]-qtiles[,2]
-      n <- apply(X, 2, function(x)sum(!is.na(x)))
-      na <- apply(X, 2, function(x)sum(is.na(x)))
-      out[[i]] <- cbind(means, sds, iqr, qtiles, n, na)
-      colnames(out[[i]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
-      names(out)[[i]] <- paste(byvar, " = ", unvals[i], sep="")
-    }
-  }
-  out
-}
-
-#' @method sumStats data.frame
-#' @export
-sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
-  d <- svydesign(ids=~1, strata=NULL, weights=~1, data=data, digits=3)
-  sumStats(data=d, vars=vars, byvar=byvar, convertFactors=convertFactors)
-  
+  sumStats(d, vars=vars, byvar=byvar, convertFactors=convertFactors, weight=weight)
 }
 
 #' @method sumStats survey.design
 #' @export
-sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE){
+sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE, weight=NULL){
   d <- data
   if(convertFactors){
     for(i in 1:length(vars)){
@@ -6671,6 +6633,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
 #' @param data Either a data frame or a survey design object. 
 #' @param var Row variable for the cross-tabular. 
 #' @param byvar Optional column variable for the cross-tabulation.  If \code{NULL}, a frequency and relative frequency distribution of \code{var} will be produced. 
+#' @param weight If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the cross-tabulation. 
 #' 
 #' Produces a cross-tabulation and Chi-square statistic for weighted or unweighted data. 
 #' 
@@ -6679,11 +6642,11 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
 #' @export
 #' 
 #' 
-xt <- function(data, var, byvar=NULL){UseMethod("xt")}
+xt <- function(data, var, byvar=NULL, weight=NULL){UseMethod("xt")}
 
 #' @method xt survey.design
 #' @export
-xt.survey.design <- function(data, var, byvar=NULL){
+xt.survey.design <- function(data, var, byvar=NULL, weight=NULL){
   d <- data
   if(is.null(byvar)){
     tab <- floor(svytable(as.formula(paste0("~", var)), d))
@@ -6715,8 +6678,13 @@ xt.survey.design <- function(data, var, byvar=NULL){
 
 #' @method xt data.frame
 #' @export
-xt.data.frame <- function(data, var, byvar=NULL){
-  d <- svydesign(ids=~1, weights=~1, data=data, digits=3)
+xt.data.frame <- function(data, var, byvar=NULL, weight=NULL){
+  if(is.null(weight)){
+    d <- svydesign(ids = ~1, strata=NULL, weights=~1, data=data, digits=3)
+  }else{
+    wform <- as.formula(paste0("~", weight))
+    d <- svydesign(ids = ~1, strata=NULL, weights=wform, data=data, digits=3)
+  }
   xt(d, var, byvar)
   }
 

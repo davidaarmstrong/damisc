@@ -7,14 +7,16 @@
 \alias{print.xt}
 \title{Cross-Tabulation of Weighted or Unweighted Data}
 \usage{
-xt(data, var, byvar = NULL)
+xt(data, var, byvar = NULL, weight = NULL)
 }
 \arguments{
 \item{data}{Either a data frame or a survey design object.}
 
 \item{var}{Row variable for the cross-tabular.}
 
-\item{byvar}{Optional column variable for the cross-tabulation.  If \code{NULL}, a frequency and relative frequency distribution of \code{var} will be produced. 
+\item{byvar}{Optional column variable for the cross-tabulation.  If \code{NULL}, a frequency and relative frequency distribution of \code{var} will be produced.}
+
+\item{weight}{If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the cross-tabulation. 
 
 Produces a cross-tabulation and Chi-square statistic for weighted or unweighted data.}
 }

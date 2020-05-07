@@ -6,7 +6,7 @@
 \alias{sumStats.survey.design}
 \title{Summary Statistics}
 \usage{
-sumStats(data, vars, byvar = NULL, convertFactors = TRUE)
+sumStats(data, vars, byvar = NULL, convertFactors = TRUE, weight = NULL)
 }
 \arguments{
 \item{data}{A data frame from which variables will be extracted.}
@@ -16,6 +16,8 @@ sumStats(data, vars, byvar = NULL, convertFactors = TRUE)
 \item{byvar}{A character string giving a variable name of a stratifying variable.  The summaries of the \code{vars} will be provided for each level of \code{byvar}.}
 
 \item{convertFactors}{Logical indicating whether factors should be converted to numeric first and then summarised.}
+
+\item{weight}{If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the summary.}
 }
 \value{
 a vector of summary statistics for each variable or variable-group combination.
