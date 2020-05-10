@@ -6586,7 +6586,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
     iqr <- qtiles[,4]-qtiles[,2]
     obs.mat <- as.matrix(!is.na(as.matrix(d$variables[,vars])))
     obs.mat <- apply(obs.mat, 2, as.numeric)
-    wtvec <- d$prob
+    wtvec <- d$variables[[weight]]
     n <- ceiling(c(wtvec %*% obs.mat))
     na <- ceiling(wtvec %*% rep(1, length(obs.mat))) - n
     tmpdf <- data.frame(group = "All Observations", variable= vars)
@@ -6633,64 +6633,593 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
 #' @param data Either a data frame or a survey design object. 
 #' @param var Row variable for the cross-tabular. 
 #' @param byvar Optional column variable for the cross-tabulation.  If \code{NULL}, a frequency and relative frequency distribution of \code{var} will be produced. 
+#' @param controlvar The name of a categorical control variable. 
 #' @param weight If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the cross-tabulation. 
+#' @param weight A vector of weights to be applied to the table. 
+#' @param ... Other arguments to be passed down to \code{make_assoc_stats}.  You can use this to calculate different statistics.  By default, you get Chi-squared, Cramer's V, Gamma and Kendall's Tau-b. 
 #' 
 #' Produces a cross-tabulation and Chi-square statistic for weighted or unweighted data. 
 #' 
 #' @return A list with two elements - table of class \code{tabyl} and the returned results from \code{svychisq}.
 #' 
 #' @export
-#' 
-#' 
-xt <- function(data, var, byvar=NULL, weight=NULL){UseMethod("xt")}
+xt <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL, ...){UseMethod("xt")}
 
 #' @method xt survey.design
 #' @export
-xt.survey.design <- function(data, var, byvar=NULL, weight=NULL){
+xt.survey.design <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL, ...){
   d <- data
+  tab <- list()
+  chi2 <- list()
+  stats <- list()
   if(is.null(byvar)){
-    tab <- floor(svytable(as.formula(paste0("~", var)), d))
-    tab <- tab %>% as.data.frame() %>% 
+    tmptab <- svytable(as.formula(paste0("~", var)), d, round=TRUE)
+    tmptab <- tmptab %>% as.data.frame() %>% 
       adorn_totals("row") %>%
       adorn_percentages("col") %>% 
       adorn_pct_formatting(rounding = "half up", digits = 0) %>%
       adorn_ns()
     chi2 <- NULL
+    tab[[1]] <- tmptab
+    chi2[[1]] <- NULL
+    stats[[1]] <- NULL
   } else{
-    tab <- floor(svytable(as.formula(paste0("~", var, "+", byvar)), d))
-    chi2 <- svychisq(as.formula(paste0("~", var, "+", byvar)), d)
-    tab <- tab %>% 
-      as_tibble() %>% 
-      pivot_wider(names_from=byvar, values_from = "n") %>% 
-      as.data.frame  
-    attr(tab, "var_names") <- list(row = var, col = byvar)
-    tab <- tab %>% 
-      adorn_totals(c("row", "col")) %>%
-      adorn_percentages("col") %>% 
-      adorn_pct_formatting(rounding = "half up", digits = 0) %>%
-      adorn_ns() %>%
-      adorn_title("combined") 
+      if(is.null(controlvar)){
+        tmptab <- svytable(as.formula(paste0("~", var, "+", byvar)), d, round=TRUE)
+        chi2[[1]] <- svychisq(as.formula(paste0("~", var, "+", byvar)), d)
+        tmptab <- tmptab %>% 
+          as_tibble() %>% 
+          pivot_wider(names_from=byvar, values_from = "n") %>% 
+          as.data.frame  
+        attr(tmptab, "var_names") <- list(row = var, col = byvar)
+        tmptab <- tmptab %>% 
+          adorn_totals(c("row", "col")) %>%
+          adorn_percentages("col") %>% 
+          adorn_pct_formatting(rounding = "half up", digits = 0) %>%
+          adorn_ns() %>%
+          adorn_title("combined") 
+        tab[[1]] <- tmptab
+        stats[[1]] <- make_assoc_stats(d$variables[[var]], d$variables[[byvar]], weight=d$variables[[weight]], ...)
+        } else{
+          if(!is.null(levels(d$variables[[controlvar]]))){
+            levs <- levels(d$variables[[controlvar]])
+          } else{
+            levs <- unique(na.omit(d$variables[[controlvar]]))
+          }
+          for(l in 1:length(levs)){
+            tmpd <- subset(d, d$variables[[controlvar]] == levs[l])
+            tmptab <- svytable(as.formula(paste0("~", var, "+", byvar)), tmpd, round=TRUE)
+            chi2[[l]] <- svychisq(as.formula(paste0("~", var, "+", byvar)), tmpd)
+            tmptab <- tmptab %>% 
+              as_tibble() %>% 
+              pivot_wider(names_from=byvar, values_from = "n") %>% 
+              as.data.frame  
+            attr(tmptab, "var_names") <- list(row = var, col = byvar)
+            tmptab <- tmptab %>% 
+              adorn_totals(c("row", "col")) %>%
+              adorn_percentages("col") %>% 
+              adorn_pct_formatting(rounding = "half up", digits = 0) %>%
+              adorn_ns() %>%
+              adorn_title("combined") 
+            tab[[l]] <- tmptab
+            stats[[l]] <- make_assoc_stats(tmpd$variables[[var]], tmpd$variables[[byvar]], weight=tmpd$variables[[weight]], ...)
+          }
+        names(tab) <- levs
+      }
   } 
-  res <- list(tab=tab, chisq=chi2)
+  res <- list(tab=tab, chisq=chi2, stats=stats)
   class(res) <- "xt"
   res
 }
 
 #' @method xt data.frame
 #' @export
-xt.data.frame <- function(data, var, byvar=NULL, weight=NULL){
+xt.data.frame <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL,  ...){
   if(is.null(weight)){
     d <- svydesign(ids = ~1, strata=NULL, weights=~1, data=data, digits=3)
+    d$variables[["weight"]] <- 1
+    weight <- "weight"
   }else{
     wform <- as.formula(paste0("~", weight))
     d <- svydesign(ids = ~1, strata=NULL, weights=wform, data=data, digits=3)
   }
-  xt(d, var, byvar)
+  xt(d, var, byvar, controlvar, weight=weight, )
   }
 
 #' @method print xt
 #' @export
 print.xt <- function(x, ...){
-  print.data.frame(x[[1]], row.names=FALSE)
-  print(x[[2]])
+  if(length(x$tab) == 1){
+    print.data.frame(x$tab[[1]])
+    print(x$chisq[[1]])
+    cat("Measures of Association\n")
+    print(x$stats[[1]])
+  }
+  if(length(x$tab) > 1){
+    for(i in 1:length(x$tab)){
+      cat("Contingency Table for", names(x$tab)[i], "\n")
+      print.data.frame(x$tab[[i]])
+      print(x$chisq[[i]])
+      cat("Measures of Association\n")
+      print(x$stats[[i]])
+      if(i != length(x$tab)){
+        cat("\n==========================================================================\n")
+      }
+      }
+    
+  }
 }
+
+
+#' Pie Charts with ggplot2
+#' 
+#' This function produces pie charts with ggplot2. 
+#' 
+#' @param data A data frame to pass to the ggplot function
+#' @param variable A variable to be plotted. 
+#' @param addPct Where labels should be added - "none" gives no labels, "legend" addes percentages to the color legend, "pie" addes the legends to the pie pieces. 
+#' 
+#' @return a ggplot
+#' 
+#' @export
+ggpie <- function(data, variable, addPct = c("pie", "none", "legend")) {
+addPct <- match.arg(addPct)
+d <- data %>% filter(!is.na(.data[[variable]])) %>% 
+    group_by(.data[[variable]]) %>% 
+    summarise(value=n()) %>% 
+    mutate(csval = cumsum(rev(.data$value))) %>%  
+    mutate(place = (.data$csval + c(0, .data$csval[-length(.data$csval)]))/2, 
+           pctlab = paste0(round(rev(.data$value)/sum(.data$value)*100), "%")) 
+if(addPct == "legend"){
+  levels(d[[variable]]) <- paste0(levels(d[[variable]]), " (", d$pctlab, ")")
+}
+
+g <- d %>% ggplot(aes_string(x="", y="value", fill=variable)) + 
+    geom_bar(stat="identity") 
+if(addPct == "pie") g <- g + geom_text(aes_string(y="place", label = "pctlab")) 
+    g + coord_polar("y", start=0) + 
+    theme_void()
+}
+
+#' t-Test function 
+#' 
+#' This function is a wrapper to the \code{t.test} function but produces more information in the output.
+#' 
+#' @param x The dichotmous variable for the test. 
+#' @param y The interval/ratio variable for the test. 
+#' @param data A data frame where \code{x} and \code{y} can be found. 
+#' @param ... Other arguments to be passed down to \code{t.test}. 
+#' 
+#' @return an object of class \code{tTest}
+#' 
+#' @export
+tTest <- function(x,y, data, ...){
+  formula <- as.formula(paste(y, x, sep=" ~ "))
+  tmp <- get_all_vars(formula, data)
+  tmp <- na.omit(tmp)
+  if(is.factor(tmp[[x]]))tmp[[x]] <- droplevels(tmp[[x]])
+  g <- vector(mode="list", length=3)
+  ng <- levels(tmp[[x]])
+  if(is.null(ng)){
+    ng <- sort(unique(tmp[[x]]))
+  }
+  tt <- t.test(formula, data, ...)
+  names(g) <- c(ng, "Difference")
+  g[[1]]$mean <- mean(tmp[[y]][which(tmp[[x]] == ng[1])], na.rm=TRUE)
+  g[[1]]$n <- sum(tmp[[x]] == ng[1])
+  g[[1]]$se <- sd(tmp[[y]][which(tmp[[x]] == ng[1])], na.rm=TRUE)
+  g[[2]]$mean <- mean(tmp[[y]][which(tmp[[x]] == ng[2])], na.rm=TRUE)
+  g[[2]]$n <- sum(tmp[[x]] == ng[2])
+  g[[2]]$se <- sd(tmp[[y]][which(tmp[[x]] == ng[2])], na.rm=TRUE)
+  g[[3]]$mean <- g[[1]]$mean - g[[2]]$mean
+  g[[3]]$n <- g[[1]]$n+g[[2]]$n
+  g[[3]]$se <- tt$stderr
+  res <- list(sum=do.call(rbind, g), tt=tt)
+  class(res) <- "tTest"
+  res
+}
+
+#' @method print tTest
+#' @export
+print.tTest <- function(x, ...){
+  alpha <- c(1.1, .05, .01, .001)
+  sig <- sum(alpha > x$tt$p.value)
+  alpha2 <- c(.05, .05, .01, .001)
+  dir <- c(">", "<", "<", "<")
+  cat("Summary:\n")
+  print(x$sum)
+  cat("p-value", dir[sig], alpha2[sig], sep=" ")
+  cat("\n")
+  cat("---------------------------------\n")
+  print(x$tt)
+}
+
+
+#' Bin a Variable
+#' 
+#' Bins a continuous variable into a categorical variable
+#' 
+#' @param x Continuous variable to be binnged
+#' @param bins Number of groups in new variable 
+#' @param method Method for generating "intervals" for fixed-width intervals and "proportions" for cut-points based on quantiles of the distribution.
+#' @param labels An optional vector of labels to apply to the groups
+#' @param include.lowest Logical indicating whether a value equal to the lowest (if \code{right=TRUE}) or highest (if \code{right=FALSE}) should be included. 
+#' @param right Logical indicating Whether the intervals should be closed on the right and open on the left (if \code{TRUE}) or vice versa (if \code{FALSE}).  Open intervals are those that do not include the end-point of the range and closed intervals do. 
+#' @param ... Other arguments to be passed down to \code{cut}
+#' 
+#' 
+#' Function adapted from \code{binVariable} from the \pkg{RcmdrMisc} pacakge.  
+#' 
+#' @author John Fox
+#' 
+#' @return A factor
+#' 
+#' @export
+binVar <- function (x, bins = 4, method = c("intervals", "proportions"), labels = FALSE, include.lowest=TRUE, right=FALSE, ...) 
+{
+  method <- match.arg(method)
+  if (length(x) < bins) {
+    stop("The number of bins exceeds the number of data values")
+  }
+  x <- if (method == "intervals") 
+    cut(x, bins, labels = labels, include.lowest=include.lowest, right=right, ...)
+  else 
+    cut(x, quantile(x, probs = seq(0, 1, 1/bins), na.rm = TRUE), 
+        labels = labels, include.lowest=include.lowest, right=right, ...)
+  
+  as.factor(x)
+}
+
+
+#' Make Categorical Association Statistics
+#' 
+#' Makes several common measures of association for contingency tables.  The 
+#' p-values are obtained through simulation. 
+#' 
+#' @aliases make_assoc_stats concordant discordant ord.gamma ord.somers.d tau.b lambda phi V simtable simrho simtab
+#' @param x The row-variable in a contingency table
+#' @param y The column-variable in a contingency table
+#' @param chisq Logical indicating whether the chi-squared statistic should be produced. 
+#' @param phi Logical indicating whether the phi statistic should be produced. 
+#' @param cramersV Logical indicating whether the Cramer's V statistic should be produced. 
+#' @param lambda Logical indicating whether the lambda statistic should be produced. 
+#' @param gamma Logical indicating whether the gamma statistic for ordinal data should be produced. 
+#' @param d Logical indicating whether Somer's D for ordinal data should be produced. 
+#' @param taub Logical indicating whether Kendall's Tau-b statistic should be produced. 
+#' @param n Number of iterations in the simulation. 
+#' @param weight Vector of weights used to generate the table. 
+#' 
+#' @export
+#' 
+#' @return A matrix of statistics and p-values. 
+make_assoc_stats <- function(x,y, chisq=FALSE, phi=FALSE, cramersV=TRUE, lambda=FALSE,
+                             gamma=TRUE, d=FALSE, taub=TRUE, n=1000, weight=NULL){
+  
+  if(is.null(weight))tab <- table(x,y)
+  if(!is.null(weight)){
+    mydf <- data.frame(x=x, y=y, weight=weight)
+    des <- svydesign(ids=~1, strata=NULL, weights=~weight, data=mydf, digits=3)
+    tab <- svytable(~x+y, design=des, round=TRUE)
+  }
+  tabs <- simtab(tab,n)
+  allStats <- NULL
+  if(chisq){
+    stat0 <- do.call('chisq.test', list(x=tab, correct=FALSE))$statistic
+    stats <- sapply(tabs, function(x)chisq.test(x, correct=FALSE)$statistic)
+    pv <- mean(stats > stat0)
+    allStats <- rbind(allStats, c(stat0, pv))[,,drop=F]
+    rownames(allStats)[nrow(allStats)] <- "Chi-squared"
+  }
+  if(phi){
+    stat0 <- do.call('phi', list(x=tab))
+    stats <- sapply(tabs, function(x)phi(x))
+    pv <- mean(stats > stat0)
+    allStats <- rbind(allStats, c(stat0, pv))[,,drop=F]
+    rownames(allStats)[nrow(allStats)] <- "Phi"
+  }
+  if(cramersV){
+    stat0 <- do.call('V', list(x=tab))
+    stats <- sapply(tabs, function(x)V(x))
+    pv <- mean(stats > stat0)
+    allStats <- rbind(allStats, c(stat0, pv))[,,drop=F]
+    rownames(allStats)[nrow(allStats)] <- "Cramers V"
+  }
+  if(lambda){
+    stat0 <- do.call('lambda', list(x=tab))
+    stats <- sapply(tabs, function(x)lambda(x))
+    pv <- mean(stats > stat0)
+    allStats <- rbind(allStats, c(stat0, pv))[,,drop=F]
+    rownames(allStats)[nrow(allStats)] <- "Lambda"
+  }
+  if(gamma){
+    stat0 <- do.call('ord.gamma', list(x=tab))
+    stats <- sapply(tabs, function(x)lambda(x))
+    pv <- {if(stat0 >= 0)mean(stats > stat0)
+      else mean(stats < stat0)}
+    allStats <- rbind(allStats, c(stat0, pv))[,,drop=F]
+    rownames(allStats)[nrow(allStats)] <- "Kruskal-Goodman Gamma"
+  }
+  if(d){
+    stat0 <- do.call('ord.somers.d', list(x=tab))$sd.symmetric
+    stats <- sapply(tabs, function(x)ord.somers.d(x)$sd.symmetric)
+    pv <- {if(stat0 >= 0)mean(stats > stat0)
+      else mean(stats < stat0)}
+    allStats <- rbind(allStats, c(stat0, pv))[,,drop=F]
+    rownames(allStats)[nrow(allStats)] <- "Somers D"
+  }
+  if(taub){
+    stat0 <- do.call('tau.b', list(x=tab))
+    stats <- sapply(tabs, function(x)tau.b(x))
+    pv <- {if(stat0 >= 0)mean(stats > stat0)
+      else mean(stats < stat0)}
+    allStats <- rbind(allStats, c(stat0, pv))[,,drop=F]
+    rownames(allStats)[nrow(allStats)] <- "Tau-b"
+  }
+  # if(rho){
+  #   x2 <-as.numeric(x)
+  #   y2 <- as.numeric(y)
+  #   r <- simrho(x2,y2,n)
+  #   allStats <- rbind(allStats, c(r$rho0, r$pv))[,,drop=F]
+  #   rownames(allStats)[nrow(allStats)] <- "Spearmans Rho"
+  # }
+  if(!is.null(allStats)){
+    colnames(allStats) <- c("statistic", "p-value")
+    w <- which(allStats[,1] == 0 & allStats[,2] == 0)
+    if(length(w) > 0){
+      allStats[w,2] <- 1.000
+    }
+#   allStats <- round(allStats, 4)
+  }
+  return(allStats)
+}
+
+#' @export
+concordant <- function (x) {
+  x <- matrix(as.numeric(x), dim(x))
+  mat.lr <- function(r, c) {
+    lr <- x[(r.x > r) & (c.x > c)]
+    sum(lr)
+  }
+  r.x <- row(x)
+  c.x <- col(x)
+  sum(x * mapply(mat.lr, r = r.x, c = c.x))
+}
+
+#' @export
+discordant <- function(x){
+  x <- matrix(as.numeric(x), dim(x))
+  mat.ll <- function(r, c) {
+    ll <- x[(r.x > r) & (c.x < c)]
+    sum(ll)
+  }
+  r.x <- row(x)
+  c.x <- col(x)
+  sum(x * mapply(mat.ll, r = r.x, c = c.x))
+}
+
+#' @export
+tau.b <- function (x) {
+  x <- matrix(as.numeric(x), dim(x))
+  c <- concordant(x)
+  d <- discordant(x)
+  n <- sum(x)
+  SumR <- rowSums(x)
+  SumC <- colSums(x)
+  tau.b <- (2 * (c - d))/sqrt(((n^2) - (sum(SumR^2))) * ((n^2) -
+                                                           (sum(SumC^2))))
+  tau.b
+}
+
+#' @export
+ord.gamma <- function(x){
+  x <- matrix(as.numeric(x), dim(x))
+  c <- concordant(x)
+  d <- discordant(x)
+  gamma <- (c - d)/(c + d)
+  class(gamma) <- "ord.gamma"
+  gamma
+}
+
+#' @export
+ord.somers.d <- function(x){
+  x <- matrix(as.numeric(x), dim(x))
+  c <- concordant(x)
+  d <- discordant(x)
+  n <- sum(x)
+  SumR <- rowSums(x)
+  SumC <- colSums(x)
+  sd.cr <- (2 * (c - d))/((n^2) - (sum(SumR^2)))
+  sd.rc <- (2 * (c - d))/((n^2) - (sum(SumC^2)))
+  sd.s <- (2 * (c - d))/((n^2) - (((sum(SumR^2)) + (sum(SumC^2)))/2))
+  res <- list(sd.cr, sd.rc, sd.s)
+  names(res) <- c("sd.cr", "sd.rc", "sd.symmetric")
+  class(res) <- "ord.somersd"
+  res
+}
+
+#' @export
+lambda <- function(x){
+  wmax <- apply(x, 2, which.max)
+  wgmax <- which.max(rowSums(x))
+  nullcc <- rowSums(x)[wgmax]
+  nullerr <- sum(rowSums(x)[-wgmax])
+  corrpred <- x[cbind(wmax, 1:ncol(x))]
+  errpred <- colSums(x) - corrpred
+  E1 <- nullerr
+  E2 <- sum(errpred)
+  (E1-E2)/E1
+}
+
+#' @export
+phi <- function(x){
+  num <- prod(diag(x))- (x[2,1]*x[1,2])
+  denom <- sqrt(prod(c(colSums(x), rowSums(x))))
+  num/denom
+}
+
+#' @export
+V <- function(x){
+  if(all(dim(x) == 2)){
+    num <- prod(diag(x))- (x[2,1]*x[1,2])
+    denom <- sqrt(prod(c(colSums(x), rowSums(x))))
+    num/denom
+  }
+  else{
+    chi2 <- chisq.test(x, correct=FALSE)$statistic
+    sqrt(chi2/(sum(c(x)) * (min(nrow(x), ncol(x)) -1)))
+  }
+}
+
+#' @export
+simtable <- function(x,y, n=1000, stat=NULL){
+  out <- lapply(1:n, function(i)table(x, sample(y, length(y), replace=F)))
+  if(is.null(stat)){
+    return(out)
+  }
+  else{
+    sapply(out, stat)
+  }
+  
+}
+
+#' @export
+simrho <- function(x,y, n=1000){
+  rho0 <- cor(x,y, use="pair", method="spearman")
+  simrho <- sapply(1:n, function(i)cor(x, sample(y, length(y), replace=F), use="pair", method="spearman"))
+  pv <- {if(rho0 >= 0)mean(simrho > rho0)
+    else mean(simrho < rho0)}
+  return(list(rho0 = rho0, simrho = simrho, pv = pv))
+}
+
+#' @export
+simtab <- function(TAB, n=1000, stat=NULL){
+  if(is.null(rownames(TAB)))rownames(TAB) <- paste0("row", 1:nrow(TAB))
+  if(is.null(colnames(TAB)))colnames(TAB) <- paste0("col", 1:ncol(TAB))
+  eg <- expand.grid(rownames(TAB), colnames(TAB))
+  cts <- c(TAB)
+  reps <- rep(1:length(cts), cts)
+  X <- eg[reps, ]
+  out <- lapply(1:n, function(i)table(X[,1], sample(X[,2], nrow(X), replace=F)))
+  if(is.null(stat)){
+    return(out)
+  }
+  else{
+    sapply(out, stat)
+  }
+  return(out)  
+}
+
+
+
+#' Pairwise Correlation Matrix
+#' 
+#' Prints pairwise correlation matrix flagging statistically significant
+#' correlations using one of a few different methods. 
+#' 
+#' @aliases pwCorrMat sig.cor
+#' @param formula A right-sided formula giving the variables to be correlated separated by pluses. 
+#' @param data A data frame where the variables in the formula can be found.
+#' @param method A method for calculating the significance of the of the 
+#' correlation - one of "z", "t" or "sim".  When correlations are 
+#' calculated with weights, a bootstrap is used to generate p-values 
+#' regardless of the method specified.  See details for more. 
+#' @param weight A vector of weightings as long as there are rows in \code{data}. 
+#' @param alpha Cutoff for identifying significant correlations. 
+#' @param ... Other arguments to be passed down to \code{sig.cor}. 
+#' 
+#' @details The significance is found through one of three ways.  For correlation \code{r}, 
+#' the z-transformation is .5*log((1+r)/(1-r)), the p-value for which is found using 
+#' the standard normal distribution. The t-transformation is r*sqrt((n-2)/(1-r^2)), 
+#' the p-value for which is found using a t-distribution with n-2 degrees of freedom. 
+#' The "sim" method uses a permutation test to build the sampling distribution of the 
+#' correlation under the null hypothesis and then calculates a p-value from that 
+#' distribution. 
+#' 
+#' @return An object of class \code{pwc}, which is a list with elements \code{rSig} 
+#' which is a lower-triangular correlation matrix where only significant correlations 
+#' are printed, \code{r} which is the raw-data pairwise correlation matrix and 
+#' \code{p} which gives the p-values of all of the correlations. 
+#' 
+#' @export
+pwCorrMat <- function(formula, data, method=c("z", "t", "sim"), weight=NULL, alpha=.05, ...){
+  meth <- match.arg(method)
+  X <- get_all_vars(formula, data)
+  out <- p.out <- diag(ncol(X))
+  if(inherits(X, "tbl_df")){
+    X <- as.data.frame(X)
+  }
+  for(i in 1:(ncol(X)-1)){
+    for(j in (i+1):ncol(X)){
+      f <- sig.cor(X[,i], X[,j], method=meth, weight=weight, ...)
+      out[i,j] <- out[j,i] <- f$r
+      p.out[i,j] <- p.out[j,i] <- f$p
+    }
+  }
+  marker <- array(ifelse(c(p.out) < alpha, "*", " "), dim=dim(out))
+  outSig <- matrix(sprintf("%.3f", out), ncol=ncol(X))
+  outSig <- array(paste(c(outSig), c(marker), sep=""), dim=dim(out))
+  diag(outSig) <- ""
+  outSig[upper.tri(outSig)] <- ""
+  colnames(outSig) <- colnames(out) <- rownames(outSig) <- rownames(out) <- colnames(p.out) <- rownames(p.out) <- colnames(X)
+  ret <- list(rSig=outSig, r=out, p = p.out )
+  class(ret) <- "pwc"
+  return(ret)
+}
+
+#' @export
+sig.cor <- function(x,y, method=c("z", "t", "sim"), n.sim = 1000, two.sided=TRUE, weight=NULL, ...){
+  meth <- match.arg(method)
+  x <- as.numeric(x)
+  y <- as.numeric(y)
+  if(is.null(weight)){  
+    r <- cor(x,y, use="pairwise.complete.obs", ...)
+    n <- sum(!is.na(x)*!is.na(y))
+  } else{
+    df <- data.frame(x=x, y=y, weight=weight)
+    des <- svydesign(ids=~1, strata=NULL, weights=~weight, data=df, digits=3)
+    rs <- svycor(~ x+ y, design=des, sig.stats=TRUE, na.rm=TRUE)
+    r <- rs$cors[2,1]
+    meth <- "sim"
+  }
+  if(meth == "z"){
+    z <- .5*log((1+r)/(1-r))
+    sez <- 1/sqrt(n-3)
+    pv <- (2^two.sided)*pnorm(abs(z), 0, sez, lower.tail=F)
+  }
+  if(meth == "t"){
+    tstat <- r*sqrt((n-2)/(1-r^2))
+    pv <- (2^two.sided)*pt(abs(tstat), n-2, lower.tail=F)
+  }
+  if(meth == "sim"){
+    if(is.null(weight)){
+      xmat <- sapply(1:n.sim, function(z)sample(x, length(x), replace=F))
+      r0 <- c(cor(y, xmat))
+      pv <- {if(two.sided){
+        mean(r0 < (-abs(r))) + mean(r0 > abs(r))
+      }
+        else{
+          if(r > 0){
+            mean(r > r0)
+          }
+          else{
+            mean(r < r0)
+          }
+        }}
+    }
+    else{
+     pv <- rs$p.values[2,1]
+    }
+  }  
+  return(list(r=r, p = pv))
+}
+
+
+
+#' @method print pwc
+#' @export
+print.pwc <- function(x, ...){
+  cat("Pairwise Correlations\n")
+  print(noquote(x$rSig))
+}
+
+
