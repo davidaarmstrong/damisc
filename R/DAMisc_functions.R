@@ -5743,7 +5743,13 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
         max2 <- vals[[vars[2]]][2]
       }
     }
-    b <- mvrnorm(1500, coef(obj), vcov(obj))
+    if(any(is.na(coef(obj)))){
+     valid.inds <- which(!is.na(coef(obj))) 
+    }else{
+      valid.inds <- 1:length(coef(obj))
+    }
+    
+    b <- mvrnorm(1500, coef(obj)[valid.inds], vcov(obj)[valid.inds, valid.inds])
 
     if(meth == "AME"){
         dat1 <- dat2 <- dat3 <- dat4 <- data
@@ -5760,10 +5766,10 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
         dat4[[vars[1]]] <- max1
         dat4[[vars[2]]] <- max2
     modmats <- list()
-    modmats[[1]] <- model.matrix(formula(obj), dat1)
-    modmats[[2]] <- model.matrix(formula(obj), dat2)
-    modmats[[3]] <- model.matrix(formula(obj), dat3)
-    modmats[[4]] <- model.matrix(formula(obj), dat4)
+    modmats[[1]] <- model.matrix(formula(obj), dat1)[,valid.inds]
+    modmats[[2]] <- model.matrix(formula(obj), dat2)[,valid.inds]
+    modmats[[3]] <- model.matrix(formula(obj), dat3)[,valid.inds]
+    modmats[[4]] <- model.matrix(formula(obj), dat4)[,valid.inds]
     probs <- lapply(modmats, function(x)family(obj)$linkinv(x%*%t(b)))
     D <- c(1,-1,-1,1)
     secdiff <- sapply(1:1500, function(x)(cbind(probs[[1]][,x], probs[[2]][,x], probs[[3]][,x], probs[[4]][,x]) %*%D))
@@ -5795,7 +5801,7 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
     tmp.df[[vars[2]]][4] <- max2
     f <- formula(obj)
     f[[2]] <- NULL
-    modmat <- model.matrix(f, data=tmp.df)
+    modmat <- model.matrix(f, data=tmp.df)[, valid.inds]
     preds <- t(family(obj)$linkinv(modmat%*%t(b)))
     D <- c(1,-1,-1,1)
     secdiff <- (preds %*% D)
