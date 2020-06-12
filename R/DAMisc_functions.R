@@ -384,6 +384,7 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,
 #' @param ticksize A scalar indicating the size of ticks in the rug plot (if
 #' included) positive values put the rug inside the plotting region and
 #' negative values put it outside the plotting region.
+#' @param level Level for the confidence bounds. 
 #' @param hist Logical indicating whether a histogram of the x-variable should
 #' be included in the plotting region.
 #' @param hist.col Argument to be passed to \code{polygon} indicating the color
@@ -432,7 +433,7 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,
 #' 
 DAintfun2 <-
 function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE,
-    hist.col = "gray75", nclass = c(10, 10), scale.hist = 0.5,
+    level=.95, hist.col = "gray75", nclass = c(10, 10), scale.hist = 0.5,
     border = NA, name.stem = "cond_eff",
 	xlab = NULL, ylab=NULL, plot.type = "screen")
 {
@@ -460,12 +461,12 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
         varcov <- vcov(obj)
     }
     se.eff1 <- sqrt(diag(a1 %*% varcov %*% t(a1)))
-    low1 <- eff1 - qt(0.975, obj$df.residual) * se.eff1
-    up1 <- eff1 + qt(0.975, obj$df.residual) * se.eff1
+    low1 <- eff1 - qt((1-((1-level)/2)), obj$df.residual) * se.eff1
+    up1 <- eff1 + qt((1-((1-level)/2)), obj$df.residual) * se.eff1
     eff2 <- a2 %*% obj$coef
     se.eff2 <- sqrt(diag(a2 %*% varcov %*% t(a2)))
-    low2 <- eff2 - qt(0.975, obj$df.residual) * se.eff2
-    up2 <- eff2 + qt(0.975, obj$df.residual) * se.eff2
+    low2 <- eff2 - qt((1-((1-level)/2)), obj$df.residual) * se.eff2
+    up2 <- eff2 + qt((1-((1-level)/2)), obj$df.residual) * se.eff2
     if (!plot.type %in% c("pdf", "png", "eps", "screen")) {
         print("plot type must be one of - pdf, png or eps")
     }
