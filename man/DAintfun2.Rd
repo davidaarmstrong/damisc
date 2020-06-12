@@ -11,6 +11,7 @@ DAintfun2(
   rug = TRUE,
   ticksize = -0.03,
   hist = FALSE,
+  level = 0.95,
   hist.col = "gray75",
   nclass = c(10, 10),
   scale.hist = 0.5,
@@ -39,6 +40,8 @@ negative values put it outside the plotting region.}
 
 \item{hist}{Logical indicating whether a histogram of the x-variable should
 be included in the plotting region.}
+
+\item{level}{Level for the confidence bounds.}
 
 \item{hist.col}{Argument to be passed to \code{polygon} indicating the color
 of the histogram bins.}
