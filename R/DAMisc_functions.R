@@ -6593,7 +6593,11 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
     iqr <- qtiles[,4]-qtiles[,2]
     obs.mat <- as.matrix(!is.na(as.matrix(d$variables[,vars])))
     obs.mat <- apply(obs.mat, 2, as.numeric)
-    wtvec <- d$variables[[weight]]
+    if(is.null(weight)){
+      wtvec <- rep(1, nrow(d$variables))
+    }else {
+      wtvec <- d$variables[[weight]]
+    }
     n <- ceiling(c(wtvec %*% obs.mat))
     na <- ceiling(wtvec %*% rep(1, length(obs.mat))) - n
     tmpdf <- data.frame(group = "All Observations", variable= vars)
@@ -6738,10 +6742,12 @@ xt.data.frame <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL,  
 print.xt <- function(x, ...){
   if(length(x$tab) == 1){
     print.data.frame(x$tab[[1]])
+    if(!is.null(x$chisq)){
     print(x$chisq[[1]])
     cat("Measures of Association\n")
     print(x$stats[[1]])
-  }
+    }
+  }  
   if(length(x$tab) > 1){
     for(i in 1:length(x$tab)){
       cat("Contingency Table for", names(x$tab)[i], "\n")
@@ -6781,7 +6787,7 @@ if(addPct == "legend"){
   levels(d[[variable]]) <- paste0(levels(d[[variable]]), " (", d$pctlab, ")")
 }
 
-g <- d %>% ggplot(aes_string(x="", y="value", fill=variable)) + 
+g <- d %>% ggplot(aes_string(x="1", y="value", fill=variable)) + 
     geom_bar(stat="identity") 
 if(addPct == "pie") g <- g + geom_text(aes_string(y="place", label = "pctlab")) 
     g + coord_polar("y", start=0) + 
