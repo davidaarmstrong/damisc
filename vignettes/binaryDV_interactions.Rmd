@@ -1,0 +1,143 @@
+---
+title: "Interactions in Binary DV Models"
+author: "Dave Armstrong"
+date: "16/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, echo=TRUE, message=FALSE, warning=FALSE)
+library(tibble)
+library(dplyr)
+library(DAMisc)
+library(ggplot2)
+```
+
+Occasionally, I get questions about interpretation of the the `intEff()` function and more generally about interactions in binary dependent variable models (e.g., logits and probits).  I thought it might be useful to make a short vignette to discuss the various issues as there has been some recent research discussing providing useful guidance.  
+
+Let's consider three different scenarios. 
+
+1. Both variables in the interaction are dummy variables. 
+2. One variable in the interaction is continuous and one is binary. 
+3. Both variables in the interaction are continuous. 
+
+## Both binary 
+
+Let's make some data first and then estimate the model. 
+
+```{r}
+set.seed(1234)
+df1 <- tibble(
+  x1 = as.factor(rbinom(1000, 1, .5)), 
+  x2 = as.factor(rbinom(1000, 1, .4)), 
+  z = rnorm(1000),
+  ystar = 0 + as.numeric(x1 == "1") - as.numeric(x2 == "1") + 
+    2*as.numeric(x1=="1")*as.numeric(x2=="1") + z, 
+  p = plogis(ystar), 
+  y = rbinom(1000, 1, p)
+)
+
+mod1 <- glm(y ~ x1*x2 + z, data=df1, family=binomial)
+```
+
+The Norton, Ai and Wang discussion suggests taking the discrete double-difference of the model above with respect to `x1` and `x2`.  This is just the probability where `x1` and `x2` are equal to 1, minus the probability where `x1` is 1 and `x2` is 0 minus the probability where `x2` is 1 and `x1` is 0 plus the probability where `x1` and `x2` are both 0. We could calculate this by hand
+
+```{r}
+## make the model matrix for all conditions
+X11 <- X10 <- X01 <- X00 <- model.matrix(mod1)
+## set the conditions for each of the four different
+## scenarios above
+
+## x1 = 1, x2=1
+X11[,"x11"] <- X11[,"x21"] <- X11[,"x11:x21"] <- 1 
+
+## x1=1, x2=0
+X10[,"x11"] <- 1
+X10[,"x21"] <- X10[,"x11:x21"] <- 0
+
+## x1=0, x2=1
+X01[,"x21"] <- 1
+X01[,"x11"] <- X01[,"x11:x21"] <- 0
+
+## x1=0, x2=0
+X00[,"x11"] <- X00[,"x21"] <-  X00[,"x11:x21"] <- 0
+ 
+## calculate the probabilities
+p11 <- plogis(X11 %*% coef(mod1))
+p10 <- plogis(X10 %*% coef(mod1))
+p01 <- plogis(X01 %*% coef(mod1))
+p00 <- plogis(X00 %*% coef(mod1))
+
+eff1 <- p11 - p10 - p01 + p00
+```
+
+This is just what the `intEff()` function does. 
+
+```{r}
+i1 <- intEff(mod1, c("x1", "x2"), df1)
+```
+
+The `byob$int` element of the `i1` object above gives the interaction effect, particularly the first column.  We can just plot that relative to the effect calculated above to see that they're the same. 
+
+```{r, fig.height=6, fig.width=6, out.width="65%", fig.align="center"}
+tibble(e1 = eff1, i1 = i1$byobs$int$int_eff) %>% 
+  ggplot(mapping= aes(x=e1, y=i1)) + 
+  geom_point(pch=1) + 
+  theme_bw() + 
+  labs(x="Calculated by Hand", y="intEff Function Output")
+```
+
+So, the `byobs` list has two elements - the `int` element holds the interaction effects for each individual observation.  The `X` element holds the original data.  These data were used to calculate the interaction effect, except that the variables involved in the interaction effect were changed as we did above.  Here, you could plot a histogram of the effects: 
+
+```{r, fig.height=6, fig.width=6, out.width="65%", fig.align="center"}
+i1$byobs$int %>% 
+  ggplot(mapping=aes(x=int_eff)) + 
+  geom_histogram() + 
+  theme_bw() + 
+  labs(x="Interaction Effect")
+```
+
+In this case, all of the effects are significant, but you could also break these out by significant and not significant effects: 
+
+```{r, fig.height=6, fig.width=12, out.width="100%", fig.align="center"}
+i1$byobs$int %>% 
+  mutate(sig = ifelse(abs(i1$byobs$int$zstat) > 1.96, 1, 0), 
+         sig = factor(sig, levels=c(0,1), labels=c("No", "Yes"))) %>% 
+  ggplot(mapping=aes(x=int_eff)) + 
+  geom_histogram() + 
+  theme_bw() + 
+  facet_wrap(~sig) + 
+  labs(x="Interaction Effect")
+```
+
+I also wrote another function that does this more generally called `secondDiff()`.  This function calculates second differences at user-defined values.  The summary function summarises all of the individual second differences like those created above. 
+
+```{r}
+sd1 <- secondDiff(mod1, c("x1", "x2"), df1)
+summary(sd1)
+```
+
+## One binary, one continuous. 
+
+With one binary and one continuous variable, the Norton, Ai and Wang model would have us calculate the slope of the line tangent to the logit curve for the continuous variable at both of the values of the categorical variable.  
+
+First, let's make the data and run the model: 
+
+```{r}
+set.seed(1234)
+df2 <- tibble(
+  x1 = as.factor(rbinom(1000, 1, .5)), 
+  x2 = runif(1000, -2,2), 
+  z = rnorm(1000),
+  ystar = 0 + as.numeric(x1 == "1") - x2 + 
+    .75*as.numeric(x1=="1")*x2 + z, 
+  p = plogis(ystar), 
+  y = rbinom(1000, 1, p)
+)
+
+mod2 <- glm(y ~ x1*x2 + z, data=df2, family=binomial)
+```
+
+If we were going to do this "by hand", we could approximate the derivative by taking a really small difference in `x2`
+
+
