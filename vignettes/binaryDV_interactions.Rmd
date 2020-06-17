@@ -1,11 +1,16 @@
 ---
 title: "Interactions in Binary DV Models"
 author: "Dave Armstrong"
-date: "16/06/2020"
-output: html_document
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Interactions in Binary DV Models}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include=FALSE}
+library(knitr)
 knitr::opts_chunk$set(echo = TRUE, echo=TRUE, message=FALSE, warning=FALSE)
 library(tibble)
 library(dplyr)
@@ -40,7 +45,7 @@ df1 <- tibble(
 mod1 <- glm(y ~ x1*x2 + z, data=df1, family=binomial)
 ```
 
-The Norton, Ai and Wang discussion suggests taking the discrete double-difference of the model above with respect to `x1` and `x2`.  This is just the probability where `x1` and `x2` are equal to 1, minus the probability where `x1` is 1 and `x2` is 0 minus the probability where `x2` is 1 and `x1` is 0 plus the probability where `x1` and `x2` are both 0. We could calculate this by hand
+The Norton, Wang and Ai discussion suggests taking the discrete double-difference of the model above with respect to `x1` and `x2`.  This is just the probability where `x1` and `x2` are equal to 1, minus the probability where `x1` is 1 and `x2` is 0 minus the probability where `x2` is 1 and `x1` is 0 plus the probability where `x1` and `x2` are both 0. We could calculate this by hand
 
 ```{r}
 ## make the model matrix for all conditions
@@ -99,7 +104,7 @@ i1$byobs$int %>%
 
 In this case, all of the effects are significant, but you could also break these out by significant and not significant effects: 
 
-```{r, fig.height=6, fig.width=12, out.width="100%", fig.align="center"}
+```{r, fig.height=6, fig.width=6, out.width="65%", fig.align="center"}
 i1$byobs$int %>% 
   mutate(sig = ifelse(abs(i1$byobs$int$zstat) > 1.96, 1, 0), 
          sig = factor(sig, levels=c(0,1), labels=c("No", "Yes"))) %>% 
@@ -117,20 +122,33 @@ sd1 <- secondDiff(mod1, c("x1", "x2"), df1)
 summary(sd1)
 ```
 
+
+These results all tell us about the change in probability when `x2` changes from 0 to 1 under two conditions one when `x1` is 1 and one when it is 0.  For example, the first row of the `byobs$int` element of the output from `intEff()`: 
+
+```{r}
+i1$byobs$int[1,]
+```
+
+suggests that for the first observation, as `x2` changes from 0 to 1, the first difference is .35 higher when `x1` is 1 than when `x1` is 0.  The `atmean` element of `i1` shows what this difference is at the average of all of the covariates: 
+
+```{r}
+i1$atmean
+```
+
 ## One binary, one continuous. 
 
-With one binary and one continuous variable, the Norton, Ai and Wang model would have us calculate the slope of the line tangent to the logit curve for the continuous variable at both of the values of the categorical variable.  
+With one binary and one continuous variable, the Norton, Wang and Ai model would have us calculate the slope of the line tangent to the logit curve for the continuous variable at both of the values of the categorical variable.  
 
 First, let's make the data and run the model: 
 
 ```{r}
 set.seed(1234)
 df2 <- tibble(
-  x1 = as.factor(rbinom(1000, 1, .5)), 
-  x2 = runif(1000, -2,2), 
+  x2 = as.factor(rbinom(1000, 1, .5)), 
+  x1 = runif(1000, -2,2), 
   z = rnorm(1000),
-  ystar = 0 + as.numeric(x1 == "1") - x2 + 
-    .75*as.numeric(x1=="1")*x2 + z, 
+  ystar = 0 + as.numeric(x2 == "1") - x1 + 
+    .75*as.numeric(x2=="1")*x1 + z, 
   p = plogis(ystar), 
   y = rbinom(1000, 1, p)
 )
@@ -138,6 +156,198 @@ df2 <- tibble(
 mod2 <- glm(y ~ x1*x2 + z, data=df2, family=binomial)
 ```
 
-If we were going to do this "by hand", we could approximate the derivative by taking a really small difference in `x2`
+Norton, Wang and Ai show that the interaction effect is the difference in the first derivatives of the probability with respect to `x1` when `x2` changes from 0 to 1.  In the following model: 
+
+$$\begin{aligned}
+log\left(\frac{p_i}{1-p_{i}}\right) &= u_i\\
+log\left(\frac{p_i}{1-p_{i}}\right) &= b_0 + b_1x_{1i} + b_2x_{2i} + b_3x_{1i}x_{2i} + \mathbf{Z\theta},
+\end{aligned}$$
+
+The first derivative of the probability with respect to `x1` when `x2 is equal to 1 is: 
+
+$$\frac{\partial F(u_i)}{\partial x_{1i}} = (b_1 + b_3)f(u_i)$$
+
+where $F(u_i)$ is the predicted probability for observation $i$ (i.e., the CDF of the logistic distribution evaluated at $u_i$) and $f(u_{i})$ is the PDF of the logistic distribution distribution evaluated at $u_i$.  We could also calculate this for the condition when `x2` = 0: 
+
+$$\frac{\partial F(u_i)}{\partial x_{1i}} = b_1f(u_i)$$
+
+In both cases, this assumes that the values of $\mathbf{x}_{i}$ are consistent with the condition.  For example in the first partial derivative above, $x_{2i}$ would have to equal 1 and in the second partial derivative, $x_{2i}$ would have to equal zero.  We could do this by hand just to see how it works: 
+
+
+
+```{r}
+X0 <- X1 <- model.matrix(mod2)
+## set the conditions for each of the four different
+## scenarios above
+
+## x1 = 1, x2=1
+X1[,"x21"] <- 1
+X1[,"x1:x21"] <- X1[,"x1"]
+
+## x1=1, x2=0
+X0[,"x21"] <- 0
+X0[,"x1:x21"] <-  0
+
+
+b <- coef(mod2)
+
+## print the coefficients to show that the two coefficients
+## we want are the second and fifth ones. 
+b
+
+## calculate the first effect
+e1 <- (b[2] + b[5])*dlogis(X1 %*% b)
+
+## calculate the second effect
+e2 <- (b[2] )*dlogis(X0 %*% b)
+
+
+## calculate the probabilities
+eff2 <- e1 - e2
+```
+
+Just like before, we can also estimate the same effect with `intEff()` and show that the two are the same. 
+
+```{r, fig.height=6, fig.width=6, out.width="65%", fig.align="center"}
+i2 <- intEff(mod2, c("x1", "x2"), df2)
+ggplot(mapping=aes(y = i2$byobs$int[,1], x=eff2)) + 
+  geom_point() + 
+  theme_bw() + 
+  labs(x="Calculated by hand", y= "intEff Output")
+```
+
+Looking at the first line of the output of `i2$byobs$int`,
+
+```{r}
+i2$byobs$int[1,]
+```
+
+We see that the slope of the line tangent to the logit curve when `x1` takes on the value of the first observation (1.350536) is 0.04 higher when `x2` = 1 than when `x2` = 0.  We could visualize this as in the figure below.  The solid lines are the logit curves and the dotted lines are the lines tangent to the curves at $x_1 = 1.350536$.  The slope of the blue dotted line is `r e1[1]` and the slope of the orange dotted line is `r e2[1]`.  You can see that the difference `r e1[1] - e2[1]` is the first entry in the `int_eff` column displayed above. 
+
+
+```{r, fig.height=6, fig.width=6, out.width="65%", fig.align="center"}
+tmpX1 <- X1[rep(1, 51), ]
+tmpX0 <- X0[rep(1, 51), ]
+tmpX1[,"x1"] <- tmpX1[,"x1:x21"] <- c(seq(-2, 2, length=50), 1.350536)
+tmpX0[,"x1"] <- c(seq(-2, 2, length=50), 1.350536)
+tmpX0[,"x1:x21"] <- 0
+
+phat1 <- plogis(tmpX1 %*% b)
+phat0 <- plogis(tmpX0 %*% b)
+plot.df <- tibble(phat = c(phat0[1:50], phat1[1:50]), 
+                  x = rep(seq(-2,2,length=50), 2), 
+                  x2 = factor(rep(c(0,1), each=50), levels=c(0,1), labels=c("x2 = 0", "x2 = 1")))
+
+yint1 <- phat1[51] - e1[1]*tmpX1[51, "x1"]
+yint0 <- phat0[51] - e2[1]*tmpX0[51, "x1"]
+
+
+plot.df %>% 
+  ggplot(aes(x=x, y=phat, colour = x2)) + 
+  geom_line() + 
+  scale_colour_manual(values=c("#0072B2", "#D55E00")) + 
+  geom_abline(slope=e1[1], intercept=yint1, colour="#D55E00", lty=3) + 
+  geom_abline(slope=e2[1], intercept=yint0, colour="#0072B2", lty=3) + 
+  theme_bw() + 
+  labs(x="x1", y="Predicted Probability of y=1", colour="x2")
+  
+
+
+```
+
+
+
+
+
+
+
+
+From the `zstat` entry, we see that the effect is not significant. We can plot the effects by significance. 
+
+
+```{r, fig.height=6, fig.width=12, out.width="100%", fig.align="center"}
+i2$byobs$int %>% 
+  mutate(sig = ifelse(abs(zstat) > 1.96, 1, 0), 
+         sig = factor(sig, levels=c(0,1), labels=c("No", "Yes"))) %>% 
+  ggplot(mapping=aes(x=int_eff)) + 
+  geom_histogram() + 
+  theme_bw() + 
+  facet_wrap(~sig) + 
+  labs(x="Interaction Effect") + 
+  theme(aspect.ratio=1)
+```
+
+Another option here is to do a second difference.  Instead of looking at the difference in the slope of the line tangent to the curve for `x1`, it looks at how the effect of a discrete change in `x1` differs across two values of `x2`.  Using the minimum and maximum as the two values to make the change for `x1` is the default.  But let's say that we wanted to see how changing `x1` from -2 to -1 change the predicted probability of success for `x2=0` and `x2=1`.  The result here is the first 
+
+$$\begin{aligned}
+& \left\{Pr(y=1|x_1=\text{high}, x_2=\text{high}) - Pr(y=1|x_1=\text{low}, x_2=\text{high})\right\} - \\
+& \left\{Pr(y=1|x_1=\text{high}, x_2=\text{low}) - Pr(y=1|x_1=\text{low}, x_2=\text{low})\right\} 
+\end{aligned}$$
+
+```{r}
+s2 <- secondDiff(mod2, c("x1", "x2"), df2, vals=list(x1=c(-2,-1), x2=c("0", "1")))
+summary(s2)
+```
+
+
+The summary shows that the change in probabilities is bigger when x2 is low than when x2 is high.  This corroborates what we saw in the plot above.  
+
+## Both Continuous
+
+With two continuous variables using this model: 
+
+$$\begin{aligned}
+log\left(\frac{p_i}{1-p_{i}}\right) &= u_i\\
+log\left(\frac{p_i}{1-p_{i}}\right) &= b_0 + b_1x_{1i} + b_2x_{2i} + b_3x_{1i}x_{2i} + \mathbf{Z\theta},
+\end{aligned}$$
+
+Norton, Wang and Ai show that the cross-derivative, rate of change in the the probabilities as a function of `x1` changes as the rate of change in `x2` changes.  
+
+$$\frac{\partial^2 F(u_{i})}{\partial x_{1i} \partial x_{2i}} = b_3f(u_i) + (b1 + b_3x_{2i})(b_2+b_3x_{1i})f'(u_i)$$
+where $f'(u_i) = f(u_i)\times (1-2F(u_{i}))$.  We could calculate this "by hand" as: 
+
+```{r}
+set.seed(1234)
+df3 <- tibble(
+  x2 = runif(1000, -2,2), 
+  x1 = runif(1000, -2,2), 
+  z = rnorm(1000),
+  ystar = 0 + as.numeric(x2 == "1") - x1 + 
+    .75*as.numeric(x2=="1")*x1 + z, 
+  p = plogis(ystar), 
+  y = rbinom(1000, 1, p)
+)
+
+mod3 <- glm(y ~ x1*x2 + z, data=df3, family=binomial)
+```
+
+
+
+```{r}
+X <- model.matrix(mod3)
+b <- coef(mod3)
+e3 <- b[5]*dlogis(X%*% b) + (b[2] + b[5]*X[,"x2"])*(b[3] + b[5]*X[,"x1"])*dlogis(X%*%b)*(1-(2*plogis(X %*% b)))
+```
+
+
+```{r}
+i3 <- intEff(mod3, c("x1", "x2"), data=df3)
+```
+
+We can content ourselves that these are the same: 
+
+```{r}
+e3[1]
+i3$byobs$int[1,]
+```
+
+So, the effects are the cross-derivative with respect to both `x1` and `x2`.  I don't find this to be a particularly intuitive metric, though we can consider the significance of these values and look at their distribution.  I find the second difference metric to be a bit more intuitive because it still gives the difference in change in predicted probabilities for a change in another variable.  For example, we could do: 
+
+```{r}
+s3 <- secondDiff(mod3, c("x1", "x2"), data=df3, vals =list(x1=c(-1,0), x2=c(-2,2)))
+summary(s3)
+```
+
+This shows us what happens when we change `x1` from -1 to 0 for the two conditions - when `x2` is at its minmum versus its maximum. We see that on average the second difference is around -.08 and about 20\% of the differences are statistically significant.  The average second difference is not, itself, significant.  The -0.084 number means the same thing here as it did above.  It's the difference in the first difference of `x1` when `x2` is high and when `x2` is low.  
 
 

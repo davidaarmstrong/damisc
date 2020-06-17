@@ -926,29 +926,29 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     phat <- plogis(xb)
     phi <- phat * (1 - phat)
     linear <- b[int.var] * phi
-    dum <- vars[which(sapply(apply(X[, vars], 2, table), length) ==
+    dum <- vars[which(sapply(apply(model.matrix(obj)[, vars, drop=FALSE], 2, table), length) ==
         2)]
     cont <- vars[which(vars != dum)]
     X1 <- X2 <- X
     X1[, dum] <- 1
-    X1[, int.var] <- X1[, cont] * X1[, dum]
+    X1[, int.var] <- X1[, cont, drop=FALSE] * X1[, dum, drop=FALSE]
     phat1 <- plogis(X1 %*% b)
     phi1 <- phat1 * (1 - phat1)
     d2f1 <- phi1 * (1 - 2 * phat1)
     ie1 <- (b[cont] + b[int.var]) * phi1
     X2[, dum] <- 0
-    X2[, int.var] <- X2[, cont] * X2[, dum]
+    X2[, int.var] <- X2[, cont, drop=FALSE] * X2[, dum, drop=FALSE]
     phat2 <- plogis(X2 %*% b)
     phi2 <- phat2 * (1 - phat2)
     d2f2 <- phi2 * (1 - 2 * phat2)
     ie2 <- b[cont] * phi2
     logitcd <- ie1 - ie2
-    deriv1 <- phi1 - phi2 + b[cont] * X[, cont] * (d2f1 - d2f2) +
-        b[int.var] * X[, cont] * d2f1
+    deriv1 <- phi1 - phi2 + b[cont] * X[, cont, drop=FALSE] * (d2f1 - d2f2) +
+        b[int.var] * X[, cont, drop=FALSE] * d2f1
     deriv2 <- (b[cont] + b[int.var]) * d2f1
-    deriv3 <- phi1 + (b[cont] + b[int.var]) * d2f1 * X[, cont]
+    deriv3 <- phi1 + (b[cont] + b[int.var]) * d2f1 * X[, cont, drop=FALSE]
     deriv0 <- (b[cont] + b[int.var]) * d2f1 - b[cont] * d2f2
-    others <- X[, -c(1, match(c(vars, int.var), names(b)))]
+    others <- X[, -c(1, match(c(vars, int.var), names(b))), drop=FALSE]
     if (!("matrix" %in% class(others))) {
         others <- matrix(others, nrow = nrow(X))
     }
@@ -2644,7 +2644,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     phat <- pnorm(xb)
     phi <- dnorm(xb)
     linear <- b[int.var] * phi
-    dum <- vars[which(sapply(apply(X[, vars], 2, table), length) ==
+    dum <- vars[which(sapply(apply(model.matrix(obj)[, vars], 2, table), length) ==
         2)]
     cont <- vars[which(vars != dum)]
     X1 <- X2 <- X
@@ -5754,18 +5754,14 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
 
     if(meth == "AME"){
         dat1 <- dat2 <- dat3 <- dat4 <- data
-        # dat1 = (L, L)
-        # dat2 = (H, L)
-        # dat3 = (L, H)
-        # dat4 = (H, H)
-        dat1[[vars[1]]] <- min1
-        dat1[[vars[2]]] <- min2
-        dat2[[vars[1]]] <- max1
-        dat2[[vars[2]]] <- min2
-        dat3[[vars[1]]] <- min1
-        dat3[[vars[2]]] <- max2
-        dat4[[vars[1]]] <- max1
-        dat4[[vars[2]]] <- max2
+        dat1[[vars[1]]] <- max1
+        dat2[[vars[1]]] <- min1
+        dat3[[vars[1]]] <- max1
+        dat4[[vars[1]]] <- min1
+        dat1[[vars[2]]] <- max2
+        dat2[[vars[2]]] <- max2
+        dat3[[vars[2]]] <- min2
+        dat4[[vars[2]]] <- min2
     modmats <- list()
     modmats[[1]] <- model.matrix(formula(obj), dat1)[,valid.inds]
     modmats[[2]] <- model.matrix(formula(obj), dat2)[,valid.inds]
@@ -5792,14 +5788,14 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
         }
     }
     tmp.df <- tmp.df[c(1,1,1,1), ]
-    tmp.df[[vars[1]]][1] <- min1
-    tmp.df[[vars[1]]][2] <- max1
-    tmp.df[[vars[1]]][3] <- min1
-    tmp.df[[vars[1]]][4] <- max1
-    tmp.df[[vars[2]]][1] <- min2
-    tmp.df[[vars[2]]][2] <- min2
-    tmp.df[[vars[2]]][3] <- max2
-    tmp.df[[vars[2]]][4] <- max2
+    tmp.df[[vars[1]]][1] <- max1
+    tmp.df[[vars[1]]][2] <- min1
+    tmp.df[[vars[1]]][3] <- max1
+    tmp.df[[vars[1]]][4] <- min1
+    tmp.df[[vars[2]]][1] <- max2
+    tmp.df[[vars[2]]][2] <- max2
+    tmp.df[[vars[2]]][3] <- min2
+    tmp.df[[vars[2]]][4] <- min2
     f <- formula(obj)
     f[[2]] <- NULL
     modmat <- model.matrix(f, data=tmp.df)[, valid.inds]
@@ -7235,4 +7231,50 @@ print.pwc <- function(x, ...){
   print(noquote(x$rSig))
 }
 
+##' Plot Variable Importance.
+##' 
+##' Builds a plot of importance based on Silber, Rosenbaum and Ross's (1995)
+##' idea of importance as the variance of the predicted model terms. 
+##' 
+##' @param obj Any objct that permits prediction of model terms using the \code{predict(obj, type="terms")} syntax. 
+##' @param pct Logical indicating whether the entries should be percentagized by the 
+##' total sum of squares in the predictions.
+##' @param names An optional vector of names for the coefficients. 
+##' @param orderSize Logical indicating whether the terms are ordered by importance in the graph. 
+##' 
+##' @return Returns an initialized ggplot, but geometries need to be added to produce meaningful output (see examples). 
+##' 
+##' @examples 
+##' data(aclp)
+##' library(ggplot2)
+##' mod <- glm(democ ~ log(gdpw) + popg +  year, data=aclp, family=binomial)	
+##' impCoef(mod, pct=TRUE, names=c("GDP", "Population", "Year")) + 
+##' geom_point(size=2)  +
+##' labs(x="Importance", y="")
+##' 
+##' 
+##' @references Silber, JH, PR Rosenbaum and RN Ross (1995) Comparing the Contributions of Groups of Predictors: Which Outcomes Vay with Hospital Rather than Patient Characteristics? JASS 90, 7-18.
+##' @export
+impCoef <- function(obj, pct=FALSE, names=NULL, orderSize=TRUE){
+  p <- predict(obj, type="terms")
+  if(length(names) != ncol(p) & !is.null(names)){
+    stop(paste0("names must be the number of terms in the model: ", ncol(p), "\n"))
+  }
+  psum <- apply(p, 2, function(x)sum(x^2))
+  if(pct){
+    psum <- psum / sum(rowSums(p)^2)
+  }
+  tmp <- data.frame(imp = psum)
+  if(!is.null(names)){
+    tmp$name = names
+  }else{
+    tmp$name <- colnames(p)
+  }
+  if(!orderSize){
+    g <- ggplot(tmp, aes_string(x="imp", y="name")) 
+  }else{
+    g <- ggplot(tmp, aes(x=.data$imp, y=reorder(.data$name, .data$imp, mean)))
+  }
+  g  
+}
 
