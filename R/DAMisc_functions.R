@@ -4921,13 +4921,14 @@ cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2
 #' may conflict with the lattice figure.  To change the figure the best advice
 #' would be to save the plot as an oject and use the \code{update} function to
 #' change its features.
+#' @param plot Logical indicating whether the plot should be returned or just the data. 
 #' @return A lattice graph produce by a call to \code{xyplot}.
 #' @method plot balsos
 #' 
 #' @export
 #' 
 #' @author Dave Armstrong
-plot.balsos <- function(x, ..., freq=TRUE, offset=.1){
+plot.balsos <- function(x, ..., freq=TRUE, offset=.1, plot=TRUE){
 if(freq){
     Xdat <- as.data.frame(x$X[,-1])
     names(Xdat) <- paste("var", 1:ncol(Xdat), sep="")
@@ -4944,11 +4945,15 @@ os <- chains[, mins[,2]]
 s<- summary(as.mcmc(os))
 
 newdf <- data.frame(
+    freq = a1$result$os[mins[,2]],
     os = s$statistics[,1],
     lower = s$quantiles[,1],
     upper = s$quantiles[,5],
-    orig = sort(unique(x$y), stringsAsFactors=TRUE)
+    orig = sort(unique(x$y)), stringsAsFactors=TRUE
 )
+if(!plot){
+  return(newdf)
+}else{
 tp <- trellis.par.get()$superpose.symbol
 if(!freq){
 xyplot(os ~ orig, data=newdf,
@@ -4958,7 +4963,6 @@ xyplot(os ~ orig, data=newdf,
     })
 }
 else{
-    newdf$freq <- a1$result$os[mins[,2]]
     xyplot(os ~ orig, data=newdf,
         panel = function(x,y, ...){
             panel.points(x-offset,y, cex=.6, col=tp$col[1], pch=tp$pch[1])
@@ -4967,6 +4971,7 @@ else{
         })
     }
 
+  }
 }
 
 ##' Summry method for Bayesian ALSOS

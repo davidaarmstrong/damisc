@@ -1,5 +1,6 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 Readme.Rmd
-Readme.md
 News.md
+\.Rhistory
+\.gitignore
