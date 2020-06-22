@@ -3765,7 +3765,9 @@ scaleDataFrame <-
 function(data){
 classes <- sapply(1:ncol(data), function(x)class(data[,x]))
 dummies <- apply(data, 2, function(x)prod(x %in% c(0,1,NA)))
-nn.ind <- union(which(dummies == 1), which(classes == "factor"))
+facs <- sapply(data, function(x)inherits(x, "factor"))
+chars <- sapply(data, function(x)inherits(x, "character"))
+nn.ind <- sort(unique(c(which(dummies == 1), which(facs), which(chars))))
 num.ind <- setdiff(1:ncol(data), nn.ind)
 if(length(num.ind) == 0){stop("No Numeric Variables in Data Frame")}
 num.dat <- data[,num.ind]
