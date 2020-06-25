@@ -4,7 +4,7 @@
 \alias{plot.balsos}
 \title{Plot Results from BALSOS}
 \usage{
-\method{plot}{balsos}(x, ..., freq = TRUE, offset = 0.1)
+\method{plot}{balsos}(x, ..., freq = TRUE, offset = 0.1, plot = TRUE)
 }
 \arguments{
 \item{x}{Object of class \code{balsos}.}
@@ -20,6 +20,8 @@ plotted alongside the Bayesian result.}
 \item{offset}{If \code{freq=T}, the Bayesian points will be plotted at
 \code{x-offset} and the frequentist points will be plotted at
 \code{x+offset}.}
+
+\item{plot}{Logical indicating whether the plot should be returned or just the data.}
 }
 \value{
 A lattice graph produce by a call to \code{xyplot}.

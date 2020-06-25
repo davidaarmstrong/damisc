@@ -3761,27 +3761,12 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", 
 #' @export
 #' 
 #' @author Dave Armstrong
-scaleDataFrame <-
-function(data){
-classes <- sapply(1:ncol(data), function(x)class(data[,x]))
-dummies <- apply(data, 2, function(x)prod(x %in% c(0,1,NA)))
-facs <- sapply(data, function(x)inherits(x, "factor"))
-chars <- sapply(data, function(x)inherits(x, "character"))
-nn.ind <- sort(unique(c(which(dummies == 1), which(facs), which(chars))))
-num.ind <- setdiff(1:ncol(data), nn.ind)
-if(length(num.ind) == 0){stop("No Numeric Variables in Data Frame")}
-num.dat <- data[,num.ind]
-nonnum.dat <- data[,nn.ind]
-if(is.null(dimnames(num.dat))){
-	num.dat <- data.frame(num.dat, stringsAsFactors=TRUE)
-	names(num.dat) <- names(data)[num.ind]
-}
-if(is.null(dimnames(nonnum.dat))){
-	nonnum.dat <- data.frame(nonnum.dat, stringsAsFactors=TRUE)
-	names(nonnum.dat) <- names(data)[nn.ind]
-}
-newdat <- cbind(as.data.frame(scale(num.dat)), as.data.frame(nonnum.dat))
-newdat
+scaleDataFrame <-function(data){
+  isNum <- function(x){
+    !(all(x%in% c(0,1,NA)) | inherits(x, "factor") | inherits(x, "character"))
+  }
+  newdat <- data %>% mutate_if(isNum, scale)
+  newdat
 }
 
 
