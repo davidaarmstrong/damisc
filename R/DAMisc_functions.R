@@ -7272,7 +7272,6 @@ alsosDV <- function(form, data, maxit = 30, level = 2, process = 1, starts = NUL
 #' \item{form}{Original formula}
 #' @author Dave Armstrong and Bill Jacoby
 #' 
-#' @importFrom dplyr bind_cols
 #' @export
 #' 
 #' @references
@@ -7419,4 +7418,106 @@ plot.alsos <- function(x, which_var=NULL, return_data=FALSE, ...){
       theme_bw() + 
       labs(x = "Raw Values", y = "Optimally Scaled Values")
   }
+}
+
+
+##' Bootstrapping function for the ALSOS algorithm
+##' 
+##' Executes a non-parametric bootstrap for the 
+##' alsos algorithm to get uncertainty estimates
+##' for the optimally scaled values of the 
+##' variables. 
+##' 
+#' @param os_form A two-sided formula including the independent variables to 
+#' be scaled on the left-hand side.  Optionally, the dependent variable can 
+#' also be scaled. 
+#' @param raw_form A right-sided formula with covariates that will not be 
+#' scaled.  
+#' @param data A data frame.
+#' @param scale_dv Logical indicating whether the dependent variable should 
+#' be optimally scaled. 
+#' @param maxit Maximum number of iterations of the optimal scaling algorithm.
+#' @param level Measurement level of the dependent variable 1=Nominal,
+#' 2=Ordinal
+#' @param process Nature of the measurement process: 1=discrete, 2=continuous.
+#' Basically identifies whether tied observations will continue to be tied in
+#' the optimally scaled variale (1) or whether the algorithm can untie the
+#' points (2) subject to the overall measurement constraints in the model.
+#' @param starts Optional starting values for the optimal scaling algorithm.
+#' @param R Number of bootstrap samples to be calculated
+#' @param conf.level Level of confidence for the confidence intervals. 
+#' @param return Whether the aggregated result with percentile confidence intervals, 
+#' the bootstrap object or both should be returned. 
+#' @param ... Other arguments to be passed down to \code{lm}.
+#' @return A list with either \code{data} and/or \code{boot.obj} entries. 
+#' @export 
+boot.alsos <- function(os_form, raw_form=~1, data,
+                       scale_dv=TRUE, maxit=30, level = 1, 
+                       process=1, starts=NULL, R = 50, 
+                       conf.level=.95, 
+                       return = c("data", "boot.obj", "both"), ...){
+  ret = match.arg(return)
+  f1 <- as.formula(os_form)
+  f2 <- as.formula(raw_form)
+  d1 <- get_all_vars(f1, data)
+  d2 <- get_all_vars(f2, data)
+  if(ncol(d2) != 0){
+    tmpdata <- bind_cols(d1, d2)  
+  } else{
+    tmpdata <- d1
+  }
+  tmpdata <- na.omit(tmpdata)
+  dv <- names(d1)[1]
+  x <- boot(bafun, data=tmpdata, os_form = os_form, raw_form=raw_form,  
+            level=level, process=process, maxit=maxit, 
+            starts=starts, R=R, strata=tmpdata[[dv]], ...)
+  
+  raw_names <- names(d1)[-1]
+  if(scale_dv){
+    raw_names <- c(dv, raw_names)    
+  }
+  raw_vals <- data %>% 
+    select(all_of(raw_names)) %>% 
+    pivot_longer(cols=all_of(raw_names), names_to="variable", values_to="raw_vals") %>%
+    group_by(variable, raw_vals) %>% 
+    summarise(raw_val = mean(raw_vals)) %>% 
+    ungroup %>% 
+    select(-raw_val)
+  raw_vals$os_vals <- x$t0
+  crit <- 1-(1-conf.level)/2
+  cis <- t(apply(x$t, 2, quantile, c(1-crit, crit)))
+  raw_vals$lower = cis[,1]
+  raw_vals$upper = cis[,2]
+  res <- list()
+  if(ret %in% c("data", "both")){
+    res$data <- raw_vals
+  }
+  if(ret %in% c("boot.obj", "both")){
+    res$boot.obj <- x
+  }
+  return(res)
+  
+}
+
+
+bafun <- function(data, inds, os_form, raw_form=~1, 
+                  level = 1, process=1, scale_dv=TRUE, 
+                  starts=NULL, maxit=30, ...){
+  
+  
+  tmp <- data[inds, ]
+  x <- alsos(os_form, raw_form, data=tmp, scale_dv = scale_dv,
+             maxit = maxit, level = level, process=process, 
+             starts = starts, ...)
+  os_names <- grep("_os", names(x$data), value=TRUE)
+  raw_names <- gsub("_os", "", os_names)
+  os_vals <- x$data %>% 
+    select(all_of(os_names)) %>% 
+    pivot_longer(cols=all_of(os_names), names_to="variable", values_to="os_vals")
+  raw_vals <- x$data %>% 
+    select(all_of(raw_names)) %>% 
+    pivot_longer(cols=all_of(raw_names), names_to="variable", values_to="raw_vals")
+  vals <- os_vals %>% select(-variable) %>% bind_cols(raw_vals, .)
+  vals <- vals %>% group_by(variable, raw_vals) %>% summarise(os_val = mean(os_vals))
+  c(vals$os_val)
 }
