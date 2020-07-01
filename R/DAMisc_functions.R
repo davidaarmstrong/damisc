@@ -7212,7 +7212,7 @@ impCoef <- function(obj, pct=FALSE, names=NULL, orderSize=TRUE){
 #' \item{iterations}{The iteration history of the algorithm}
 #' 
 #' \item{form}{Original formula}
-#' @author Dave Armstrong
+#' @author Dave Armstrong and Bill Jacoby
 #' 
 #' @importFrom dplyr bind_cols
 #' @export
@@ -7270,7 +7270,7 @@ alsosDV <- function(form, data, maxit = 30, level = 2, process = 1, starts = NUL
 #' \item{iterations}{The iteration history of the algorithm}
 #' 
 #' \item{form}{Original formula}
-#' @author Dave Armstrong
+#' @author Dave Armstrong and Bill Jacoby
 #' 
 #' @importFrom dplyr bind_cols
 #' @export

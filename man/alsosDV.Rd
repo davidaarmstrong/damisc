@@ -57,5 +57,5 @@ with Qualitative and Quantitative Variables: An Alternating Least Squares
 Method with Optimal Scaling Features} Psychometrika, 41:502-529.
 }
 \author{
-Dave Armstrong
+Dave Armstrong and Bill Jacoby
 }
