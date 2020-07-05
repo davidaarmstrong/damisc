@@ -4,3 +4,5 @@ Readme.Rmd
 News.md
 \.Rhistory
 \.gitignore
+^doc$
+^Meta$

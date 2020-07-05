@@ -3758,6 +3758,8 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", 
 #' @param data A data frame.
 #' @return A data frame with standardized quantitative variables
 #' 
+#' @importFrom dplyr mutate_if
+#' 
 #' @export
 #' 
 #' @author Dave Armstrong
@@ -4392,96 +4394,6 @@ inspect.data.frame <- function(data, x, includeLabels=FALSE, ...){
   }
   return(out)
 }
-
-
-
-#' Alternating Least Squares Optimal Scaling
-#' 
-#' Estimates the Alternating Least Squares Optimal Scaling (ALSOS) solution for
-#' qualitative dependent variables.
-#' 
-#' \code{alsosDV} estimates the Alternating Least Squares Optimal Scaling
-#' solution on the dependent variable.
-#' 
-#' @param form A formula with a dependent variable that will be optimally
-#' scaled
-#' @param data A data frame.
-#' @param maxit Maximum number of iterations of the optimal scaling algorithm.
-#' @param level Measurement level of the dependent variable 1=Nominal,
-#' 2=Ordinal
-#' @param process Nature of the measurement process: 1=discrete, 2=continuous.
-#' Basically identifies whether tied observations will continue to be tied in
-#' the optimally scaled variale (1) or whether the algorithm can untie the
-#' points (2) subject to the overall measurement constraints in the model.
-#' @param starts Optional starting values for the optimal scaling algorithm.
-#' @param ... Other arguments to be passed down to \code{lm}.
-#' @return A list with the following elements:
-#' 
-#' \item{result}{The result of the optimal scaling process}
-#' 
-#' \item{data}{The original data frame with additional columns adding the
-#' optimally scaled DV}
-#' 
-#' \item{iterations}{The iteration history of the algorithm}
-#' 
-#' \item{form}{Original formula}
-#' @author Dave Armstrong
-#' 
-#' @export
-#' 
-#' @references
-#' 
-#' Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political
-#' Research: An Optimistic View} American Journal of Political Science 43(1):
-#' 271-301.
-#' 
-#' Young, Forrest.  1981.  \sQuote{Quantitative Analysis of Qualitative Data}
-#' Psychometrika, 46: 357-388.
-#' 
-#' Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression
-#' with Qualitative and Quantitative Variables: An Alternating Least Squares
-#' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
-alsosDV <- function(form, data, maxit=30, level=2, process=1, starts=NULL,...){
-	# process: 1 = discrete, 2 = continuous
-	# level: 1 = nominal, 2 = ordinal
-	# maxit: maximum number of optimal scaling iterations
-	# source("http://www.quantoid.net/reg3/opscale_v14.R")
-
-	rownames(data) <- 1:nrow(data)
-	previous.rsquared <- niter <- 0
-	rsquared.differ <- 1.0
-	record <- c()
-	form <- as.formula(form)
-	mf <- model.frame(form, data)
-	tmpdata <- data[which(rownames(data) %in% rownames(mf)),]
-	dv <- form[[2]]
-	tmpdata$dvar.os <- model.response(mf)
-	if(!is.null(starts)){
-		tmpdata$dvar.os <- starts
-	}
-	tmpmod <- lm(form, tmpdata, ...)
-	while (rsquared.differ > .001 && niter <= maxit) {
-	niter <- niter + 1
-	reg.os <- update(tmpmod, dvar.os ~ .)
-	rsquared.differ <- summary(reg.os)$r.squared - previous.rsquared
-	previous.rsquared <- summary(reg.os)$r.squared
-	record <- c(record, niter, summary(reg.os)$r.squared, rsquared.differ)
-	   if (rsquared.differ > .001) {
-	   dvar.pred <- predict(reg.os)
-	   opscaled.dvar <- opscale(model.response(model.frame(form, data)), dvar.pred, level = level, process = process)
-	   tmpdata$dvar.os <- opscaled.dvar$os
-	   }
-	}
-	record <- matrix(round(record,4), ncol=3, byrow=TRUE)
-	rownames(record) <- record[,1]
-	record <- record[,-1]
-	colnames(record) <- c("r-squared", "r-squared dif")
-	tmpdata[[paste(dv, "_os", sep="")]] <- NA
-	tmpdata[[paste(dv, "_os", sep="")]][match(rownames(tmpdata), rownames(mf))] <- tmpdata$dvar.os
-	invisible(list(result=opscaled.dvar, data=tmpdata, iterations=record, formula=form))
-}
-
-
 
 #' Bayesian Alternating Least Squares Optimal Scaling
 #' 
@@ -7272,3 +7184,342 @@ impCoef <- function(obj, pct=FALSE, names=NULL, orderSize=TRUE){
   g  
 }
 
+##' Alternating Least Squares Optimal Scaling
+##' 
+##' This is a wrapper for the newer \code{alsos} function 
+##' which allows optimal scaling of both dependent and independent
+##' variables.  I retain the old operationalization of \code{alsosDV} 
+##' for backward compatability purposes. 
+##' 
+##' 
+#' @param form A formula for a linear model where the dependent 
+#' variable will be optimally scaled relative to the model. 
+#' @param data A data frame.
+#' @param maxit Maximum number of iterations of the optimal scaling algorithm.
+#' @param level Measurement level of the dependent variable 1=Nominal,
+#' 2=Ordinal
+#' @param process Nature of the measurement process: 1=discrete, 2=continuous.
+#' Basically identifies whether tied observations will continue to be tied in
+#' the optimally scaled variale (1) or whether the algorithm can untie the
+#' points (2) subject to the overall measurement constraints in the model.
+#' @param starts Optional starting values for the optimal scaling algorithm.
+#' @param ... Other arguments to be passed down to \code{lm}.
+#' @return A list with the following elements:
+#' 
+#' \item{result}{The result of the optimal scaling process}
+#' 
+#' \item{data}{The original data frame with additional columns adding the
+#' optimally scaled DV}
+#' 
+#' \item{iterations}{The iteration history of the algorithm}
+#' 
+#' \item{form}{Original formula}
+#' @author Dave Armstrong and Bill Jacoby
+#' 
+#' @importFrom dplyr bind_cols
+#' @export
+#' 
+#' @references
+#' 
+#' Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political
+#' Research: An Optimistic View} American Journal of Political Science 43(1):
+#' 271-301.
+#' 
+#' Young, Forrest.  1981.  \sQuote{Quantitative Analysis of Qualitative Data}
+#' Psychometrika, 46: 357-388.
+#' 
+#' Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression
+#' with Qualitative and Quantitative Variables: An Alternating Least Squares
+#' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
+alsosDV <- function(form, data, maxit = 30, level = 2, process = 1, starts = NULL, ...){
+  dv <- names(model.frame(form, data))[1]
+  os_form <- paste(dv, " ~ 1")
+  raw_form <- paste0("~ ", as.character(form)[[3]])
+  out <- alsos(os_form, raw_form, data=data, maxit=maxit, scale_dv=TRUE, 
+               level=level, process=process, starts=starts)
+  return(out)
+}
+
+#' Alternating Least Squares Optimal Scaling
+#' 
+#' Estimates the Alternating Least Squares Optimal Scaling (ALSOS) solution for
+#' qualitative variables.  
+#' 
+#' @param os_form A two-sided formula including the independent variables to 
+#' be scaled on the left-hand side.  Optionally, the dependent variable can 
+#' also be scaled. 
+#' @param raw_form A right-sided formula with covariates that will not be 
+#' scaled.  
+#' @param data A data frame.
+#' @param scale_dv Logical indicating whether the dependent variable should 
+#' be optimally scaled. 
+#' @param maxit Maximum number of iterations of the optimal scaling algorithm.
+#' @param level Measurement level of the dependent variable 1=Nominal,
+#' 2=Ordinal
+#' @param process Nature of the measurement process: 1=discrete, 2=continuous.
+#' Basically identifies whether tied observations will continue to be tied in
+#' the optimally scaled variale (1) or whether the algorithm can untie the
+#' points (2) subject to the overall measurement constraints in the model.
+#' @param starts Optional starting values for the optimal scaling algorithm.
+#' @param ... Other arguments to be passed down to \code{lm}.
+#' @return A list with the following elements:
+#' 
+#' \item{result}{The result of the optimal scaling process}
+#' 
+#' \item{data}{The original data frame with additional columns adding the
+#' optimally scaled DV}
+#' 
+#' \item{iterations}{The iteration history of the algorithm}
+#' 
+#' \item{form}{Original formula}
+#' @author Dave Armstrong and Bill Jacoby
+#' 
+#' @export
+#' 
+#' @references
+#' 
+#' Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political
+#' Research: An Optimistic View} American Journal of Political Science 43(1):
+#' 271-301.
+#' 
+#' Young, Forrest.  1981.  \sQuote{Quantitative Analysis of Qualitative Data}
+#' Psychometrika, 46: 357-388.
+#' 
+#' Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression
+#' with Qualitative and Quantitative Variables: An Alternating Least Squares
+#' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
+alsos <- function(os_form, raw_form = ~1, data, scale_dv=FALSE, maxit=30, 
+                  level=2, process=1, starts=NULL,...){
+  rownames(data) <- 1:nrow(data)
+  previous.rsquared <- niter <- 0
+  rsquared.differ <- 1.0
+  record <- c()
+  f1 <- as.formula(os_form)
+  f2 <- as.formula(raw_form)
+  d1 <- get_all_vars(f1, data)
+  d2 <- get_all_vars(f2, data)
+  if(ncol(d2) != 0){
+    tmpdata <- bind_cols(d1, d2)  
+  } else{
+    tmpdata <- d1
+  }
+  tmpdata <- orig_data <- na.omit(tmpdata)
+  dv <- names(d1)[1]
+  scale_vars <- names(d1)[-1]
+  if(length(process) > 1 & length(process) != (length(scale_vars) + scale_dv)){
+    stop("The process argument must be either a scalar or a vector with one entry for each scaled variable with the DV first, if the DV is being scaled.\n")
+  }
+  if(length(level) > 1 & length(level) != (length(scale_vars) + scale_dv)){
+    stop("The level argument must be either a scalar or a vector with one entry for each scaled variable with the DV first, if the DV is being scaled.\n")
+  }
+  if(length(process) == 1){
+    process <- rep(process, (length(scale_vars) + scale_dv))
+  }
+  if(length(level) == 1){
+    level <- rep(level, (length(scale_vars) + scale_dv))
+  }
+  form <- paste(dv, "~", 
+        paste(as.character(f1)[3], 
+          as.character(f2)[2], 
+          sep="+"), 
+        collapse="")
+  if(!is.null(starts)){
+    if(length(starts) != nrow(tmpdata)){
+      stop("Starting values must be the same length as the dataset\n")
+    }
+    tmpdata[[dv]] <- starts
+  }
+  reg.os <- lm(form, data=tmpdata, ...)
+  r2 <- summary(reg.os)$r.squared
+  rsquared.differ <-  r2 - previous.rsquared
+  previous.rsquared <- r2
+  record <- c(record, niter, r2, rsquared.differ)
+  while (rsquared.differ > .001 && niter <= maxit) {
+    niter <- niter + 1
+    if(scale_dv){
+      dvar.pred <- predict(reg.os)
+      opscaled.dvar <- opscale(orig_data[[dv]], dvar.pred, level = level[1], process = process[1])
+      tmpdata[[dv]] <- opscaled.dvar$os
+    }
+    if(length(scale_vars) > 0){
+      for(i in 1:length(scale_vars)){
+        reg.os <- update(reg.os, tmpdata)
+        b <- coef(reg.os)
+        tms <- predict(reg.os, type="terms", newdata=tmpdata)
+        scale_var <- orig_data[[scale_vars[i]]]
+        others <- rowSums(tms[,-which(colnames(tms) == scale_vars[i])])
+        pred.scale <- (model.response(model.frame(reg.os)) - (b[1] + others))/b[scale_vars[i]]
+        opscaled.var <- opscale(scale_var, pred.scale, level = level[(i+scale_dv)], process = process[(i+scale_dv)])
+        tmpdata[[scale_vars[i]]] <- opscaled.var$os
+      }
+    }
+    reg.os <- update(reg.os, tmpdata)
+    r2 <- summary(reg.os)$r.squared
+    rsquared.differ <-  r2 - previous.rsquared
+    previous.rsquared <- r2
+    record <- c(record, niter, r2, rsquared.differ)
+  }
+  record <- matrix(round(record,4), ncol=3, byrow=TRUE)
+  rownames(record) <- record[,1]
+  record <- record[,-1]
+  colnames(record) <- c("r-squared", "r-squared dif")
+  if(scale_dv){
+    names(tmpdata) <- gsub(dv, paste0(dv, "_os"), names(tmpdata))
+  }
+  if(length(scale_vars) > 0){
+    for(i in 1:length(scale_vars)){
+      names(tmpdata) <- gsub(scale_vars[i], paste0(scale_vars[i], "_os"), names(tmpdata))
+    }
+  }
+  tmpdata <- tmpdata[,grep("_os", names(tmpdata))]
+  out <- bind_cols(orig_data, tmpdata)
+  res <- list(result=opscaled.dvar, data=out, iterations=record, formula=form)
+  class(res) <- "alsos"
+  invisible(res)
+}
+##' Plotting method for ALSOS object
+##' 
+##' Makes a plot or optionally returns data for user-generated
+##' plots from an alsos object
+##' 
+##' @param x An object of class \code{alsos}. 
+##' @param which_var The name of a raw variable that was scaled in the 
+##' alsos procedure for which a meausrement function should be returned. 
+##' @param return_data Logical indicating whether the data should be returned
+##' (if \code{TRUE}) or a plot generated (if \code{FALSE})
+##' @param ... arguments to be passed in, currently not implemented.
+##' @return A plot.
+##' @export
+##' @importFrom tidyr pivot_longer
+##' @method plot alsos
+plot.alsos <- function(x, which_var=NULL, return_data=FALSE, ...){
+  os_names <- grep("_os", names(x$data), value=TRUE)
+  raw_names <- gsub("_os", "", os_names)
+  os_vals <- x$data %>% 
+    select(all_of(os_names)) %>% 
+    pivot_longer(cols=all_of(os_names), names_to="variable", values_to="os_vals")
+  raw_vals <- x$data %>% 
+    select(all_of(raw_names)) %>% 
+    pivot_longer(cols=all_of(raw_names), names_to="variable", values_to="raw_vals")
+  vals <- os_vals %>% select(-variable) %>% bind_cols(raw_vals, .)
+  vals <- vals %>% group_by(variable, raw_vals) %>% summarise(os_val = mean(os_vals))
+  if(!is.null(which_var)){
+    if(!(which_var %in% vals$variable)){
+      stop("which_var must be the name of a raw variable in the model\n")
+    }else{
+      vals <- vals %>% filter(variable == which_var)
+    }
+  }
+  if(return_data){
+    return(vals)
+  }else{
+    ggplot(vals, aes(x=raw_vals, y=os_val)) + 
+      geom_line() + 
+      geom_point() + 
+      facet_wrap(~variable, scales="free") + 
+      theme_bw() + 
+      labs(x = "Raw Values", y = "Optimally Scaled Values")
+  }
+}
+
+
+##' Bootstrapping function for the ALSOS algorithm
+##' 
+##' Executes a non-parametric bootstrap for the 
+##' alsos algorithm to get uncertainty estimates
+##' for the optimally scaled values of the 
+##' variables. 
+##' 
+#' @param os_form A two-sided formula including the independent variables to 
+#' be scaled on the left-hand side.  Optionally, the dependent variable can 
+#' also be scaled. 
+#' @param raw_form A right-sided formula with covariates that will not be 
+#' scaled.  
+#' @param data A data frame.
+#' @param scale_dv Logical indicating whether the dependent variable should 
+#' be optimally scaled. 
+#' @param maxit Maximum number of iterations of the optimal scaling algorithm.
+#' @param level Measurement level of the dependent variable 1=Nominal,
+#' 2=Ordinal
+#' @param process Nature of the measurement process: 1=discrete, 2=continuous.
+#' Basically identifies whether tied observations will continue to be tied in
+#' the optimally scaled variale (1) or whether the algorithm can untie the
+#' points (2) subject to the overall measurement constraints in the model.
+#' @param starts Optional starting values for the optimal scaling algorithm.
+#' @param R Number of bootstrap samples to be calculated
+#' @param conf.level Level of confidence for the confidence intervals. 
+#' @param return Whether the aggregated result with percentile confidence intervals, 
+#' the bootstrap object or both should be returned. 
+#' @param ... Other arguments to be passed down to \code{lm}.
+#' @return A list with either \code{data} and/or \code{boot.obj} entries. 
+#' @export 
+boot.alsos <- function(os_form, raw_form=~1, data,
+                       scale_dv=TRUE, maxit=30, level = 1, 
+                       process=1, starts=NULL, R = 50, 
+                       conf.level=.95, 
+                       return = c("data", "boot.obj", "both"), ...){
+  ret = match.arg(return)
+  f1 <- as.formula(os_form)
+  f2 <- as.formula(raw_form)
+  d1 <- get_all_vars(f1, data)
+  d2 <- get_all_vars(f2, data)
+  if(ncol(d2) != 0){
+    tmpdata <- bind_cols(d1, d2)  
+  } else{
+    tmpdata <- d1
+  }
+  tmpdata <- na.omit(tmpdata)
+  dv <- names(d1)[1]
+  x <- boot(bafun, data=tmpdata, os_form = os_form, raw_form=raw_form,  
+            level=level, process=process, maxit=maxit, 
+            starts=starts, R=R, strata=tmpdata[[dv]], ...)
+  
+  raw_names <- names(d1)[-1]
+  if(scale_dv){
+    raw_names <- c(dv, raw_names)    
+  }
+  raw_vals <- data %>% 
+    select(all_of(raw_names)) %>% 
+    pivot_longer(cols=all_of(raw_names), names_to="variable", values_to="raw_vals") %>%
+    group_by(variable, raw_vals) %>% 
+    summarise(raw_val = mean(raw_vals)) %>% 
+    ungroup %>% 
+    select(-raw_val)
+  raw_vals$os_vals <- x$t0
+  crit <- 1-(1-conf.level)/2
+  cis <- t(apply(x$t, 2, quantile, c(1-crit, crit)))
+  raw_vals$lower = cis[,1]
+  raw_vals$upper = cis[,2]
+  res <- list()
+  if(ret %in% c("data", "both")){
+    res$data <- raw_vals
+  }
+  if(ret %in% c("boot.obj", "both")){
+    res$boot.obj <- x
+  }
+  return(res)
+  
+}
+
+
+bafun <- function(data, inds, os_form, raw_form=~1, 
+                  level = 1, process=1, scale_dv=TRUE, 
+                  starts=NULL, maxit=30, ...){
+  
+  
+  tmp <- data[inds, ]
+  x <- alsos(os_form, raw_form, data=tmp, scale_dv = scale_dv,
+             maxit = maxit, level = level, process=process, 
+             starts = starts, ...)
+  os_names <- grep("_os", names(x$data), value=TRUE)
+  raw_names <- gsub("_os", "", os_names)
+  os_vals <- x$data %>% 
+    select(all_of(os_names)) %>% 
+    pivot_longer(cols=all_of(os_names), names_to="variable", values_to="os_vals")
+  raw_vals <- x$data %>% 
+    select(all_of(raw_names)) %>% 
+    pivot_longer(cols=all_of(raw_names), names_to="variable", values_to="raw_vals")
+  vals <- os_vals %>% select(-variable) %>% bind_cols(raw_vals, .)
+  vals <- vals %>% group_by(variable, raw_vals) %>% summarise(os_val = mean(os_vals))
+  c(vals$os_val)
+}
