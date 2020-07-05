@@ -4169,6 +4169,8 @@ NKnots <- function(form, var, data, degree=3, min.knots=1,
       if(includePoly){k <- c(1:3, k)}
       plot(k, stats, type="o", pch=16, col="black", xlab="# Degrees of Freedom", ylab = crit)
       points(k[which.min(stats)], min(stats), pch=16, col="red")
+   }else{
+     return(data.frame(df = k, stat=stats))
    }
 }
 
