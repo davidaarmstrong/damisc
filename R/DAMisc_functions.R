@@ -1421,9 +1421,15 @@ mnlChange2 <-
     	y <- model.response(model.frame(obj))
     	ylev <- levels(y)
     	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x))
+    	xb0 <- Xmats[[1]] %*% cbind(0, t(coef(obj)))
+    	p0 <- apply(xb0, 1, function(x)exp(x)/sum(exp(x)))
+    	xb1 <- Xmats[[2]] %*% cbind(0, t(coef(obj)))
+    	p1 <- apply(xb1, 1, function(x)exp(x)/sum(exp(x)))
+    	pdiffmean <- p1-p0
+    	ave.pdiffmean <- colMeans(t(pdiffmean))
+    	names(ave.pdiffmean) <- ylev
     	xb <- lapply(Xmats, function(x)lapply(1:nrow(b), function(z)cbind(1, exp(x %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=TRUE))))))
     	probs <- lapply(xb, function(x)lapply(x, function(z)z/rowSums(z)))
-
     	if(is.numeric(data[[varnames[m]]])){
     	diffs <- lapply(1:R, function(x)probs[[2]][[x]] - probs[[1]][[x]])
     	probdiffs <- sapply(diffs, colMeans)
@@ -1459,7 +1465,7 @@ mnlChange2 <-
         allupper <- cbind(allupper, upper)
 
     }
-	res <- list(diffs=list(mean = t(allmean), lower=t(alllower), upper=t(allupper)))
+	res <- list(diffs=list(mean = matrix(ave.pdiffmean, nrow=1), lower=t(alllower), upper=t(allupper)))
     class(res) <- "ordChange"
     res
 }
