@@ -294,6 +294,8 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,
     else {
         v1 <- varnames[1]
         v2 <- varnames[2]
+        v1 <- gsub(")", "\\)", gsub("(", "\\(", v1, fixed=TRUE), fixed=TRUE)
+        v2 <- gsub(")", "\\)", gsub("(", "\\(", v2, fixed=TRUE), fixed=TRUE)
         ind <- unique(c(grep(v1, names(obj$coef)), grep(v2, names(obj$coef))))
         ind <- ind[order(ind)]
         b <- obj$coef[ind]
@@ -444,6 +446,8 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
     MM <- model.matrix(obj)
     v1 <- varnames[1]
     v2 <- varnames[2]
+    v1 <- gsub(")", "\\)", gsub("(", "\\(", v1, fixed=TRUE), fixed=TRUE)
+    v2 <- gsub(")", "\\)", gsub("(", "\\(", v2, fixed=TRUE), fixed=TRUE)
     ind1 <- grep(paste0("^",v1,"$"), names(obj$coef))
     ind2 <- grep(paste0("^",v2,"$"), names(obj$coef))
     indboth <- which(names(obj$coef) %in% c(paste0(v1,":",v2),paste0(v2,":",v1)))
@@ -5404,6 +5408,8 @@ function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
     MM <- model.matrix(obj)
     v1 <- varnames[1]
     v2 <- varnames[2]
+    v1 <- gsub(")", "\\)", gsub("(", "\\(", v1, fixed=TRUE), fixed=TRUE)
+    v2 <- gsub(")", "\\)", gsub("(", "\\(", v2, fixed=TRUE), fixed=TRUE)
     ind1 <- grep(paste0("^",v1,"$"), names(obj$coef))
     ind2 <- grep(paste0("^",v2,"$"), names(obj$coef))
     indboth <- which(names(obj$coef) %in% c(paste0(v1,":",v2),paste0(v2,":",v1)))
