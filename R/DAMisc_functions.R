@@ -6461,6 +6461,7 @@ is.Numeric <- function (x, length.arg = Inf, integer.valued = FALSE, positive = 
 #' @param byvar A character string giving a variable name of a stratifying variable.  The summaries of the \code{vars} will be provided for each level of \code{byvar}. 
 #' @param convertFactors Logical indicating whether factors should be converted to numeric first and then summarised. 
 #' @param weight If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the summary. 
+#' @param digits Number of digits to print in the output. 
 
 #' @export
 #' 
@@ -6471,7 +6472,7 @@ sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL){
 
 #' @method sumStats data.frame
 #' @export
-sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL){
+sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL, digits=3){
   if(is.null(weight)){
     d <- svydesign(ids = ~1, strata=NULL, weights=~1, data=data, digits=3)
   }else{
@@ -6483,7 +6484,7 @@ sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE, wei
 
 #' @method sumStats survey.design
 #' @export
-sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE, weight=NULL){
+sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE, weight=NULL, digits=3){
   d <- data
   if(convertFactors){
     for(i in 1:length(vars)){
@@ -6509,7 +6510,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
     n <- ceiling(c(wtvec %*% obs.mat))
     na <- ceiling(wtvec %*% rep(1, length(obs.mat))) - n
     tmpdf <- data.frame(group = "All Observations", variable= vars)
-    out[[1]] <- as.data.frame(cbind(means, sds, iqr, qtiles, n, na))
+    out[[1]] <- as.data.frame(cbind(round(cbind(means, sds, iqr, qtiles), digits=digits), n, na))
     names(out[[1]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
     out[[1]] <- cbind(tmpdf, out[[1]])
     rownames(out[[1]]) <- NULL
@@ -6533,7 +6534,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
     na <- lapply(n, function(x)allobs - x)
     na <- lapply(na, function(x){names(x) <- NULL; c(x)})
     for(i in 1:length(out)){
-      out[[i]] <- cbind(means[[i]][,2], sds[[i]][,2], iqr[[i]], qtiles[[i]][,-1], n[[i]][], na[[i]][])
+      out[[i]] <- cbind(round(cbind(means[[i]][,2], sds[[i]][,2], iqr[[i]], qtiles[[i]][,-1]), digits=digits), n[[i]][], na[[i]][])
       colnames(out[[i]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", 
                               "75%", "100%", "n", "NA")
       tmpdf <- data.frame(group = factor(1:length(rownames(means[[1]])), labels=rownames(means[[1]])), 
