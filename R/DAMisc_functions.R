@@ -6514,7 +6514,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
       wtvec <- d$variables[[weight]]
     }
     n <- ceiling(c(wtvec %*% obs.mat))
-    na <- ceiling(wtvec %*% rep(1, length(obs.mat))) - n
+    na <- ceiling(wtvec %*% (1-obs.mat)) 
     tmpdf <- data.frame(group = "All Observations", variable= vars)
     out[[1]] <- as.data.frame(cbind(round(cbind(means, sds, iqr, qtiles), digits=digits), n, na))
     names(out[[1]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
