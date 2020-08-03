@@ -2549,8 +2549,6 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
                 b1.sim[x, ], n.coef = length(coef(mod1))))
             mod2.probs <- lapply(1:nrow(b2.sim), function(x) simPredpolr(mod2,
                 b2.sim[x, ], n.coef = length(coef(mod2))))
-            mod1.probs <- lapply(mod1.probs, function(x)t(rbind(x, 1-colSums(x))))
-            mod2.probs <- lapply(mod2.probs, function(x)t(rbind(x, 1-colSums(x))))
             pred.cat1 <- lapply(mod1.probs, function(x) apply(x,
                 1, which.max))
             pred.cat2 <- lapply(mod2.probs, function(x) apply(x,
@@ -2879,10 +2877,16 @@ function (object, coefs, n.coef)
     }
     pfun <- switch(object$method, logistic = plogis, probit = pnorm,
         cauchit = pcauchy)
-    cumpr <- matrix(pfun(matrix(coefs[(n.coef + 1):length(coefs)],
-        n, q, byrow = TRUE) - eta), q)
-    Y <- t(apply(cumpr, 1L, function(x) diff(c(0, x, 1))))
-    return(Y)
+    cumpr <- pfun(matrix(coefs[(n.coef + 1):length(coefs)],
+        n, q, byrow = TRUE) - eta)
+    if(!is.matrix(cumpr))cumpr <- matrix(cumpr, q)
+    cumpr <- cbind(cumpr, 1)
+    prob <- cumpr
+    for(j in ncol(cumpr):2){
+      prob[,j] <- prob[,j] - prob[,(j-1)]
+    }
+#    Y <- t(apply(cumpr, 1L, function(x) diff(c(0, x, 1))))
+    return(prob)
 }
 
 
