@@ -2033,22 +2033,29 @@ ordfit <- function(obj){
 	# 	}
 	# 	k
 	# }
-	pp <- predict(obj, type="probs")
+  type_pred <- "probs"
+  if(inherits(obj, "clm")){
+    type_pred <- "prob"
+  }
+	pp <- predict(obj, type=type_pred)
 	# ints <- 1:ncol(pp)
 	# n <- nrow(pp)
 	# up <- floor(n/(5*ncol(pp)))
 	# g <- ifelse(up > 10, 10, max(6, up))
 	# s <- pp %*% ints
 	# g_fac <- cut(s, breaks=(g))
-	X <- model.matrix(obj)[,-1]
+	X <- model.matrix(obj)
+	if(inherits(X, "matrix"))X <- X[,-1, drop=FALSE]
+	if(inherits(X, "list"))X <- X$X[,-1, drop=FALSE]
 	y <- model.response(model.frame(obj))
-	orig <- polr(y ~ X)
+	orig <- MASS::polr(y ~ X)
 	# upmod <- polr(y ~ X + g_fac)
 	# lrt <- lrtest(orig, upmod)
 	# facs <- which(attr(obj$terms, "dataClasses") == "factor")[-1]
 	# mf <- model.frame(obj)
 	# pats <- factor(apply(mf[, facs, drop=F], 1, function(x)paste(x, collapse=":")))
 	predcat <- predict(obj, type="class")
+	if(inherits(predcat, "list"))predcat <- predcat$fit
 	# prchi2 <- 0
 	# prD <- 0
 	# combcountPR <- 0
@@ -2102,8 +2109,14 @@ ordfit <- function(obj){
 	r2_count <- mean(predcat == y)
 	modal <- max(table(y))
 	r2_counta <- (sum(y == predcat) - modal)/(length(y) - modal)
-	b <- matrix(c(0, obj$coef), ncol=1)
+	b <- obj$coef
+	gp <- grep("\\|", names(b))
+	if(length(gp) > 0){
+	  b <- b[-gp]
+	}
+	b <- matrix(c(0, b), ncol=1)
 	X <- model.matrix(obj)
+	if(inherits(X, "list"))X <- X$X
 	r2_mz <- (t(b)%*%var(X)%*%b)/(t(b)%*%var(X)%*%b + (pi^2/3))
 	r2_mcf <- 1-(logLik(obj)/logLik(update(obj, .~1)))
 	r2_mcfa <- 1-((logLik(obj) - obj$edf)/logLik(update(obj, .~1)))
@@ -2128,6 +2141,7 @@ ordfit <- function(obj){
 	res[8,1] <- r2_mcf
 	res[9,1] <- r2_mcfa
 	res[10,1] <- r2_mz
+	# res <- res[-which(is.na(res[,1])), ]
 	class(res) <- c("ordfit", "matrix")
 	print(res)
 }
@@ -2382,8 +2396,20 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
             stop("Model 2 must be either NULL or of the same class as Model 1\n")
         }
     }
-    if (!any(class(mod1) %in% c("polr", "multinom", "glm"))) {
+    if (!any(class(mod1) %in% c("polr", "clm", "multinom", "glm"))) {
         stop("pre only works on models of class glm (with binomial family), polr or multinom\n")
+    }
+    if(inherits(mod1, "clm")){
+        data <- mod1$model
+        f1 <- as.character(mod1$formula)
+        f1 <- paste(f1[[2]], f1[[3]], sep="~")
+        mod1 <- MASS::polr(f1, data=data)
+    }
+    if(inherits(mod2, "clm")){
+      data2 <- mod2$model
+      f2 <- as.character(mod1$formula)
+      f2 <- paste(f2[[2]], f2[[3]], sep="~")
+      mod2 <- MASS::polr(f2, data=data2)
     }
     if ("glm" %in% class(mod1)) {
         if (!(family(mod1)$link %in% c("logit", "probit", "cloglog",
@@ -2495,6 +2521,9 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
             mod2 <- update(mod1, ". ~ 1", data = mod1$model,
                 model = TRUE, Hess = TRUE)
         }
+        if (is.null(mod2$Hess)) {
+          mod2 <- update(mod2, Hess = TRUE)
+        }
         pred.prob1 <- predict(mod1, type = "prob")
         pred.prob2 <- predict(mod2, type = "prob")
         pred.cat1 <- apply(pred.prob1, 1, which.max)
@@ -2520,6 +2549,8 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
                 b1.sim[x, ], n.coef = length(coef(mod1))))
             mod2.probs <- lapply(1:nrow(b2.sim), function(x) simPredpolr(mod2,
                 b2.sim[x, ], n.coef = length(coef(mod2))))
+            mod1.probs <- lapply(mod1.probs, function(x)t(rbind(x, 1-colSums(x))))
+            mod2.probs <- lapply(mod2.probs, function(x)t(rbind(x, 1-colSums(x))))
             pred.cat1 <- lapply(mod1.probs, function(x) apply(x,
                 1, which.max))
             pred.cat2 <- lapply(mod2.probs, function(x) apply(x,
@@ -2536,6 +2567,8 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
             epre.sim <- (epcp.sim - epmc.sim)/(1 - epmc.sim)
         }
     }
+
+
     ret <- list()
     ret$pre <- pre
     ret$epre <- epre
