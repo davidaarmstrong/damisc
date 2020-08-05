@@ -6569,25 +6569,30 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
       d$variables[[byvar]] <- as.factor(d$variables[[byvar]])
     }
     out <- vector(mode="list", length=length(vars))
-    forms <- lapply(vars, function(x)as.formula(paste0("~", x)))
+    forms <- NULL
+    for(i in 1:length(vars))forms <- c(forms, as.formula(paste0("~", vars[i])))
     byform <- as.formula(paste0("~", byvar))
     means <- lapply(forms, function(x)svyby(x, byform, d, svymean, na.rm=TRUE))
     sds <- lapply(forms, function(x)svyby(x, byform, d, svyvar, na.rm=TRUE))
     qtiles <- lapply(forms, function(x)svyby(x, byform, d, svyquantile, 
                                              quantiles=c(0,.25,.5,.75,1), na.rm=TRUE, keep.var=FALSE))
     iqr <- lapply(qtiles, function(x)x[,4]-x[,2])
-    n <- lapply(vars, function(x)svytable(byform, 
-                                          subset(d, !is.na(eval(parse(text=x))))))
-    n <- lapply(n, function(x){names(x) <- NULL; c(x)})
-    allobs <- svytable(byform, d)
-    na <- lapply(n, function(x)allobs - x)
-    na <- lapply(na, function(x){names(x) <- NULL; c(x)})
+    n <- vector(mode="list", length=length(vars))
+    for(i in 1:length(n)){
+      d$variables$tmp <- ifelse(is.na(d$variables[[vars[i]]]), 0, 1)
+      n[[i]] <- svyby(~tmp, byform, d, svytotal)[,2]
+    }
+    na <- vector(mode="list", length=length(vars))
+    for(i in 1:length(n)){
+      d$variables$tmp <- ifelse(!is.na(d$variables[[vars[i]]]), 0, 1)
+      na[[i]] <- svyby(~tmp, byform, d, svytotal)[,2]
+    }
     for(i in 1:length(out)){
-      out[[i]] <- cbind(round(cbind(means[[i]][,2], sds[[i]][,2], iqr[[i]], qtiles[[i]][,-1]), digits=digits), n[[i]][], na[[i]][])
+      out[[i]] <- cbind(round(cbind(means[[i]][,2], sds[[i]][,2], iqr[[i]], qtiles[[i]][,-1]), digits=digits), round(n[[i]]), round(na[[i]]))
       colnames(out[[i]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", 
                               "75%", "100%", "n", "NA")
       tmpdf <- data.frame(group = factor(1:length(rownames(means[[1]])), labels=rownames(means[[1]])), 
-                          variable= vars)
+                          variable= vars[i])
       out[[i]] <- cbind(tmpdf, as.data.frame(out[[i]]))
       rownames(out[[i]]) <- NULL
     }
