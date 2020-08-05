@@ -6554,7 +6554,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
     if(is.null(weight)){
       wtvec <- rep(1, nrow(d$variables))
     }else {
-      wtvec <- d$variables[[weight]]
+      wtvec <- weights(d)
     }
     n <- ceiling(c(wtvec %*% obs.mat))
     na <- ceiling(c(wtvec %*% (1-obs.mat)))
@@ -6648,7 +6648,7 @@ xt.survey.design <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL
           adorn_ns() %>%
           adorn_title("combined") 
         tab[[1]] <- tmptab
-        stats[[1]] <- make_assoc_stats(d$variables[[var]], d$variables[[byvar]], weight=d$variables[[weight]], ...)
+        stats[[1]] <- make_assoc_stats(d$variables[[var]], d$variables[[byvar]], weight=weights(d), ...)
         } else{
           if(!is.null(levels(d$variables[[controlvar]]))){
             levs <- levels(d$variables[[controlvar]])
