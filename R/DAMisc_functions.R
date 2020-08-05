@@ -2192,7 +2192,13 @@ ordfit <- function(obj){
 #' \dontrun{ordAveEffPlot(polr.mod, "lrself", data=france)	}
 #' 
 ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, returnInd=FALSE, returnMprob=FALSE,...){
-    pfun <- switch(obj$method, logistic = plogis, probit = pnorm,
+  if(inherits(obj, "clm")){
+    f1 <- as.character(obj$formula)
+    f1 <- paste(f1[[2]], f1[[3]], sep="~")
+    obj <- MASS::polr(f1, data=data, Hess=TRUE)
+  }  
+  
+  pfun <- switch(obj$method, logistic = plogis, probit = pnorm,
            loglog = pgumbel, cloglog = pGumbel, cauchit = pcauchy)
     rI <- rMP <- list()
     vars <- all.vars(formula(obj))[-1]
