@@ -94,7 +94,7 @@ NULL
 #' trellis.unfocus xyplot
 #' @importFrom haven is.labelled as_factor
 #' @importFrom survey svymean svyvar svyquantile svyby svytable svychisq
-#' svydesign cv
+#' svydesign cv svytotal
 #' @importFrom janitor adorn_totals adorn_percentages adorn_pct_formatting 
 #' adorn_ns adorn_title
 #' @importFrom tibble as_tibble
