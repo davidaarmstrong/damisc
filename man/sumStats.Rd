@@ -6,7 +6,14 @@
 \alias{sumStats.survey.design}
 \title{Summary Statistics}
 \usage{
-sumStats(data, vars, byvar = NULL, convertFactors = TRUE, weight = NULL)
+sumStats(
+  data,
+  vars,
+  byvar = NULL,
+  convertFactors = TRUE,
+  weight = NULL,
+  digits = 3
+)
 }
 \arguments{
 \item{data}{A data frame from which variables will be extracted.}
@@ -18,6 +25,8 @@ sumStats(data, vars, byvar = NULL, convertFactors = TRUE, weight = NULL)
 \item{convertFactors}{Logical indicating whether factors should be converted to numeric first and then summarised.}
 
 \item{weight}{If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the summary.}
+
+\item{digits}{Number of digits to print in the output.}
 }
 \value{
 a vector of summary statistics for each variable or variable-group combination.

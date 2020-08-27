@@ -6511,11 +6511,13 @@ is.Numeric <- function (x, length.arg = Inf, integer.valued = FALSE, positive = 
 #' @param convertFactors Logical indicating whether factors should be converted to numeric first and then summarised. 
 #' @param weight If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the summary. 
 #' @param digits Number of digits to print in the output. 
-
+#'
+#' @importFrom stats weights 
+#' @importFrom survey svytotal
 #' @export
 #' 
 #' @return a vector of summary statistics for each variable or variable-group combination.
-sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL){
+sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL, digits=3){
   UseMethod("sumStats")
 }
 
@@ -7462,22 +7464,23 @@ plot.alsos <- function(x, which_var=NULL, return_data=FALSE, ...){
   raw_vals <- x$data %>% 
     select(all_of(raw_names)) %>% 
     pivot_longer(cols=all_of(raw_names), names_to="variable", values_to="raw_vals")
-  vals <- os_vals %>% select(-variable) %>% bind_cols(raw_vals, .)
-  vals <- vals %>% group_by(variable, raw_vals) %>% summarise(os_val = mean(os_vals))
+  tmpvals <- os_vals %>% select(-"variable")
+  vals <- bind_cols(raw_vals, tmpvals)
+  vals <- vals %>% group_by_at(vars(c("variable", "raw_vals"))) %>% summarise("os_val" = mean(os_vals))
   if(!is.null(which_var)){
     if(!(which_var %in% vals$variable)){
       stop("which_var must be the name of a raw variable in the model\n")
     }else{
-      vals <- vals %>% filter(variable == which_var)
+      vals <- vals[which(vals$variable == which_var), ] 
     }
   }
   if(return_data){
     return(vals)
   }else{
-    ggplot(vals, aes(x=raw_vals, y=os_val)) + 
+    ggplot(vals, aes_string(x="raw_vals", y="os_val")) + 
       geom_line() + 
       geom_point() + 
-      facet_wrap(~variable, scales="free") + 
+      facet_wrap(vars("variable"), scales="free") + 
       theme_bw() + 
       labs(x = "Raw Values", y = "Optimally Scaled Values")
   }
@@ -7513,6 +7516,7 @@ plot.alsos <- function(x, which_var=NULL, return_data=FALSE, ...){
 #' the bootstrap object or both should be returned. 
 #' @param ... Other arguments to be passed down to \code{lm}.
 #' @return A list with either \code{data} and/or \code{boot.obj} entries. 
+#' @importFrom dplyr group_by_at vars
 #' @export 
 boot.alsos <- function(os_form, raw_form=~1, data,
                        scale_dv=TRUE, maxit=30, level = 1, 
@@ -7531,7 +7535,7 @@ boot.alsos <- function(os_form, raw_form=~1, data,
   }
   tmpdata <- na.omit(tmpdata)
   dv <- names(d1)[1]
-  x <- boot(bafun, data=tmpdata, os_form = os_form, raw_form=raw_form,  
+  x <- boot(statistic=bafun, data=tmpdata, os_form = os_form, raw_form=raw_form,  
             level=level, process=process, maxit=maxit, 
             starts=starts, R=R, strata=tmpdata[[dv]], ...)
   
@@ -7542,10 +7546,10 @@ boot.alsos <- function(os_form, raw_form=~1, data,
   raw_vals <- data %>% 
     select(all_of(raw_names)) %>% 
     pivot_longer(cols=all_of(raw_names), names_to="variable", values_to="raw_vals") %>%
-    group_by(variable, raw_vals) %>% 
-    summarise(raw_val = mean(raw_vals)) %>% 
+    group_by_at(vars(c("variable", "raw_vals"))) %>% 
+    summarise("raw_val" = mean(raw_vals)) %>% 
     ungroup %>% 
-    select(-raw_val)
+    select(-"raw_val")
   raw_vals$os_vals <- x$t0
   crit <- 1-(1-conf.level)/2
   cis <- t(apply(x$t, 2, quantile, c(1-crit, crit)))
@@ -7578,193 +7582,28 @@ bafun <- function(data, inds, os_form, raw_form=~1,
   raw_vals <- x$data %>% 
     select(all_of(raw_names)) %>% 
     pivot_longer(cols=all_of(raw_names), names_to="variable", values_to="raw_vals")
-  vals <- os_vals %>% select(-"variable") %>% bind_cols(raw_vals, .data)
-  vals <- vals %>% group_by("variable", "raw_vals") %>% summarise(os_val = mean(os_vals))
+  tmpvals <- os_vals %>% select(-"variable")
+  vals <- bind_cols(raw_vals, tmpvals)
+  vals <- vals %>% group_by_at(vars(c("variable", "raw_vals"))) %>% summarise("os_val" = mean(os_vals))
   c(vals$os_val)
 }
 
-
-
-##' Generated individual likelihood values for a GAMLSS Model
-##' 
-##' This is a slight modification of the \code{gen-Likelihood} function 
-##' from version 5.1-6 of the \pkg{gamlss} package.  The main modification
-##' was to put a conditional flag that would permit the individual log-
-##' likelihood values (rather than the summed log-likelihood) to be 
-##' returned. 
-##' @param object An object of class \code{gamlss}. 
-##' @param sum Whether the summed or individual log-likelihood should be returned. 
-##' @export
-##' @import gamlss
-gen.ilikelihood <- function(object, sum=TRUE){
-  if (!is.gamlss(object)) stop("needs a gamlss object")
-  #    fam <- as.gamlss.family(object$family) this is changed to get the right link functions
-  fam <-  if(is.null(object$call$family)) as.gamlss.family(NO) 
-  else as.gamlss.family(object$call$family)
-  fname <- object$family[1]
-  dfun <- paste("d",fname,sep="")
-  #pfun <- paste("p",fname,sep="")
-  pdf <- eval(parse(text=dfun))
-  # cdf <- eval(parse(text=pfun)) # may be we need this for censored data
-  nopar <- length(object$par)
-  y  <- object$y
-  w  <- object$weights 
-  X  <- list()
-  links <- list()
-  coefs <- list()
-  Smo <- list() 
-  offSet <- list()
-  binomialIndex <- FALSE
-  if  (fname%in%.gamlss.bi.list)
-  {bd <- object$bd # binomial denominator
-  binomialIndex <- TRUE  
-  }
-  # establish whether data is called
-  if (any(grepl("data", names(object$call)))) 
-  {
-    exitData <- TRUE
-    ##    DS The idea here is if na.omit(data) is used to do the correct thing    
-    DaTa <- if (startsWith(as.character(object$call["data"]), "na.omit"))
-      eval(parse(text=as.character(object$call["data"]))) else 
-        get(as.character(object$call["data"]))	
-  }
-  else
-    exitData <- FALSE  
-  for (i in object$par)
-  {
-    if (length(eval(parse(text=paste(paste("object$",i, sep=""),".fix==TRUE", sep=""))))!=0)
-    {
-      ff <- eval(parse(text=paste(paste(paste(object$family[1],"()$", sep=""), i, sep=""),".linkfun", sep="")))
-      fixvalue <- ff( fitted(object,i)[1])
-      names(fixvalue) <- paste("fixed",i, sep=" ")
-      coefs[[i]] <- fixvalue 
-      X[[i]] <- matrix(rep(1, length(object$y)), ncol=1)
-      #eval(call(paste(paste(paste(object$family[1],"()$", sep=""), i, sep=""),".linkfun", sep=""), fitted(object,i)[1]))
-      # eval(paste(paste(paste(object$family[1],"()$", sep=""), i, sep=""),".linkfun", sep=""))
-      #gamlss.family(object$family[1])$nu.link
-      links[i] <- eval(parse(text=paste(paste(paste(object$family[1],"()$", sep=""), i, sep=""),".link", sep="")))
-      Smo[[i]] <- matrix(rep(0, length(object$y)), ncol=1)
-      offSet[[i]] <- rep(0, length(object$y))  
-    }
-    else
-    {
-      coefs[[i]] <- eval(parse(text=paste(paste("object$", i, sep=""), ".coefficients", sep="")))
-      notNAcoef <- !is.na(coefs[[i]])
-      X[[i]] <- eval(parse(text=paste(paste("object$", i, sep=""), ".x", sep="")))  
-      if (any(is.na(coefs[[i]])))
-      { # this is to ensure that are non NA
-        coefs[[i]] <- coefs[[i]][notNAcoef]
-        X[[i]] <- as.matrix(X[[i]][,notNAcoef])
-      }
-      links[i] <- eval(parse(text=paste(paste("object$", i, sep=""), ".link", sep="")))
-      Smo[[i]] <- eval(parse(text=paste(paste("object$", i, sep=""), ".s", sep="")))
-      offSet[[i]] <- eval(parse(text=paste(paste("object$", i, sep=""), ".offset", sep=""))) 
-      #    OffSet <- if (exitData) model.extract(model.frame(eval(parse(text=paste(paste("object$", 
-      # i, sep=""), ".terms", sep=""))), data=DaTa), "offset")
-      #               else  model.extract(model.frame(eval(parse(text=paste(paste("object$", i, 
-      # sep=""), ".terms", sep="")))), "offset")
-      #    offSet[[i]] <- if (is.null(OffSet)) rep(0, length(y)) else  OffSet   
-    }
-  } 
-  switch(nopar,
-         { #  1 parameter
-           lik.fun <- function(par) 
-           {
-             lmu <-  length(coefs[["mu"]])
-             if (length(par)!=lmu) stop("par is not the right length")
-             eta.mu <- if (is.null(Smo[["mu"]])) X[["mu"]] %*% par[1:lmu]   + offSet[["mu"]]  
-             else X[["mu"]] %*% par[1:lmu] + rowSums(Smo[["mu"]]) + offSet[["mu"]] 
-             mu <- fam$mu.linkinv(eta.mu) 
-             if ( binomialIndex){
-               ll <- -sum(w*pdf(y, mu=mu, bd=bd, log=TRUE)) 
-             }else{
-               ll <- -(w*pdf(y, mu=mu, log=TRUE))
-             }
-             if(sum) ll <- sum(ll)
-             ll
-           }
-           thebetas <-  coefs[["mu"]] 
-           formals(lik.fun) <- alist(par=thebetas)
-         },
-         { # 2 parameter
-           lik.fun <- function(par) 
-           { 
-             lmu <- length(coefs[["mu"]])
-             lsigma <- length(coefs[["sigma"]])
-             tl <- lmu + lsigma	
-             if (length(par)!=tl) stop("par is not the right length")	
-             eta.mu <- if (is.null(Smo[["mu"]])) X[["mu"]] %*% par[1:lmu]  + offSet[["mu"]] 
-             else X[["mu"]] %*% par[1:lmu]+ rowSums(Smo[["mu"]]) + offSet[["mu"]] 
-             mu <- fam$mu.linkinv(eta.mu) 
-             eta.sigma <- if (is.null(Smo[["sigma"]])) X[["sigma"]] %*% par[(lmu+1):(lmu+lsigma)] + offSet[["sigma"]] 
-             else X[["sigma"]] %*% par[(lmu+1):(lmu+lsigma)] + rowSums(Smo[["sigma"]])+offSet[["sigma"]]     
-             sigma <- fam$sigma.linkinv(eta.sigma)
-             if ( binomialIndex){
-               ll <- -(w*pdf(y, mu=mu, sigma=sigma, bd=bd, log=TRUE))
-             }else{
-               ll <- -(w*pdf(y, mu=mu, sigma=sigma, log=TRUE))
-             }
-             if(sum)ll <- sum(ll)
-             ll
-           }
-           thebetas <-  c(coefs[["mu"]], coefs[["sigma"]]) 
-           formals(lik.fun) <- alist(par=thebetas)
-         },         
-         { # 3 parameter 
-           lik.fun <- function(par) 
-           {
-             lmu <-	 length(coefs[["mu"]])
-             lsigma <-  length(coefs[["sigma"]])
-             lnu <-  length(coefs[["nu"]])
-             tl <-  lmu + lsigma + lnu	
-             if (length(par)!=tl) stop("par is not the right length")	
-             eta.mu <- if (is.null(Smo[["mu"]])) X[["mu"]] %*% par[1:lmu] + offSet[["mu"]] 
-             else X[["mu"]] %*% par[1:lmu]+ rowSums(Smo[["mu"]]) + offSet[["mu"]] 
-             mu <- fam$mu.linkinv(eta.mu) 
-             eta.sigma <- if (is.null(Smo[["sigma"]])) X[["sigma"]] %*% par[(lmu+1):(lmu+lsigma)] +offSet[["sigma"]] 
-             else X[["sigma"]] %*% par[(lmu+1):(lmu+lsigma)] + rowSums(Smo[["sigma"]])+ offSet[["sigma"]]       
-             sigma <- fam$sigma.linkinv(eta.sigma)
-             eta.nu <- if (is.null(Smo[["nu"]])) X[["nu"]] %*% par[(lmu+lsigma+1):(lmu+lsigma+lnu)] + offSet[["nu"]] 
-             else X[["nu"]] %*% par[(lmu+lsigma+1):(lmu+lsigma+lnu)] + rowSums(Smo[["nu"]]) + offSet[["nu"]]     
-             nu <- fam$nu.linkinv(eta.nu)
-             if ( binomialIndex){   
-               ll <- -(w*pdf(y, mu=mu, sigma=sigma, nu=nu, bd=bd, log=TRUE))
-             }else{
-               ll <- -(w*pdf(y, mu=mu, sigma=sigma, nu=nu, log=TRUE)) 	
-             }
-             if(sum) ll <- sum(ll)
-             ll
-           }
-           thebetas <-  c(coefs[["mu"]], coefs[["sigma"]], coefs[["nu"]]) 
-           formals(lik.fun) <- alist(par=thebetas)
-         },
-         { # 4 parameter
-           lik.fun <- function(par) 
-           {
-             lmu <- length(coefs[["mu"]])
-             lsigma <- length(coefs[["sigma"]])
-             lnu <-  length(coefs[["nu"]])
-             ltau <-  length(coefs[["tau"]])
-             tl <- lmu + lsigma + lnu +ltau	
-             if (length(par)!=tl) stop("par is not the right length")	
-             eta.mu <- if (is.null(Smo[["mu"]])) X[["mu"]] %*% par[1:lmu]  + offSet[["mu"]] 
-             else X[["mu"]] %*% par[1:lmu]+ rowSums(Smo[["mu"]]) + offSet[["mu"]] 
-             mu <- fam$mu.linkinv(eta.mu) 
-             eta.sigma <- if (is.null(Smo[["sigma"]])) X[["sigma"]] %*% par[(lmu+1):(lmu+lsigma)] + offSet[["sigma"]]  
-             else X[["sigma"]] %*% par[(lmu+1):(lmu+lsigma)] + rowSums(Smo[["sigma"]]) + offSet[["sigma"]] 
-             sigma <- fam$sigma.linkinv(eta.sigma)
-             eta.nu <- if (is.null(Smo[["nu"]])) X[["nu"]] %*% par[(lmu+lsigma+1):(lmu+lsigma+lnu)]+ offSet[["nu"]] 
-             else X[["nu"]] %*% par[(lmu+lsigma+1):(lmu+lsigma+lnu)] + rowSums(Smo[["nu"]])+ offSet[["nu"]]     
-             nu <- fam$nu.linkinv(eta.nu) 
-             eta.tau <- if (is.null(Smo[["tau"]]))  X[["tau"]] %*% par[(lmu+lsigma+lnu+1):(lmu+lsigma+lnu+ltau)] + offSet[["tau"]] 
-             else  X[["tau"]] %*% par[(lmu+lsigma+lnu+1):(lmu+lsigma+lnu+ltau)]+ rowSums(Smo[["tau"]]) + offSet[["tau"]] 
-             tau <- fam$tau.linkinv(eta.tau)
-             ll <- -(w*pdf(y, mu=mu, sigma=sigma, nu=nu, tau=tau, log=TRUE)) 	
-             if(sum)ll <- sum(ll)
-             ll
-           }
-           thebetas <-  c(coefs[["mu"]], coefs[["sigma"]], coefs[["nu"]], coefs[["tau"]]) 
-           formals(lik.fun) <- alist(par=thebetas)
-         })
-  lik.fun
+#' Interactive List of Variables
+#' 
+#' Makes an interactive list of variables and their descriptive labels.  Uses the \pkg{DT} package to generate the table.  
+#' 
+#' @param data A dataset to be described. 
+#' 
+#' @export
+#' @importFrom DT datatable
+describe_data <- function(data){
+labs <- sapply(data, function(x){
+  if("label" %in% names(attributes(x))){
+    attr(x, "label")
+  }else{
+    ""
+  }})
+x <- as_tibble(labs, rownames="variable")
+names(x)[2] <- "label"
+datatable(x)
 }
