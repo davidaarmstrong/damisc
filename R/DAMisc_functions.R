@@ -5679,7 +5679,7 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
         v1 <- factor(w1, levels=1:length(l1), labels=l1)
         v2 <- factor(w2, levels=1:length(l1), labels=l1)
         min1 <- v1
-        max2 <- v2
+        max1 <- v2
         
       }else{
         min1 <- vals[[vars[1]]][1]
