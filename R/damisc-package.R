@@ -86,7 +86,6 @@ NULL
 #' theme aes_string geom_bar labs ggtitle coord_polar 
 #' theme_void geom_text aes_string facet_wrap
 #' @importFrom car Anova
-#' @importFrom gdata trim
 #' @importFrom grid gpar grid.segments unit
 #' @importFrom lattice histogram packet.number panel.abline panel.arrows 
 #' panel.lines panel.points panel.polygon panel.rug panel.segments 

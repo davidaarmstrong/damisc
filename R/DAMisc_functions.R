@@ -2943,7 +2943,7 @@ function (obj, data, typical.dat = NULL, type = "count")
     vars.type <- strsplit(vars.type, split = "|", fixed = TRUE)[[1]][ifelse(type ==
         "count", 1, 2)]
     vars.type <- c(unlist(strsplit(vars.type, "+", fixed = TRUE)))
-    vars.type <- unique(trim(vars.type))
+    vars.type <- unique(trimws(vars.type))
     pols <- grep("poly", vars.type)
     if (length(pols) > 0) {
         poly.split <- strsplit(vars.type[pols], split = "")
