@@ -6576,6 +6576,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE,
     byform <- as.formula(paste0("~", byvar))
     means <- lapply(forms, function(x)svyby(x, byform, d, svymean, na.rm=TRUE))
     sds <- lapply(forms, function(x)svyby(x, byform, d, svyvar, na.rm=TRUE))
+    for(i in 1:length(sds))sds[[i]][,vars[i]] <- sqrt(sds[[i]][,vars[i]])
     qtiles <- lapply(forms, function(x)svyby(x, byform, d, svyquantile, 
                                              quantiles=c(0,.25,.5,.75,1), na.rm=TRUE, keep.var=FALSE))
     iqr <- lapply(qtiles, function(x)x[,4]-x[,2])
