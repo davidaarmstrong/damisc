@@ -61,5 +61,5 @@ y1 <- sin(2*x1) + e1
 
 }
 \author{
-X.F. Wang \url{wangx6@ccf.org}
+X.F. Wang
 }

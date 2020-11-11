@@ -7631,7 +7631,7 @@ datatable(x)
 ##' 
 ##' @return An object of class \code{loess}.
 ##' 
-##' @author X.F. Wang \url{wangx6@ccf.org}
+##' @author X.F. Wang 
 ##' 
 ##' @examples
 ##' ## Fit Local Polynomial Regression with Automatic Smoothing Parameter Selection
