@@ -67,12 +67,11 @@ NULL
 #' var vcov gaussian glm aggregate cooks.distance 
 #' cor hatvalues naprint nlminb pbinom printCoefmat
 #' qnorm rnorm binomial get_all_vars t.test 
-#' chisq.test reorder
+#' chisq.test reorder optimize
 #' @importFrom boot cv.glm boot 
 #' @importFrom coda as.mcmc
 #' @importFrom latticeExtra useOuterStrips
 #' @importFrom AICcmodavg AICc
-#' @importFrom fANCOVA loess.as
 #' @importFrom optiscale opscale
 #' @importFrom utils combn
 #' @importFrom effects Effect effect

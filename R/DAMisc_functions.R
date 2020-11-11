@@ -3671,7 +3671,12 @@ panel.2cat <- function(x,y,subscripts,lower,upper, length=.2){
 #' mod <- lm(prestige ~ income + education + women, data=Prestige)
 #' crTest(mod)
 #' 
-crTest <- function(model, adjust.method="none", cat = 5, var=NULL, span.as = TRUE, span = 0.75, ...){
+crTest <- function(model, 
+                   adjust.method="none", 
+                   cat = 5, 
+                   var=NULL, 
+                   span.as = TRUE, 
+                   span = 0.75, ...){
     cl <- attr(terms(model), "dataClasses")
 	cl <- cl[which(cl != "factor")]
     mf <- model.frame(model)
@@ -3707,7 +3712,7 @@ if(!span.as){
     lo.mods <- lapply(terms.list, function(z)loess(y ~ x, data=z, span=span, ...))
 }
 if(span.as){
-    lo.mods <- lapply(terms.list, function(z)loess.as(z$x, z$y, ...))
+    lo.mods <- lapply(terms.list, function(z)loess.as(z$x, z$y, family="symmetric", ...))
 }
 lin.mods <- lapply(terms.list, function(z)lm(y ~ x, data=z))
 n <- nrow(model.matrix(model))
@@ -7607,4 +7612,149 @@ labs <- sapply(data, function(x){
 x <- as_tibble(labs, rownames="variable")
 names(x)[2] <- "label"
 datatable(x)
+}
+
+##' Fit a local polynomial regression with automatic smoothing parameter selection 
+##' 
+##' Fit a local polynomial regression with automatic smoothing parameter selection. Two methods are available for the selection of the smoothing parameter: bias-corrected Akaike information criterion (aicc); and generalized cross-validation (gcv).
+##' 
+##' @param x a vector or two-column matrix of covariate values
+##' @param y a vector of response values
+##' @param degree	the degree of the local polynomials to be used. It can ben 0, 1 or 2.
+##' @param criterion the criterion for automatic smoothing parameter selection: "aicc" denotes bias-corrected AIC criterion, "gcv" denotes generalized cross-validation.
+##' @param family if "gaussian" fitting is by least-squares, and if "symmetric" a re-descending M estimator is used with Tukey's biweight function.
+##' @param user.span the user-defined parameter which controls the degree of smoothing.
+##' @param plot if \code{TRUE}, the fitted curve or surface will be generated.
+##' @param ... control parameters.
+##' 
+##' Fit a local polynomial regression with automatic smoothing parameter selection. The predictor x can either one-dimensional or two-dimensional. This function was taken directly from `fANCOVA` version 0.5-1 and is wholly attributed to its author Xiao-Feng Wang. 
+##' 
+##' @return An object of class \code{loess}.
+##' 
+##' @author X.F. Wang \url{wangx6@ccf.org}
+##' 
+##' @examples
+##' ## Fit Local Polynomial Regression with Automatic Smoothing Parameter Selection
+##' n1 <- 100
+##' x1 <- runif(n1,min=0, max=3)
+##' sd1 <- 0.2
+##' e1 <- rnorm(n1,sd=sd1)
+##' y1 <- sin(2*x1) + e1
+##' (y1.fit <- loess.as(x1, y1, plot=TRUE))
+##' 
+##' @export
+loess.as <- function (x, 
+                      y, 
+                      degree = 1, 
+                      criterion = c("aicc", "gcv"), 
+                      family = c("gaussian", "symmetric"), 
+                      user.span = NULL, 
+                      plot = FALSE, 
+                      ...) 
+{
+  criterion <- match.arg(criterion)
+  family <- match.arg(family)
+  x <- as.matrix(x)
+  if ((ncol(x) != 1) & (ncol(x) != 2)) 
+    stop("The predictor 'x' should be one or two dimensional!!")
+  if (!is.numeric(x)) 
+    stop("argument 'x' must be numeric!")
+  if (!is.numeric(y)) 
+    stop("argument 'y' must be numeric!")
+  if (any(is.na(x))) 
+    stop("'x' contains missing values!")
+  if (any(is.na(y))) 
+    stop("'y' contains missing values!")
+  if (!is.null(user.span) && (length(user.span) != 1 || !is.numeric(user.span))) 
+    stop("argument 'user.span' must be a numerical number!")
+  if (nrow(x) != length(y)) 
+    stop("'x' and 'y' have different lengths!")
+  if (length(y) < 3) 
+    stop("not enough observations!")
+  data.bind <- data.frame(x = x, y = y)
+  if (ncol(x) == 1) {
+    names(data.bind) <- c("x", "y")
+  }
+  else {
+    names(data.bind) <- c("x1", "x2", "y")
+  }
+  args <- list(formula= as.formula("y ~ x"),
+               degree=degree, 
+               family=family, 
+               data = data.bind, 
+               ...
+               )
+  if (ncol(x) == 1) {
+    if (is.null(user.span)) {
+      fit0 <- do.call(loess, args)
+      span1 <- opt.span(fit0, criterion = criterion)$span
+    }
+    else {
+      args$span <- user.span
+    }
+    fit <- do.call(loess, args)
+  }
+  else {
+    if (is.null(user.span)) {
+      fit0 <- do.call(loess, args)
+      span1 <- opt.span(fit0, criterion = criterion)$span
+    }
+    else {
+      args$span <- user.span
+    }
+    fit <- do.call(loess, args)
+  }
+  if (plot) {
+    if (ncol(x) == 1) {
+      m <- 100
+      x.new <- seq(min(x), max(x), length.out = m)
+      fit.new <- predict(fit, data.frame(x = x.new))
+      plot(x, y, col = "lightgrey", xlab = "x", ylab = "m(x)", 
+           ...)
+      lines(x.new, fit.new, lwd = 1.5, ...)
+    }
+    else {
+      m <- 50
+      x1 <- seq(min(data.bind$x1), max(data.bind$x1), len = m)
+      x2 <- seq(min(data.bind$x2), max(data.bind$x2), len = m)
+      x.new <- expand.grid(x1 = x1, x2 = x2)
+      fit.new <- matrix(predict(fit, x.new), m, m)
+      persp(x1, x2, fit.new, theta = 40, phi = 30, ticktype = "detailed", 
+            xlab = "x1", ylab = "x2", zlab = "y", col = "lightblue", 
+            expand = 0.6)
+    }
+  }
+  return(fit)
+}
+
+##' Return criterion for span selection 
+##' 
+##' @param x An object of class \code{loess}. 
+##' @rdname loess.as
+as.crit <- function(x) {
+  span <- x$pars$span
+  traceL <- x$trace.hat
+  sigma2 <- sum(x$residuals^2)/(x$n - 1)
+  aicc <- log(sigma2) + 1 + 2 * (2 * (traceL + 1))/(x$n - 
+                                                      traceL - 2)
+  gcv <- x$n * sigma2/(x$n - traceL)^2
+  result <- list(span = span, aicc = aicc, gcv = gcv)
+  return(result)
+}
+
+##' Optimize span for loess. 
+##' 
+##' @param model An object of class \code{loess}. 
+##' @param criterion The criterion used to find the optimal span
+##' @param span.range The range in which to look for the optimal span
+##' @rdname loess.as
+opt.span <- function(model, criterion = c("aicc", "gcv"), 
+                     span.range = c(0.05, 0.95)) {
+  criterion <- match.arg(criterion)
+  fn <- function(span) {
+    mod <- update(model, span = span)
+    as.crit(mod)[[criterion]]
+  }
+  result <- optimize(fn, span.range)
+  return(list(span = result$minimum, criterion = result$objective))
 }
