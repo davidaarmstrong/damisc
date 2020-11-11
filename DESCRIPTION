@@ -1,7 +1,7 @@
 Package: DAMisc
 Type: Package
 Title: Dave Armstrong's Miscellaneous Functions
-Version: 1.6.1
+Version: 1.6.2
 Imports: lattice, grid, car, effects, rstan, gamlss, ggplot2, MASS, nnet, splines, xtable, boot, optiscale, AICcmodavg, latticeExtra, coda, glue, clarkeTest, haven, survey, janitor, tidyr, tidyselect, tibble, magrittr, dplyr, rlang, jtools, DT
 Suggests: carData, knitr, markdown
 VignetteBuilder: knitr
