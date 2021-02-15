@@ -3361,7 +3361,7 @@ if(type == "facs"){
 	if(!plot){
         res <- list(out = res, mainvar = facvar, givenvar = quantvar)
         class(res) <- "iqq"
-        print(res)
+        res
 	}
 	if(plot){
 		rl <- range(c(res[, c("lower", "upper")]))
@@ -3412,7 +3412,7 @@ if(type == "slopes"){
 	names(qeff) <- faclevs
 	res <- list(out = data.frame(eff = qeff, se = qse, tstat=qtstats, pvalue=qpv, stringsAsFactors=TRUE), varcor = qvar, mainvar = quantvar, givenvar = facvar)
     class(res) <- "iqq"
-	print(res)
+	res
 }
 if(plot){
 	intterm <- NULL
