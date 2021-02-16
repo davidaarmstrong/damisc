@@ -437,8 +437,9 @@ DAintfun2 <-
 function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE,
     level=.95, hist.col = "gray75", nclass = c(10, 10), scale.hist = 0.5,
     border = NA, name.stem = "cond_eff",
-	xlab = NULL, ylab=NULL, plot.type = "screen")
+	xlab = NULL, ylab=NULL, plot.type = c("screen", "pdf", "png", "eps", "none"))
 {
+  plot.type <- match.arg(plot.type)
     rseq <- function(x) {
         rx <- range(x, na.rm = TRUE)
         seq(rx[1], rx[2], length = 25)
@@ -471,107 +472,118 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
     se.eff2 <- sqrt(diag(a2 %*% varcov %*% t(a2)))
     low2 <- eff2 - qt((1-((1-level)/2)), obj$df.residual) * se.eff2
     up2 <- eff2 + qt((1-((1-level)/2)), obj$df.residual) * se.eff2
-    if (!plot.type %in% c("pdf", "png", "eps", "screen")) {
-        print("plot type must be one of - pdf, png or eps")
+    if(plot.type == "none"){
+      outdf <- data.frame(
+        vals_var2 = s2, 
+        eff_var1 = eff1, 
+        se_var1 = se.eff1
+        low_var1 = low1, 
+        up_var1 = up1, 
+        vals_var1 = s1, 
+        eff_var2 = eff2, 
+        se_var2 = se.eff2, 
+        low_var2 = low2, 
+        up_var2 = up2)
+      names(outdf) <- gsub("var1", v1, names(outdf))
+      names(outdf) <- gsub("var2", v2, names(outdf))
+      return(outdf)
     }
-    else {
-        if (plot.type == "pdf") {
-            pdf(paste(name.stem, "_", v1, ".pdf", sep = ""),
-                height = 6, width = 6)
+    if (plot.type == "pdf") {
+        pdf(paste(name.stem, "_", v1, ".pdf", sep = ""),
+            height = 6, width = 6)
+    }
+    if (plot.type == "png") {
+        png(paste(name.stem, "_", v1, ".png", sep = ""))
+    }
+    if (plot.type == "eps") {
+        old.psopts <- ps.options()
+        setEPS()
+        postscript(paste(name.stem, "_", v1, ".eps", sep = ""))
+    }
+    if (plot.type == "screen") {
+        oldpar <- par()
+        par(mfrow = c(1, 2))
+    }
+    plot(s2, eff1, type = "n", ylim = range(c(low1, up1)),
+        xlab = ifelse(is.null(xlab), toupper(v2), xlab[1]), ylab = ifelse(is.null(ylab), paste("Conditional Effect of ",
+            toupper(v1), " | ", toupper(v2), sep = ""), ylab[1]))
+    if (hist == TRUE) {
+        rng <- diff(par()$usr[3:4])
+        h2 <- hist(MM[, v2], nclass = nclass[1], plot = FALSE)
+        prop2 <- h2$counts/sum(h2$counts)
+        plot.prop2 <- (prop2/max(prop2)) * rng * scale.hist +
+            par()$usr[3]
+        av2 <- pretty(prop2, n = 3)
+        axis(4, at = (av2/max(prop2)) * rng * scale.hist +
+            par()$usr[3], labels = av2)
+        br2 <- h2$breaks
+        for (i in 1:(length(br2) - 1)) {
+            polygon(x = c(br2[i], br2[(i + 1)], br2[(i +
+              1)], br2[i], br2[i]), y = c(par()$usr[3], par()$usr[3],
+              plot.prop2[i], plot.prop2[i], par()$usr[3]),
+              col = hist.col, border = border)
         }
-        if (plot.type == "png") {
-            png(paste(name.stem, "_", v1, ".png", sep = ""))
+    }
+    if (rug == TRUE) {
+        rug(MM[,v2], ticksize = ticksize)
+    }
+    if (par()$usr[3] < 0 & par()$usr[4] > 0) {
+        abline(h = 0, col = "gray50")
+    }
+    lines(s2, eff1)
+    lines(s2, low1, lty = 2)
+    lines(s2, up1, lty = 2)
+    if (plot.type != "screen") {
+        dev.off()
+    }
+    if (plot.type == "pdf") {
+        pdf(paste(name.stem, "_", v2, ".pdf", sep = ""),
+            height = 6, width = 6)
+    }
+    if (plot.type == "png") {
+        png(paste(name.stem, "_", v2, ".png", sep = ""))
+    }
+    if (plot.type == "eps") {
+        postscript(paste(name.stem, "_", v2, ".eps", sep = ""))
+    }
+    plot(s1, eff2, type = "n", ylim = range(c(low2, up2)),
+        xlab = ifelse(is.null(xlab), toupper(v1), xlab[2]),
+	ylab = ifelse(is.null(ylab), paste("Conditional Effect of ",
+            toupper(v2), " | ", toupper(v1), sep = ""), ylab[2]))
+    if (hist == TRUE) {
+        rng <- diff(par()$usr[3:4])
+        h1 <- hist(MM[,v1], nclass = nclass[2], plot = FALSE)
+        prop1 <- h1$counts/sum(h1$counts)
+        plot.prop1 <- (prop1/max(prop1)) * rng * scale.hist +
+            par()$usr[3]
+        av1 <- pretty(prop1, n = 3)
+        axis(4, at = (av1/max(prop1)) * rng * scale.hist +
+            par()$usr[3], labels = av1)
+        br1 <- h1$breaks
+        for (i in 1:(length(br1) - 1)) {
+            polygon(x = c(br1[i], br1[(i + 1)], br1[(i +
+              1)], br1[i], br1[i]), y = c(par()$usr[3], par()$usr[3],
+              plot.prop1[i], plot.prop1[i], par()$usr[3]),
+              col = hist.col, border = border)
         }
-        if (plot.type == "eps") {
-            old.psopts <- ps.options()
-            setEPS()
-            postscript(paste(name.stem, "_", v1, ".eps", sep = ""))
-        }
-        if (plot.type == "screen") {
-            oldpar <- par()
-            par(mfrow = c(1, 2))
-        }
-        plot(s2, eff1, type = "n", ylim = range(c(low1, up1)),
-            xlab = ifelse(is.null(xlab), toupper(v2), xlab[1]), ylab = ifelse(is.null(ylab), paste("Conditional Effect of ",
-                toupper(v1), " | ", toupper(v2), sep = ""), ylab[1]))
-        if (hist == TRUE) {
-            rng <- diff(par()$usr[3:4])
-            h2 <- hist(MM[, v2], nclass = nclass[1], plot = FALSE)
-            prop2 <- h2$counts/sum(h2$counts)
-            plot.prop2 <- (prop2/max(prop2)) * rng * scale.hist +
-                par()$usr[3]
-            av2 <- pretty(prop2, n = 3)
-            axis(4, at = (av2/max(prop2)) * rng * scale.hist +
-                par()$usr[3], labels = av2)
-            br2 <- h2$breaks
-            for (i in 1:(length(br2) - 1)) {
-                polygon(x = c(br2[i], br2[(i + 1)], br2[(i +
-                  1)], br2[i], br2[i]), y = c(par()$usr[3], par()$usr[3],
-                  plot.prop2[i], plot.prop2[i], par()$usr[3]),
-                  col = hist.col, border = border)
-            }
-        }
-        if (rug == TRUE) {
-            rug(MM[,v2], ticksize = ticksize)
-        }
-        if (par()$usr[3] < 0 & par()$usr[4] > 0) {
-            abline(h = 0, col = "gray50")
-        }
-        lines(s2, eff1)
-        lines(s2, low1, lty = 2)
-        lines(s2, up1, lty = 2)
-        if (plot.type != "screen") {
-            dev.off()
-        }
-        if (plot.type == "pdf") {
-            pdf(paste(name.stem, "_", v2, ".pdf", sep = ""),
-                height = 6, width = 6)
-        }
-        if (plot.type == "png") {
-            png(paste(name.stem, "_", v2, ".png", sep = ""))
-        }
-        if (plot.type == "eps") {
-            postscript(paste(name.stem, "_", v2, ".eps", sep = ""))
-        }
-        plot(s1, eff2, type = "n", ylim = range(c(low2, up2)),
-            xlab = ifelse(is.null(xlab), toupper(v1), xlab[2]),
-			ylab = ifelse(is.null(ylab), paste("Conditional Effect of ",
-                toupper(v2), " | ", toupper(v1), sep = ""), ylab[2]))
-        if (hist == TRUE) {
-            rng <- diff(par()$usr[3:4])
-            h1 <- hist(MM[,v1], nclass = nclass[2], plot = FALSE)
-            prop1 <- h1$counts/sum(h1$counts)
-            plot.prop1 <- (prop1/max(prop1)) * rng * scale.hist +
-                par()$usr[3]
-            av1 <- pretty(prop1, n = 3)
-            axis(4, at = (av1/max(prop1)) * rng * scale.hist +
-                par()$usr[3], labels = av1)
-            br1 <- h1$breaks
-            for (i in 1:(length(br1) - 1)) {
-                polygon(x = c(br1[i], br1[(i + 1)], br1[(i +
-                  1)], br1[i], br1[i]), y = c(par()$usr[3], par()$usr[3],
-                  plot.prop1[i], plot.prop1[i], par()$usr[3]),
-                  col = hist.col, border = border)
-            }
-        }
-        if (rug == TRUE) {
-            rug(MM[, v1], ticksize = ticksize)
-        }
-        if (par()$usr[3] < 0 & par()$usr[4] > 0) {
-            abline(h = 0, col = "gray50")
-        }
-        lines(s1, eff2)
-        lines(s1, low2, lty = 2)
-        lines(s1, up2, lty = 2)
-        if (plot.type != "screen") {
-            dev.off()
-        }
-        if (plot.type == "eps") {
-            ps.options <- old.psopts
-        }
-        if (plot.type == "screen") {
-            par <- oldpar
-        }
+    }
+    if (rug == TRUE) {
+        rug(MM[, v1], ticksize = ticksize)
+    }
+    if (par()$usr[3] < 0 & par()$usr[4] > 0) {
+        abline(h = 0, col = "gray50")
+    }
+    lines(s1, eff2)
+    lines(s1, low2, lty = 2)
+    lines(s1, up2, lty = 2)
+    if (plot.type != "screen") {
+        dev.off()
+    }
+    if (plot.type == "eps") {
+        ps.options <- old.psopts
+    }
+    if (plot.type == "screen") {
+        par <- oldpar
     }
 }
 
