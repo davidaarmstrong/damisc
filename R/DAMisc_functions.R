@@ -476,7 +476,7 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
       outdf <- data.frame(
         vals_var2 = s2, 
         eff_var1 = eff1, 
-        se_var1 = se.eff1
+        se_var1 = se.eff1,
         low_var1 = low1, 
         up_var1 = up1, 
         vals_var1 = s1, 
