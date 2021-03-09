@@ -6353,9 +6353,7 @@ testNL.lm <- testNL.glm
 #' @author Dave Armstrong
 effect_logistf <- function(var, obj, data, ...){
   v <- function(obj, complete=FALSE)return(obj$var)
-  form <- as.character(obj$formula)
-  form <- as.formula(paste(form[2], form[3], sep=form[1]))
-  tmp.mod <- glm(form, data=data, family=binomial)
+  tmp.mod <- glm(substitute(obj$formula), data=data, family=binomial)
   tmp.mod$coefficients <- as.vector(obj$coefficients)
   tmp.mod$var <- obj$var
   e <- Effect(var, tmp.mod, vcov.=v, ...)
