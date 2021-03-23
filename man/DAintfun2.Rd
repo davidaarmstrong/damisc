@@ -19,7 +19,7 @@ DAintfun2(
   name.stem = "cond_eff",
   xlab = NULL,
   ylab = NULL,
-  plot.type = "screen"
+  plot.type = c("screen", "pdf", "png", "eps", "none")
 )
 }
 \arguments{

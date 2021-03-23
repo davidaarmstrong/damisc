@@ -1,3 +1,4 @@
+utils::globalVariables("where") 
 
 pGumbel <- function (q, mu = 0, sigma = 1){
   stopifnot(sigma > 0)
@@ -607,23 +608,41 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
 #' 
 #' @param obj A model object of class \code{glm}.
 #' @param data Data frame used to fit \code{object}.
+#' @param V An optional variance-covariance matrix for the coefficients, if 
+#' \code{NULL}, will be obtained through a call to \code{vcov}. 
 #' @param typical.dat Data frame with a single row containing values at which
 #' to hold variables constant when calculating first differences.  These values
 #' will be passed to \code{predict}, so factors must take on a single value,
 #' but have all possible levels as their levels attribute.
+#' @param change.dat A named list of values over which the variables of interest 
+#' will be changed.  If \code{NULL} or partially specified, unspecified variables
+#' will use \code{diffchange}.  If a categorical variable is specified in here, this 
+#' overrides the \code{catdiff} argument and only the specified contrast will be 
+#' generated.  
 #' @param diffchange A string indicating the difference in predictor values to
 #' calculate the discrete change.  \code{range} gives the difference between
 #' the minimum and maximum, \code{sd} gives plus and minus one-half standard
 #' deviation change around the median and \code{unit} gives a plus and minus
 #' one-half unit change around the median.
+#' @param n number of units of \code{diffchange} to move.  Only active for \code{unit}
+#' or \code{sd}. 
+#' @param catdiff String identifying how differences in factor variables
+#' is handled.  Options are \code{"all"} in which case all pairwise differences are
+#' returned, or \code{"biggest"} in which case the biggest difference is returned. 
 #' @param sim Logical indicating whether simulated confidence bounds on the
 #' difference should be calculated and presented.
 #' @param R Number of simulations to perform if \code{sim} is \code{TRUE}
+#' @param qtiles Quantiles to calculate if \code{sim=TRUE}. 
+#' @param trim Logical indicating whether data should be trimmed to remain within 
+#' the bounds of the observed variable.  If \code{TRUE}, for a variable whose maximum is 100, 
+#' if the change scenario indicated a change from 99 to 101, the upper bound of the change
+#' scenario would be reset to 100. 
 #' @return A list with the following elements: \item{diffs}{A matrix of
 #' calculated first differences} \item{minmax}{A matrix of values that were
 #' used to calculate the predicted changes}
 #' @author Dave Armstrong
 #' 
+#' @importFrom dplyr across rename left_join bind_rows
 #' @export
 #' 
 #' @examples
@@ -638,98 +657,167 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
 #' glmChange(left.mod, data=france, typical.dat=typical.france)
 #' 
 glmChange <-
-function (obj, data, typical.dat = NULL, diffchange = c("range", "sd", "unit"), sim=FALSE, R=1000)
+function (obj, 
+          data, 
+          V = NULL,
+          typical.dat = NULL, 
+          change.dat = NULL, 
+          diffchange = c("range", "sd", "unit"), 
+          outcome = c("diff", "maxdiff")
+          n = 1, 
+          catdiff = c("biggest", "all"), 
+          sim=FALSE, 
+          R=1000, 
+          qtiles=c(.025, .975), 
+          trim=TRUE)
 {
-    vars <- all.vars(formula(obj))[-1]
-    if(any(!(vars %in% names(data)))){
-        vars <- vars[-which(!vars %in% names(data))]
+  diffchange <- match.arg(diffchange)
+  catdiff <- match.arg(catdiff)
+  allvars <- all.vars(formula(obj))
+  vars <- names(c(unlist(sapply(allvars, function(x)grep(x, attr(terms(obj), "term.labels"))))))
+  dv <- setdiff(allvars, vars)
+  if(any(!(vars %in% names(data)))){
+      vars <- vars[-which(!vars %in% names(data))]
+  }
+  rn <- vars
+  var.classes <- sapply(vars, function(x) class(data[[x]]))
+  levs <- obj$xlevels
+  meds <- vector(mode="list", length=length(vars))
+  names(meds) <- vars 
+  for(i in 1:length(vars)){
+    if(is.factor(data[[vars[i]]])){
+      if(vars[i] %in% names(typical.dat)){
+        meds[[vars[i]]] <- typical.dat[[vars[i]]]
+      }else{
+        tab <- table(data[[vars[i]]])
+        meds[[vars[i]]] <- factor(names(tab)[which.max(tab)], levels = levels(data[[vars[i]]]))
+      }
     }
-    rn <- vars
-    var.classes <- sapply(vars, function(x) class(data[[x]]))
-    minmax <- lapply(vars, function(x) c(NA, NA))
-    meds <- lapply(vars, function(x) NA)
-    names(minmax) <- names(meds) <- vars
-    levs <- obj$xlevels
-    if (length(levs) > 0) {
-        for (i in 1:length(levs)) {
-            tmp.levs <- paste(names(levs)[i], unlist(levs[i]),
-                sep = "")
-            col.inds <- match(tmp.levs, names(obj$coef))
-            if (length(grep("1$", names(obj$coef)[col.inds])) >
-                0) {
-                col.inds <- c(col.inds[which(is.na(col.inds))],
-                  col.inds[grep("1$", names(col.inds))])
-                names(col.inds) <- gsub("1$", "", names(col.inds))
-                col.inds <- col.inds[match(tmp.levs, names(col.inds))]
-            }
-            tmp.coefs <- obj$coef[col.inds]
-            tmp.coefs <- obj$coef[match(tmp.levs, names(obj$coef))]
-            tmp.coefs[which(is.na(tmp.coefs))] <- 0
-            mm <- c(which.min(tmp.coefs), which.max(tmp.coefs))
-            minmax[[names(levs)[i]]] <- factor(levs[[i]][mm],
-                levels = levs[[i]])
-            tmp.tab <- table(data[[names(levs)[i]]])
-            meds[[names(levs)[i]]] <- factor(names(tmp.tab)[which.max(tmp.tab)],
-                levels = levs[[i]])
+    else{
+      if(vars[i] %in% names(typical.dat)){
+        meds[[vars[i]]] <- typical.dat[[vars[i]]]
+      }else{
+        meds[[vars[i]]] <- median(data[[vars[i]]], na.rm=TRUE)
+      }
+    }
+  }
+  prob.dat <- list()
+  k <- 1
+  for(i in 1:length(vars)){
+    tmp <- meds
+    tmp <- tmp[-which(names(tmp) == vars[i])]
+    if(!is.factor(data[[vars[i]]])){
+      if(vars[i] %in% names(change.dat)){
+        dlist <- list(change.dat[[vars[i]]])
+        names(dlist) <- vars[i]
+        prob.dat[[k]] <- do.call(expand.grid, c(tmp, dlist))
+        names(prob.dat)[k] <- vars[i]
+        prob.dat[[k]]$fit <- predict(obj, newdata=prob.dat[[k]], type="response")
+        prob.dat[[k]]$focal <- vars[i]
+        prob.dat[[k]]$side <- factor(c(1,2), labels=c("Low", "High"))
+        k <- k+1
+    }else{
+        rg <- switch(diffchange, 
+                     range = range(data[[vars[i]]], na.rm=TRUE), 
+                     sd = median(data[[vars[i]]], na.rm=TRUE) + 
+                       c(-n*.5, n*.5)*sd(data[[vars[i]]], na.rm=TRUE), 
+                     unit = median(data[[vars[i]]], na.rm=TRUE) + c(-n*.5, n*.5))
+        if(trim){
+          rg[1] <- max(min(data[[vars[i]]], na.rm=TRUE), rg[1])
+          rg[2] <- min(max(data[[vars[i]]], na.rm=TRUE), rg[2])
         }
-    }
-    vars <- vars[sapply(minmax, function(x) is.na(x[1]))]
-	if(length(vars) > 0){
-        mmc <- match.arg(diffchange)
-        for (i in 1:length(vars)) {
-            if(mmc == "range"){
-            minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = TRUE)
-            }
-            if(mmc == "sd"){
-              tmp <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
-              tmp[1] <- ifelse(tmp[1] < min(data[[vars[i]]], na.rm=TRUE), min(data[[vars[i]]], na.rm=TRUE), tmp[1])
-              tmp[2] <- ifelse(tmp[2] > max(data[[vars[i]]], na.rm=TRUE), max(data[[vars[i]]], na.rm=TRUE), tmp[2])
-              minmax[[vars[i]]] <- tmp
-            }
-            if(mmc == "unit"){
-            minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)
-            }
-            meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE)
+        dlist <- list(rg)
+        names(dlist) <- vars[i]
+        prob.dat[[k]] <- do.call(expand.grid, c(tmp, dlist))
+        names(prob.dat)[k] <- vars[i]
+        prob.dat[[k]]$fit <- predict(obj, newdata=prob.dat[[k]], type="response")
+        prob.dat[[k]]$focal <- vars[i]
+        prob.dat[[k]]$side <- factor(c(1,2), labels=c("Low", "High"))
+        k <- k+1
+      }
+    }else{
+      if(vars[i] %in% names(change.dat)){
+        dlist <- list(change.dat[[vars[i]]])
+        names(dlist) <- vars[i]
+        prob.dat[[k]] <- do.call(expand.grid, c(tmp, dlist))
+        names(prob.dat)[k] <- vars[i]
+        prob.dat[[k]]$fit <- predict(obj, newdata=prob.dat[[k]], type="response")
+        prob.dat[[k]] <- tmpdat[c(mn,mx), ]
+        
+        prob.dat[[k]]$focal <- vars[i]
+        prob.dat[[k]]$side <- factor(c(1,2), labels=c("Low", "High"))
+        k <- k+1
+      }else{
+        if(catdiff == "biggest"){
+          dl <- list(factor(levs[[vars[i]]], levels=levels(data[[vars[i]]])))
+          names(dl) <- vars[i]
+          tmpdat <- do.call(expand.grid, c(tmp, dl))
+          tmpdat$fit <- predict(obj, newdata=tmpdat, type="response")
+          mn <- which.min(tmpdat$fit)
+          mx <- which.max(tmpdat$fit)
+          prob.dat[[k]] <- tmpdat[c(mn,mx), ]
+          names(prob.dat)[k] <- vars[i]
+          prob.dat[[k]]$focal <- vars[i]
+          prob.dat[[k]]$side <- factor(c(1,2), labels=c("Low", "High"))
+          k <- k+1
+        }else{
+          combs <- combn(length(levs[[vars[i]]]), 2)
+          tmplevs <- apply(combs, c(1,2), function(x)levs[[vars[i]]][x])
+          for(j in 1:ncol(tmplevs)){
+            dlist <- list(factor(tmplevs[,j], levels=levels(data[[vars[i]]])))
+            names(dlist) <- vars[i]
+            prob.dat[[k]] <- do.call(expand.grid, c(tmp, dlist))
+            names(prob.dat)[k] <- paste(vars[i], j, sep="_")
+            prob.dat[[k]]$fit <- predict(obj, newdata=prob.dat[[k]], type="response")
+            prob.dat[[k]]$focal <- vars[i]
+            prob.dat[[k]]$side <- factor(c(1,2), labels=c("Low", "High"))
+            k <- k+1
+            }            
+          }
         }
-    }
-    tmp.df <- do.call(data.frame, c(lapply(meds, function(x) rep(x,
-        length(meds) * 2)), stringsAsFactors=TRUE))
-    if (!is.null(typical.dat)) {
-        notin <- which(!(names(typical.dat) %in% names(tmp.df)))
-        if (length(notin) > 0) {
-            cat("The following variables in typical.dat were not found in the prediction data: ",
-                names(typical.dat)[notin], "\n\n", sep = "")
-            typical.dat <- typical.dat[, -notin]
+        
         }
-        for (j in 1:ncol(typical.dat)) {
-            tmp.df[[names(typical.dat)[j]]] <- typical.dat[1,
-                j]
-            meds[names(typical.dat)[j]] <- as.numeric(typical.dat[1,
-                j])
-        }
+  } # close loop over i
+  probw <- lapply(seq_along(prob.dat), function(i){ 
+    prob.dat[[i]] %>% 
+      select(all_of(c("focal", "side", "fit", prob.dat[[i]]$focal[1]))) %>% 
+      rename("val" = prob.dat[[i]]$focal[1]) %>% 
+      mutate(v = names(prob.dat)[i]) %>% 
+      pivot_wider(names_from="side", values_from=c("val", "fit")) %>% 
+      mutate(diff = .data$fit_High-.data$fit_Low,
+             across(where(is.numeric), ~sprintf("%.3f",.x)))
+  })
+  probw <- do.call(bind_rows, probw)
+  if(sim){
+    if(is.null(V)){
+      V <- vcov(obj)
+    }else{
+      if(nrow(V) != ncol(V) | ncol(V) != length(coef(obj))){
+        stop("Provided variance covariance matrix is of wrong dimensions\n")
+      }
     }
-    inds <- seq(1, nrow(tmp.df), by = 2)
-    for (j in 1:length(minmax)) {
-        tmp.df[inds[j]:(inds[j] + 1), j] <- minmax[[j]]
-    }
-    preds <- matrix(predict(obj, newdata = tmp.df, type = "response"),
-        ncol = 2, byrow = TRUE)
-    diffs <- cbind(preds, apply(preds, 1, diff))
-    colnames(diffs) <- c("min", "max", "diff")
-    rownames(diffs) <- rn
-    minmax.mat <- do.call(data.frame, c(minmax, stringsAsFactors=TRUE))
-    minmax.mat <- rbind(do.call(data.frame, c(meds, stringsAsFactors=TRUE)), minmax.mat)
-    rownames(minmax.mat) <- c("typical", "min", "max")
-	if(sim){
-    preds <- predict(obj, newdata = tmp.df, type = "link", se.fit=TRUE)
-	res <- sapply(1:R, function(x)apply(matrix(family(obj)$linkinv(with(preds, rnorm(length(preds$fit), fit, se.fit))), ncol=2, byrow=TRUE), 1, diff))
-	cis <- t(apply(res, 1, quantile, c(.025, .975)))
-	colnames(cis) <- c("lower", "upper")
-	diffs <- cbind(diffs, cis)
-	}
-    ret <- list(diffs = diffs, minmax = minmax.mat)
-    class(ret) <- "change"
-    return(ret)
+    B <- MASS::mvrnorm(R, coef(obj), V)
+    se.dat <- lapply(prob.dat, function(x){
+      dvdat <- na.omit(data)[dv][1,, drop=FALSE]
+      rownames(dvdat) <- NULL
+      x <- cbind(x,dvdat)
+      X <- model.matrix(formula(obj), data=x)
+      p <- family(obj)$linkinv(X %*% t(B))
+      ap <- apply(p, 2, diff)
+      q <- quantile(ap, probs=qtiles)
+      names(q) <- paste("q_", gsub("\\%", "", names(q)), sep="")
+      q <- do.call(data.frame, as.list(q))
+      q$focal <- x$focal[1]
+      q
+    })
+    se.dat <- do.call(rbind, se.dat)
+    se.dat$v <- rownames(se.dat)
+    rownames(se.dat) <- NULL
+    probw <- left_join(probw, se.dat)
+  }  
+  probw <- probw %>% select(-c("v"))
+  attr(probw, "meds") <- do.call(data.frame, meds)
+  return(probw)
 }
 
 
@@ -3932,11 +4020,26 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 #' @param varname Character string giving the variable name for which average
 #' effects are to be calculated.
 #' @param data Data frame used to fit \code{object}.
-#' @param change A string indicating the difference in predictor values to
+#' @param V An optional variance-covariance matrix for the coefficients, if 
+#' \code{NULL}, will be obtained through a call to \code{vcov}. 
+#' @param diffchange A string indicating the difference in predictor values to
 #' calculate the discrete change.  \code{sd} gives plus and minus one-half
 #' standard deviation change around the median and \code{unit} gives a plus and
 #' minus one-half unit change around the median.
+#' @param n Number of \code{diffchange} to move. 
+#' @param baseline Character string representing the baseline to use for the 
+#' change.  It can be one of \code{"obs"}, in which case each observations value
+#' is used as the baseline or \code{"median"}, in which case the median is 
+#' used as a common baseline for all observations.
+#' @param catdiff String identifying how differences in factor variables
+#' is handled.  Options are \code{"all"} in which case all pairwise differences are
+#' returned, or \code{"biggest"} in which case the biggest difference is returned. 
 #' @param R Number of simulations to perform.
+#' @param trim Logical indicating whether data should be trimmed to remain within 
+#' the bounds of the observed variable.  If \code{TRUE}, for a variable whose maximum is 100, 
+#' if the change scenario indicated a change from 99 to 101, the upper bound of the change
+#' scenario would be reset to 100. 
+#' @param ... Allows user to specify legacy argument \code{change}
 #' @return \item{res}{A vector of values giving the average and 95 percent
 #' confidence bounds} \item{ames}{The average change in predicted probability
 #' (across all N observations) for each of the R simulations.}
@@ -3951,32 +4054,61 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 #' data(france)
 #' left.mod <- glm(voteleft ~ male + age + retnat + 
 #' 	poly(lrself, 2), data=france, family=binomial)
-#' glmChange2(left.mod, "age", data=france, "sd")
+#' glmChange2(left.mod, "age", data=france, 
+#' diffchange="sd")
 #' 
 glmChange2 <-
-function (obj, varname, data, change=c("unit", "sd"), R=1500)
+function (obj, 
+          varname, 
+          data, 
+          V = NULL, 
+          diffchange=c("unit", "sd"), 
+          baseline = c("obs", "median"), 
+          catdiff = c("biggest", "all"), 
+          n=1, 
+          R=1500, 
+          trim=TRUE, 
+          ...)
 {
-    vars <- names(attr(terms(obj), "dataClasses"))[-1]
-    vars <- gsub("poly\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("bs\\((.*?),.*?\\)", "\\1", vars)
-    vars <- gsub("log\\((.*?),.*?\\)", "\\1", vars)
-    rn <- vars
-    var.classes <- sapply(vars, function(x) class(data[[x]]))
-    b <- mvrnorm(R, coef(obj), vcov(obj))
-    change <- match.arg(change)
-    if(!is.factor(data[[varname]])){
-    delt <- switch(change, unit = 1, sd = sd(data[[varname]],
-        na.rm = TRUE))
-    }else{
-      delt <- 1
-    }
-
-    if (is.numeric(data[[varname]])) {
+  el.args <- list(...)
+  n.el.args <- names(el.args)
+  if("change" %in% n.el.args){
+    diffchange <- do.call("[", el.args)["change"]
+  }
+  change <- match.arg(diffchange)
+  baseline <- match.arg(baseline)
+  catdiff <- match.arg(catdiff)
+  allvars <- all.vars(formula(obj))
+  vars <- names(c(unlist(sapply(allvars, function(x)grep(x, attr(terms(obj), "term.labels"))))))
+  dv <- setdiff(allvars, vars)
+  if(any(!(vars %in% names(data)))){
+    vars <- vars[-which(!vars %in% names(data))]
+  }
+  rn <- vars
+  var.classes <- sapply(vars, function(x) class(data[[x]]))
+  if(is.null(V)){
+    V <- vcov(obj)
+  }
+  b <- MASS::mvrnorm(R, coef(obj), V)
+  if(!is.factor(data[[varname]])){
+  delt <- switch(change, unit = 1, sd = sd(data[[varname]],
+      na.rm = TRUE))*n
+  }else{
+    delt <- 1
+  }
+  if (is.numeric(data[[varname]])) {
         d0 <- d1 <- data
-        tmp0 <- d0[[varname]] - (0.5 * delt)
-        tmp0 <- ifelse(tmp0 < min(d0[[varname]], na.rm=TRUE), min(d0[[varname]], na.rm=TRUE), tmp0)
-        tmp1 <- d1[[varname]] + (0.5 * delt)
-        tmp1 <- ifelse(tmp1 > max(d1[[varname]], na.rm=TRUE), max(d1[[varname]], na.rm=TRUE), tmp1)
+        if(baseline == "median"){
+          tmp0 <- median(d0[[varname]], na.rm=TRUE) - (0.5 * delt)
+          tmp1 <- median(d1[[varname]], na.rm=TRUE) + (0.5 * delt)
+        }else{
+          tmp0 <- d0[[varname]] - (0.5 * delt)
+          tmp1 <- d1[[varname]] + (0.5 * delt)
+        }
+        if(trim){
+          tmp0 <- ifelse(tmp0 < min(d0[[varname]], na.rm=TRUE), min(d0[[varname]], na.rm=TRUE), tmp0)
+          tmp1 <- ifelse(tmp1 > max(d1[[varname]], na.rm=TRUE), max(d1[[varname]], na.rm=TRUE), tmp1)
+        }
         d0[[varname]] <- tmp0
         d1[[varname]] <- tmp1
         X0 <- model.matrix(obj, data = d0)
@@ -4033,7 +4165,14 @@ function (obj, varname, data, change=c("unit", "sd"), R=1500)
         rownames(res) <- c("mean", "lower", "upper")
         colnames(res) <- apply(cl[c(2, 1), ], 2, paste, collapse = "-")
         res <- t(res)
-        outres = list(res = res, ames=eff, avesamp = sapply(d.list, rowMeans))
+        asamp <- sapply(d.list, rowMeans)
+        if(catdiff == "biggest"){
+          w <- which.max(abs(res[,1]))
+          res <- res[w, , drop=FALSE]
+          ames <- ames[,w]
+          asamp <- asamp[,w]
+        }
+        outres = list(res = res, ames=eff, avesamp = asamp )
     }
     class(outres) <- "glmc2"
     print(outres)
