@@ -11,6 +11,7 @@ glmChange(
   typical.dat = NULL,
   change.dat = NULL,
   diffchange = c("range", "sd", "unit"),
+  outcome = c("diff", "maxdiff"),
   n = 1,
   catdiff = c("biggest", "all"),
   sim = FALSE,
@@ -43,6 +44,11 @@ calculate the discrete change.  \code{range} gives the difference between
 the minimum and maximum, \code{sd} gives plus and minus one-half standard
 deviation change around the median and \code{unit} gives a plus and minus
 one-half unit change around the median.}
+
+\item{outcome}{For quantitative variables, should the difference over the range of chosen values be calculated 
+(the default) or should the maximum probability difference over the range be 
+calculated.  These will be the same for single-term quantitative variables, 
+but could be different for multi-term variables, like splines and polynomials.}
 
 \item{n}{number of units of \code{diffchange} to move.  Only active for \code{unit}
 or \code{sd}.}

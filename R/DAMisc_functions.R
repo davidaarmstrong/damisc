@@ -624,6 +624,10 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
 #' the minimum and maximum, \code{sd} gives plus and minus one-half standard
 #' deviation change around the median and \code{unit} gives a plus and minus
 #' one-half unit change around the median.
+#' @param outcome For quantitative variables, should the difference over the range of chosen values be calculated 
+#' (the default) or should the maximum probability difference over the range be 
+#' calculated.  These will be the same for single-term quantitative variables, 
+#' but could be different for multi-term variables, like splines and polynomials. 
 #' @param n number of units of \code{diffchange} to move.  Only active for \code{unit}
 #' or \code{sd}. 
 #' @param catdiff String identifying how differences in factor variables
@@ -663,7 +667,7 @@ function (obj,
           typical.dat = NULL, 
           change.dat = NULL, 
           diffchange = c("range", "sd", "unit"), 
-          outcome = c("diff", "maxdiff")
+          outcome = c("diff", "maxdiff"),
           n = 1, 
           catdiff = c("biggest", "all"), 
           sim=FALSE, 
@@ -674,6 +678,7 @@ function (obj,
   diffchange <- match.arg(diffchange)
   catdiff <- match.arg(catdiff)
   allvars <- all.vars(formula(obj))
+  data <- data %>% select(all_of(allvars)) %>% na.omit
   vars <- names(c(unlist(sapply(allvars, function(x)grep(x, attr(terms(obj), "term.labels"))))))
   dv <- setdiff(allvars, vars)
   if(any(!(vars %in% names(data)))){
@@ -725,6 +730,14 @@ function (obj,
         if(trim){
           rg[1] <- max(min(data[[vars[i]]], na.rm=TRUE), rg[1])
           rg[2] <- min(max(data[[vars[i]]], na.rm=TRUE), rg[2])
+        }
+        if(outcome == "maxdiff"){
+          tmpd <- list(seq(rg[1], rg[2], length=1000))
+          names(tmpd) <- vars[i]
+          tmp2 <- do.call(data.frame, c(tmp, tmpd))
+          tmpfit <- predict(obj, newdata=tmp2, type="link")
+          tmprg <- tmpd[[1]][c(which.min(tmpfit), which.max(tmpfit))]
+          rg <- tmprg
         }
         dlist <- list(rg)
         names(dlist) <- vars[i]
@@ -4026,6 +4039,10 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 #' calculate the discrete change.  \code{sd} gives plus and minus one-half
 #' standard deviation change around the median and \code{unit} gives a plus and
 #' minus one-half unit change around the median.
+#' @param outcome For quantitative variables, should the difference over the range of chosen values be calculated 
+#' (the default) or should the maximum probability difference over the range be 
+#' calculated.  These will be the same for single-term quantitative variables, 
+#' but could be different for multi-term variables, like splines and polynomials. 
 #' @param n Number of \code{diffchange} to move. 
 #' @param baseline Character string representing the baseline to use for the 
 #' change.  It can be one of \code{"obs"}, in which case each observations value
@@ -4063,6 +4080,7 @@ function (obj,
           data, 
           V = NULL, 
           diffchange=c("unit", "sd"), 
+          outcome = c("diff", "maxdiff"), 
           baseline = c("obs", "median"), 
           catdiff = c("biggest", "all"), 
           n=1, 
@@ -4079,6 +4097,7 @@ function (obj,
   baseline <- match.arg(baseline)
   catdiff <- match.arg(catdiff)
   allvars <- all.vars(formula(obj))
+  data <- data %>% select(all_of(allvars)) %>% na.omit
   vars <- names(c(unlist(sapply(allvars, function(x)grep(x, attr(terms(obj), "term.labels"))))))
   dv <- setdiff(allvars, vars)
   if(any(!(vars %in% names(data)))){
@@ -4097,7 +4116,13 @@ function (obj,
     delt <- 1
   }
   if (is.numeric(data[[varname]])) {
-        d0 <- d1 <- data
+    tmpd1 <- as.list(data[1,] )
+    tmpd1[[var]] <- seq(min(data[[var]]), max(data[[var]]), length=1000)
+    tmp2 <- do.call(data.frame, tmpd1)
+    tmpfit <- predict(obj, newdata=tmp2, type="link")
+    tmprg <- data.frame(x=tmpd1[[var]], 
+                        fit = tmpfit)
+    d0 <- d1 <- data
         if(baseline == "median"){
           tmp0 <- median(d0[[varname]], na.rm=TRUE) - (0.5 * delt)
           tmp1 <- median(d1[[varname]], na.rm=TRUE) + (0.5 * delt)
@@ -4108,6 +4133,16 @@ function (obj,
         if(trim){
           tmp0 <- ifelse(tmp0 < min(d0[[varname]], na.rm=TRUE), min(d0[[varname]], na.rm=TRUE), tmp0)
           tmp1 <- ifelse(tmp1 > max(d1[[varname]], na.rm=TRUE), max(d1[[varname]], na.rm=TRUE), tmp1)
+        }
+        if(outcome == "maxdiff"){
+          t01 <- cbind(tmp0, tmp1)
+          tout <- t(apply(t01, 1, function(z){
+            w <- tmprg[which(tmprg$x >= z[1] & tmprg$x <= z[2]), ]
+            w <- w[order(w$fit), ]
+            w$x[c(1, nrow(w))]
+          }))
+          tmp0 <- tout[,1]
+          tmp1 <- tout[,2]
         }
         d0[[varname]] <- tmp0
         d1[[varname]] <- tmp1

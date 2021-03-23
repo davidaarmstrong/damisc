@@ -10,6 +10,7 @@ glmChange2(
   data,
   V = NULL,
   diffchange = c("unit", "sd"),
+  outcome = c("diff", "maxdiff"),
   baseline = c("obs", "median"),
   catdiff = c("biggest", "all"),
   n = 1,
@@ -33,6 +34,11 @@ effects are to be calculated.}
 calculate the discrete change.  \code{sd} gives plus and minus one-half
 standard deviation change around the median and \code{unit} gives a plus and
 minus one-half unit change around the median.}
+
+\item{outcome}{For quantitative variables, should the difference over the range of chosen values be calculated 
+(the default) or should the maximum probability difference over the range be 
+calculated.  These will be the same for single-term quantitative variables, 
+but could be different for multi-term variables, like splines and polynomials.}
 
 \item{baseline}{Character string representing the baseline to use for the 
 change.  It can be one of \code{"obs"}, in which case each observations value
