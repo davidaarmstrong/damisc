@@ -10,8 +10,9 @@ aveEffPlot(
   data,
   R = 1500,
   nvals = 25,
-  plot = TRUE,
-  returnSim = FALSE,
+  level = 0.95,
+  ciType = c("percent", "normal"),
+  return = c("ci", "plot", "sim"),
   ...
 )
 }
@@ -28,11 +29,16 @@ effects are to be calculated.}
 \item{nvals}{Number of evaluation points at which the average probability
 will be calculated.}
 
-\item{plot}{Logical indicating whether plot should be returned, or just data
-(if \code{FALSE}).}
+\item{level}{Scalar giving the confidence level of the point-wise confidence 
+intervals.}
 
-\item{returnSim}{Logical indicating whether simulated predicted
-probabilities should be returned.}
+\item{ciType}{Type of confidence interval to be created.  If \code{"perc"}, a 
+percentile interval will be created from the distribution of effects.  If 
+\code{"normal"} a normal-theory interval will be calculated using the standard
+deviation of the fitted response from the simulation.}
+
+\item{return}{Character string indicating what should be returned.  Multiple 
+entries are supported.}
 
 \item{...}{Other arguments to be passed down to \code{xyplot}.}
 }

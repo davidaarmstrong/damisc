@@ -17,7 +17,7 @@ glmChange(
   sim = FALSE,
   R = 1000,
   qtiles = c(0.025, 0.975),
-  trim = TRUE
+  adjust = c("none", "shift", "trim")
 )
 }
 \arguments{
@@ -64,10 +64,11 @@ difference should be calculated and presented.}
 
 \item{qtiles}{Quantiles to calculate if \code{sim=TRUE}.}
 
-\item{trim}{Logical indicating whether data should be trimmed to remain within 
-the bounds of the observed variable.  If \code{TRUE}, for a variable whose maximum is 100, 
-if the change scenario indicated a change from 99 to 101, the upper bound of the change
-scenario would be reset to 100.}
+\item{adjust}{String identifying how range should be changed if it goes out of
+the bounds of the observed data.  Trimming will simply truncate the size of 
+the change to make it fit in bounds.  Shifting will shift the interval so 
+both ends are in bounds. If the shifted interval is wider than the range of
+the data, the change will be truncated to the range of the data.}
 }
 \value{
 A list with the following elements: \item{diffs}{A matrix of

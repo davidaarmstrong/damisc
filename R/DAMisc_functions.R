@@ -637,10 +637,11 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
 #' difference should be calculated and presented.
 #' @param R Number of simulations to perform if \code{sim} is \code{TRUE}
 #' @param qtiles Quantiles to calculate if \code{sim=TRUE}. 
-#' @param trim Logical indicating whether data should be trimmed to remain within 
-#' the bounds of the observed variable.  If \code{TRUE}, for a variable whose maximum is 100, 
-#' if the change scenario indicated a change from 99 to 101, the upper bound of the change
-#' scenario would be reset to 100. 
+#' @param adjust String identifying how range should be changed if it goes out of
+#' the bounds of the observed data.  Trimming will simply truncate the size of 
+#' the change to make it fit in bounds.  Shifting will shift the interval so 
+#' both ends are in bounds. If the shifted interval is wider than the range of
+#' the data, the change will be truncated to the range of the data. 
 #' @return A list with the following elements: \item{diffs}{A matrix of
 #' calculated first differences} \item{minmax}{A matrix of values that were
 #' used to calculate the predicted changes}
@@ -673,10 +674,12 @@ function (obj,
           sim=FALSE, 
           R=1000, 
           qtiles=c(.025, .975), 
-          trim=TRUE)
+          adjust=c("none", "shift", "trim"))
 {
   diffchange <- match.arg(diffchange)
   catdiff <- match.arg(catdiff)
+  adj <- match.arg(adjust)
+  outcome <- match.arg(outcome)
   allvars <- all.vars(formula(obj))
   data <- data %>% select(all_of(allvars)) %>% na.omit
   vars <- names(c(unlist(sapply(allvars, function(x)grep(x, attr(terms(obj), "term.labels"))))))
@@ -727,17 +730,24 @@ function (obj,
                      sd = median(data[[vars[i]]], na.rm=TRUE) + 
                        c(-n*.5, n*.5)*sd(data[[vars[i]]], na.rm=TRUE), 
                      unit = median(data[[vars[i]]], na.rm=TRUE) + c(-n*.5, n*.5))
-        if(trim){
+        if(adj == "trim"){
           rg[1] <- max(min(data[[vars[i]]], na.rm=TRUE), rg[1])
           rg[2] <- min(max(data[[vars[i]]], na.rm=TRUE), rg[2])
         }
+        if(adj == "shift"){
+          if(diff(rg) > diff(range(data[[vars[i]]])))rg <- range(data[[vars[i]]])
+          if(rg[1] < min(data[[vars[i]]])){rg <- rg + abs(diff(c(rg[1], min(data[[vars[i]]]))))}
+          if(rg[2] > max(data[[vars[i]]])){rg <- rg - abs(diff(c(rg[2], max(data[[vars[i]]]))))}
+        }
+        
         if(outcome == "maxdiff"){
           tmpd <- list(seq(rg[1], rg[2], length=1000))
           names(tmpd) <- vars[i]
           tmp2 <- do.call(data.frame, c(tmp, tmpd))
           tmpfit <- predict(obj, newdata=tmp2, type="link")
           tmprg <- tmpd[[1]][c(which.min(tmpfit), which.max(tmpfit))]
-          rg <- tmprg
+          rg <- sort(tmprg)
+          
         }
         dlist <- list(rg)
         names(dlist) <- vars[i]
@@ -798,7 +808,7 @@ function (obj,
       mutate(v = names(prob.dat)[i]) %>% 
       pivot_wider(names_from="side", values_from=c("val", "fit")) %>% 
       mutate(diff = .data$fit_High-.data$fit_Low,
-             across(where(is.numeric), ~sprintf("%.3f",.x)))
+             across(c(val_Low, val_High), ~sprintf("%.3f",.x)))
   })
   probw <- do.call(bind_rows, probw)
   if(sim){
@@ -814,7 +824,10 @@ function (obj,
       dvdat <- na.omit(data)[dv][1,, drop=FALSE]
       rownames(dvdat) <- NULL
       x <- cbind(x,dvdat)
-      X <- model.matrix(formula(obj), data=x)
+      tt <- terms(obj)
+      Terms <- delete.response(tt)
+      m <- model.frame(Terms, x, xlev = obj$xlevels)
+      X <- model.matrix(Terms, m, contrasts.arg = obj$contrasts)
       p <- family(obj)$linkinv(X %*% t(B))
       ap <- apply(p, 2, diff)
       q <- quantile(ap, probs=qtiles)
@@ -4052,10 +4065,11 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 #' is handled.  Options are \code{"all"} in which case all pairwise differences are
 #' returned, or \code{"biggest"} in which case the biggest difference is returned. 
 #' @param R Number of simulations to perform.
-#' @param trim Logical indicating whether data should be trimmed to remain within 
-#' the bounds of the observed variable.  If \code{TRUE}, for a variable whose maximum is 100, 
-#' if the change scenario indicated a change from 99 to 101, the upper bound of the change
-#' scenario would be reset to 100. 
+#' @param adjust String identifying how range should be changed if it goes out of
+#' the bounds of the observed data.  Trimming will simply truncate the size of 
+#' the change to make it fit in bounds.  Shifting will shift the interval so 
+#' both ends are in bounds. If the shifted interval is wider than the range of
+#' the data, the change will be truncated to the range of the data. 
 #' @param ... Allows user to specify legacy argument \code{change}
 #' @return \item{res}{A vector of values giving the average and 95 percent
 #' confidence bounds} \item{ames}{The average change in predicted probability
@@ -4085,7 +4099,7 @@ function (obj,
           catdiff = c("biggest", "all"), 
           n=1, 
           R=1500, 
-          trim=TRUE, 
+          adjust=c("none", "shift", "trim"), 
           ...)
 {
   el.args <- list(...)
@@ -4095,6 +4109,8 @@ function (obj,
   }
   change <- match.arg(diffchange)
   baseline <- match.arg(baseline)
+  adj <- match.arg(adjust)
+  outcome <- match.arg(outcome)
   catdiff <- match.arg(catdiff)
   allvars <- all.vars(formula(obj))
   data <- data %>% select(all_of(allvars)) %>% na.omit
@@ -4117,10 +4133,10 @@ function (obj,
   }
   if (is.numeric(data[[varname]])) {
     tmpd1 <- as.list(data[1,] )
-    tmpd1[[var]] <- seq(min(data[[var]]), max(data[[var]]), length=1000)
+    tmpd1[[varname]] <- seq(min(data[[varname]]), max(data[[varname]]), length=1000)
     tmp2 <- do.call(data.frame, tmpd1)
     tmpfit <- predict(obj, newdata=tmp2, type="link")
-    tmprg <- data.frame(x=tmpd1[[var]], 
+    tmprg <- data.frame(x=tmpd1[[varname]], 
                         fit = tmpfit)
     d0 <- d1 <- data
         if(baseline == "median"){
@@ -4130,10 +4146,27 @@ function (obj,
           tmp0 <- d0[[varname]] - (0.5 * delt)
           tmp1 <- d1[[varname]] + (0.5 * delt)
         }
-        if(trim){
-          tmp0 <- ifelse(tmp0 < min(d0[[varname]], na.rm=TRUE), min(d0[[varname]], na.rm=TRUE), tmp0)
-          tmp1 <- ifelse(tmp1 > max(d1[[varname]], na.rm=TRUE), max(d1[[varname]], na.rm=TRUE), tmp1)
+      if(adj == "trim"){
+        tmp0 <- ifelse(tmp0 < min(d0[[varname]], na.rm=TRUE), min(d0[[varname]], na.rm=TRUE), tmp0)
+        tmp1 <- ifelse(tmp1 > max(d1[[varname]], na.rm=TRUE), max(d1[[varname]], na.rm=TRUE), tmp1)
+      }
+      if(adj == "shift"){
+        for(i in 1:length(tmp0)){
+          if(diff(c(tmp0[i], tmp1[i])) >= diff(range(d0[[varname]]))){
+            tmp0[i] <- min(d0[[varname]])
+            tmp1[i] <- max(d0[[varname]])
+          }else{
+            if(tmp0[i] < min(data[[varname]])){
+              tmp1[i] <- tmp1[i] + abs(diff(c(tmp0[i], min(data[[varname]])))) 
+              tmp0[i] <- tmp0[i] + abs(diff(c(tmp0[i], min(data[[varname]])))) 
+            }
+            if(tmp1[i] > max(data[[varname]])){
+              tmp0[i] <- tmp0[i] - abs(diff(c(tmp1[i], max(data[[varname]]))))
+              tmp1[i] <- tmp1[i] - abs(diff(c(tmp1[i], max(data[[varname]]))))
+            }
+          }
         }
+      }
         if(outcome == "maxdiff"){
           t01 <- cbind(tmp0, tmp1)
           tout <- t(apply(t01, 1, function(z){
@@ -4141,13 +4174,19 @@ function (obj,
             w <- w[order(w$fit), ]
             w$x[c(1, nrow(w))]
           }))
+          cmt <- colMeans(tout)
+          if(cmt[2] < cmt[1])tout <- tout[,c(2,1)]
           tmp0 <- tout[,1]
           tmp1 <- tout[,2]
         }
         d0[[varname]] <- tmp0
         d1[[varname]] <- tmp1
-        X0 <- model.matrix(obj, data = d0)
-        X1 <- model.matrix(obj, data = d1)
+        tt <- terms(obj)
+        Terms <- delete.response(tt)
+        m0 <- model.frame(Terms, d0, xlev = obj$xlevels)
+        X0 <- model.matrix(Terms, m0, contrasts.arg = obj$contrasts)
+        m1 <- model.frame(Terms, d1, xlev = obj$xlevels)
+        X1 <- model.matrix(Terms, m1, contrasts.arg = obj$contrasts)
         p0 <- family(obj)$linkinv(X0 %*% t(b))
         p1 <- family(obj)$linkinv(X1 %*% t(b))
         diff <- p1 - p0
@@ -4156,7 +4195,8 @@ function (obj,
             nrow = 1)
         colnames(res) <- c("mean", "lower", "upper")
         rownames(res) <- varname
-        outres = list(res = res, ames=eff, avesamp = rowMeans(diff))
+        outres = list(res = res, ames=eff, avesamp = rowMeans(diff), 
+                      x0 = tmp0, x1=tmp1)
     }
     if (!is.numeric(data[[varname]]) & length(unique(na.omit(data[[varname]]))) ==
         2) {
@@ -4164,8 +4204,12 @@ function (obj,
         D0 <- D1 <- data
         D0[[varname]] <- factor(1, levels=1:2, labels=l)
         D1[[varname]] <- factor(2, levels=1:2, labels=l)
-        X0 <- model.matrix(formula(obj), data=D0)
-        X1 <- model.matrix(formula(obj), data=D1)
+        tt <- terms(obj)
+        Terms <- delete.response(tt)
+        m0 <- model.frame(Terms, D0, xlev = obj$xlevels)
+        X0 <- model.matrix(Terms, m0, contrasts.arg = obj$contrasts)
+        m1 <- model.frame(Terms, D1, xlev = obj$xlevels)
+        X1 <- model.matrix(Terms, m1, contrasts.arg = obj$contrasts)
         p0 <- family(obj)$linkinv(X0 %*% t(b))
         p1 <- family(obj)$linkinv(X1 %*% t(b))
         diff <- p1 - p0
@@ -4180,11 +4224,14 @@ function (obj,
     if (!is.numeric(data[[varname]]) & length(unique(na.omit(data[[varname]]))) >
         2) {
         l <- obj$xlevels[[varname]]
+        tt <- terms(obj)
+        Terms <- delete.response(tt)
         X.list <- list()
         for (j in 1:length(l)) {
             tmp <- data
             tmp[[varname]] <- factor(j, levels=1:length(l), labels=l)
-            X.list[[j]] <- model.matrix(formula(obj), data=tmp)
+            tmp.m <- model.frame(Terms, tmp, xlev = obj$xlevels)
+            X.list[[j]] <- model.matrix(Terms, tmp.m, contrasts.arg = obj$contrasts)
         }
         combs <- combn(length(X.list), 2)
         d.list <- list()
@@ -4207,7 +4254,7 @@ function (obj,
           ames <- ames[,w]
           asamp <- asamp[,w]
         }
-        outres = list(res = res, ames=eff, avesamp = asamp )
+        outres = list(res = res, ames=eff, avesamp = asamp)
     }
     class(outres) <- "glmc2"
     print(outres)
@@ -4232,10 +4279,14 @@ function (obj,
 #' @param R Number of simulations to perform.
 #' @param nvals Number of evaluation points at which the average probability
 #' will be calculated.
-#' @param plot Logical indicating whether plot should be returned, or just data
-#' (if \code{FALSE}).
-#' @param returnSim Logical indicating whether simulated predicted
-#' probabilities should be returned.
+#' @param level Scalar giving the confidence level of the point-wise confidence 
+#' intervals. 
+#' @param ciType Type of confidence interval to be created.  If \code{"perc"}, a 
+#' percentile interval will be created from the distribution of effects.  If 
+#' \code{"normal"} a normal-theory interval will be calculated using the standard
+#' deviation of the fitted response from the simulation. 
+#' @param return Character string indicating what should be returned.  Multiple 
+#' entries are supported. 
 #' @param ... Other arguments to be passed down to \code{xyplot}.
 #' @return A plot or a data frame
 #' @author Dave Armstrong
@@ -4250,8 +4301,18 @@ function (obj,
 #' 	poly(lrself, 2, coefs=attr(p, "coefs")), data=france, family=binomial)
 #' aveEffPlot(left.mod, "age", data=france, plot=FALSE)
 #' 
-aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnSim=FALSE, ...)
+aveEffPlot <- function (obj, 
+                        varname, 
+                        data, 
+                        R=1500, 
+                        nvals=25, 
+                        level=.95, 
+                        ciType = c("percent", "normal"), 
+                        return=c("ci", "plot", "sim")
+                        , ...)
 {
+  cit <- match.arg(ciType)
+  ret <- match.arg(return, several.ok=TRUE)
     vars <- all.vars(formula(obj))[-1]
     if(any(!(vars %in% names(data)))){
         vars <- vars[-which(!vars %in% names(data))]
@@ -4259,6 +4320,8 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnS
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
 	b <- mvrnorm(R, coef(obj), vcov(obj), empirical=TRUE)
+	tt <- terms(obj)
+	Terms <- delete.response(tt)
 	if(is.numeric(data[[varname]])){
 		s <- seq(min(data[[varname]], na.rm=TRUE), max(data[[varname]], na.rm=TRUE), length=nvals)
 		dat.list <- list()
@@ -4266,73 +4329,76 @@ aveEffPlot <- function (obj, varname, data, R=1500, nvals=25, plot=TRUE, returnS
 			dat.list[[i]] <- data
 			dat.list[[i]][[varname]] <- s[i]
 		}
-		mm <- lapply(dat.list, function(x)model.matrix(obj, data=x))
-		probs <- lapply(mm, function(x)family(obj)$linkinv(x %*% t(b)))
-		cmprobs <- sapply(probs, colMeans)
-		ciprobs <- t(apply(cmprobs, 2, function(x)c(mean(x), quantile(x, c(.025,.975)))))
+	}
+	if(!is.numeric(data[[varname]])){
+	  s <- obj$xlevels[[varname]]
+	  dat.list <- list()
+	  for(j in 1:length(s)){
+	    dat.list[[j]] <- data
+	    dat.list[[j]][[varname]] <- factor(rep(j, nrow(data)), levels=1:length(s), labels=s)
+	  }
+	  s <- factor(1:length(s), labels=s)
+	}
+	s <- data.frame(s=s)
+	mm <- lapply(dat.list, function(x){
+		  m <- model.frame(Terms, x, xlev = obj$xlevels)
+		  model.matrix(Terms, m, contrasts.arg = obj$contrasts)})
+		cmprobs <- NULL
+		for(i in seq_along(mm)){
+		  cmprobs <- cbind(cmprobs, colMeans(family(obj)$linkinv(mm[[i]] %*% t(b))))
+		}
+		if(cit == "percent"){
+		  ciprobs <- t(apply(cmprobs, 2, function(x)
+		    c(mean(x), quantile(x, c((1-level)/2,1-(1-level)/2)))))
+		}
+		if(cit == "normal"){
+		  ciprobs <- t(apply(cmprobs, 2, function(x)
+		    c(mean(x), 
+		      mean(x) + qnorm((1-level)/2)*sd(x), 
+		      mean(x) + qnorm(1-(1-level)/2)*sd(x))))
+		}
 		colnames(ciprobs) <- c("mean", "lower", "upper")
 		ciprobs <- cbind(s, ciprobs)
 		tmp <- as.data.frame(ciprobs)
-		if(plot){
-			pl <- xyplot(mean ~ s, data=tmp,  xlab=varname, ylab="Predicted Value", ...,
-				lower=tmp$lower, upper=tmp$upper,
-				prepanel = prepanel.ci,
-				panel = function(x,y, lower, upper){
-					panel.lines(x,y, col="black", lty=1)
-					panel.lines(x, lower, col="black", lty=2)
-					panel.lines(x, upper, col="black", lty=2)
-			})
-			return(pl)
+		if("plot" %in% ret){
+		  if(is.numeric(data[[varname]])){
+		    pl <- xyplot(mean ~ s, data=tmp,  xlab=varname, ylab="Predicted Value", ...,
+		                 lower=tmp$lower, upper=tmp$upper,
+		                 prepanel = prepanel.ci,
+		                 panel = function(x,y, lower, upper){
+		                   panel.lines(x,y, col="black", lty=1)
+		                   panel.lines(x, lower, col="black", lty=2)
+		                   panel.lines(x, upper, col="black", lty=2)
+		                 })
+		  }
+		  if(!is.numeric(data[[varname]])){
+		    pl <- xyplot(mean ~ s, data=tmp, xlab="", ylab="Predicted Value", ...,
+		                 lower=tmp$lower, upper=tmp$upper,
+		                 prepanel = prepanel.ci,
+		                 scales=list(x=list(at=1:length(l), labels=l)),
+		                 panel = function(x,y, lower, upper){
+		                   panel.points(x,y, col="black", lty=1, pch=16)
+		                   panel.segments(x, lower, x, upper, lty=1, col="black")
+		  })
+		  }
 		}
-		else{
-            if(returnSim){
-                colnames(cmprobs) <- s
-                class(cmprobs) <- "sims"
-                out <- list(cis = tmp, probs=cmprobs)
-                return(out)
-            }
-            else{
-		    	return(tmp)
-            }
-        }
-	}
-	if(!is.numeric(data[[varname]])){
-		l <- obj$xlevels[[varname]]
-		dat.list <- list()
-		for(j in 1:length(l)){
-            dat.list[[j]] <- data
-            dat.list[[j]][[varname]] <- factor(rep(j, nrow(data)), levels=1:length(l), labels=l)
-			dat.list[[j]] <- model.matrix(formula(obj), data=dat.list[[j]])
-		}
-		probs <- lapply(dat.list, function(x)family(obj)$linkinv(x %*% t(b)))
-		cmprobs <- sapply(probs, colMeans)
-		ciprobs <- t(apply(cmprobs, 2, function(x)c(mean(x), quantile(x, c(.025,.975)))))
-		colnames(ciprobs) <- c("mean", "lower", "upper")
-		tmp <- as.data.frame(ciprobs)
-		tmp$s <- factor(1:length(l), labels=l)
-		if(plot){
-			pl <- xyplot(mean ~ s, data=tmp, xlab="", ylab="Predicted Value", ...,
-				lower=tmp$lower, upper=tmp$upper,
-				prepanel = prepanel.ci,
-				scales=list(x=list(at=1:length(l), labels=l)),
-				panel = function(x,y, lower, upper){
-					panel.points(x,y, col="black", lty=1, pch=16)
-					panel.segments(x, lower, x, upper, lty=1, col="black")
-			})
-			return(pl)
-		}
-		else{
-            if(returnSim){
-                colnames(cmprobs) <- l
-                class(cmprobs) <- "sims"
-                out <- list(cis = tmp, probs=cmprobs)
-                return(out)
-            }
-            else{
-		    	return(tmp)
-            }
-        }
-	}
+  out <- list()
+  k <- 1
+  if("ci" %in% ret){
+    out[[k]] <- tmp
+    names(out)[k] <- "ci"
+    k <- k+1
+  }
+  if("plot" %in% ret){
+    out[[k]] <- pl
+    names(out)[k] <- "plot"
+    k <- k+1
+  }
+  if("sim" %in% ret){
+    out[[k]] <- cmprobs
+    names(out)[k] <- "sim"
+  }
+  return(out)
 }
 
 
