@@ -8009,3 +8009,43 @@ opt.span <- function(model, criterion = c("aicc", "gcv"),
   result <- optimize(fn, span.range)
   return(list(span = result$minimum, criterion = result$objective))
 }
+
+#' Break Apart Model Formula
+#' 
+#' A sort of inverse of the \code{reformulate} function.
+#' 
+#' @param form A formula
+#' @param keep_inv Logical indicating whether the formula's
+#' environment should be returned with the result
+#' 
+#' @description Works as a sort of inverse to \code{reformulate} 
+#' by breaking apart the formula into response and the term labels. 
+#' It also returns the variable names of all of the variables 
+#' implicated in the formula. 
+#' 
+#' @return A list with \code{termlabels} giving the rhs terms of the
+#' model, \code{response} give the lhs of the model, \code{env} optionally 
+#' giving the environment of the formula and \code{vars} a vector of the 
+#' variable names implicated in the formula
+#' 
+#' @export
+#'
+unformulate <- function(form, keep_env=FALSE){
+  rhs <- attr(terms(form), "term.labels")
+  vn <- all.vars(form)
+  l <- as.list(form)
+  if(length(l) == 2){
+    lhs <- NULL
+  }
+  if(length(l) == 3){
+    lhs <- as.character(l[[2]])
+  }
+  if(!(length(l) %in% 2:3)){
+    stop("formula must transform into a two- or three-element list\n")
+  }
+  res <- list(termlabels = rhs, response = lhs, vars = vn)
+  if(keep_env){
+    res$env <- environment(form)
+  }
+  res
+}
