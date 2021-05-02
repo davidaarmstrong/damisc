@@ -12,6 +12,8 @@ DAintfun(
   xlab = NULL,
   ylab = NULL,
   zlab = NULL,
+  adjustY = 0,
+  plot = TRUE,
   hcols = NULL,
   ...
 )
@@ -35,7 +37,13 @@ it will take the first element of \code{varnames}}
 it will take the second element of \code{varnames}}
 
 \item{zlab}{Optional label to put on the z-axis, otherwise if \code{NULL},
-it will be \sQuote{Predictions}}
+it will be \sQuote{Predictions}.}
+
+\item{adjustY}{Scalar indicating a constant that should be added to all of 
+fitted values.  Defaults to 0.}
+
+\item{plot}{Logical indicating whether the plot should be returned.  If 
+\code{FALSE}, the data are returned instead.}
 
 \item{hcols}{Vector of four colors to color increasingly high density areas}
 

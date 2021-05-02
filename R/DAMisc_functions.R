@@ -263,7 +263,11 @@ combTest <- function(obj){
 #' @param ylab Optional label to put on the y-axis, otherwise if \code{NULL},
 #' it will take the second element of \code{varnames}
 #' @param zlab Optional label to put on the z-axis, otherwise if \code{NULL},
-#' it will be \sQuote{Predictions}
+#' it will be \sQuote{Predictions}. 
+#' @param adjustY Scalar indicating a constant that should be added to all of 
+#' fitted values.  Defaults to 0. 
+#' @param plot Logical indicating whether the plot should be returned.  If 
+#' \code{FALSE}, the data are returned instead.
 #' @param hcols Vector of four colors to color increasingly high density areas
 #' @param ... Other arguments to be passed down to the initial call to
 #' \code{persp}
@@ -283,8 +287,8 @@ combTest <- function(obj){
 #' DAintfun(mod, c("x1", "x2"))
 #' 
 DAintfun <-
-function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,
-    hcols=NULL, ...)
+function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, 
+          zlab=NULL, adjustY=0, plot=TRUE, hcols=NULL, ...)
 {
     if (length(varnames) != 2) {
         stop("varnames must be a vector of 2 variable names")
@@ -320,6 +324,7 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,
             sep = "")
         }
         predsurf <- outer(v1.seq, v2.seq, eff.fun)
+        predsurf <- predsurf + adjustY
         cutoff <- quantile(c(dens$z), prob = c(0.25, 0.5,
             0.75))
         pred1 <- predsurf
@@ -328,27 +333,30 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL, zlab=NULL,
         pred2[dens$z < cutoff[2]] <- NA
         pred3 <- predsurf
         pred3[dens$z < cutoff[3]] <- NA
+      if(plot){  
         persp(v1.seq, v2.seq, predsurf,
-			xlab = ifelse(is.null(xlab), toupper(v1), xlab),
-			ylab = ifelse(is.null(ylab), toupper(v2), ylab),
-            zlab = ifelse(is.null(zlab), toupper("Predictions"), zlab),
-			col = hcols[1], theta = theta, phi = phi,...)
+    			xlab = ifelse(is.null(xlab), toupper(v1), xlab),
+    			ylab = ifelse(is.null(ylab), toupper(v2), ylab),
+          zlab = ifelse(is.null(zlab), toupper("Predictions"), zlab),
+			    col = hcols[1], theta = theta, phi = phi,...)
         par(new = TRUE)
-            persp(v1.seq, v2.seq, pred1, col = hcols[2], axes = FALSE,
+          persp(v1.seq, v2.seq, pred1, col = hcols[2], axes = FALSE,
             xlab = "", ylab = "", zlab = "", theta = theta, phi = phi,
             zlim = c(min(c(predsurf)), max(c(predsurf))), ylim = c(min(v2.seq),
                 max(v2.seq)), xlim = c(min(v1.seq), max(v1.seq)))
         par(new = TRUE)
-        persp(v1.seq, v2.seq, pred2, col = hcols[3], axes = FALSE,
+          persp(v1.seq, v2.seq, pred2, col = hcols[3], axes = FALSE,
             xlab = "", ylab = "", zlab = "", theta = theta, phi = phi,
             zlim = c(min(c(predsurf)), max(c(predsurf))), ylim = c(min(v2.seq),
                 max(v2.seq)), xlim = c(min(v1.seq), max(v1.seq)))
         par(new = TRUE)
-        persp(v1.seq, v2.seq, pred3, col = hcols[4], axes = FALSE,
+          persp(v1.seq, v2.seq, pred3, col = hcols[4], axes = FALSE,
             xlab = "", ylab = "", zlab = "", theta = theta, phi = phi,
             zlim = c(min(c(predsurf)), max(c(predsurf))), ylim = c(min(v2.seq),
                 max(v2.seq)), xlim = c(min(v1.seq), max(v1.seq)))
-	    invisible(list(x1=v1.seq, x2=v2.seq, pred=predsurf))
+      }else{
+        return(list(x1=v1.seq, x2=v2.seq, pred=predsurf))
+      }
     }
 }
 
@@ -4251,7 +4259,7 @@ function (obj,
         if(catdiff == "biggest"){
           w <- which.max(abs(res[,1]))
           res <- res[w, , drop=FALSE]
-          ames <- ames[,w]
+          eff <- eff[,w]
           asamp <- asamp[,w]
         }
         outres = list(res = res, ames=eff, avesamp = asamp)
