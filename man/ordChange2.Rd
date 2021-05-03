@@ -4,7 +4,7 @@
 \alias{ordChange2}
 \title{Average Effects for Proportional Odds Logistic Regression Models}
 \usage{
-ordChange2(obj, varnames, data, diffchange = c("sd", "unit"), R = 1500)
+ordChange2(obj, varnames, data, diffchange = c("sd", "unit"), n = 1, R = 1500)
 }
 \arguments{
 \item{obj}{A model object of class \code{polr}.}
@@ -18,6 +18,8 @@ manipulated.}
 calculate the discrete change. \code{sd} gives plus and minus one-half
 standard deviation change around the median and \code{unit} gives a plus and
 minus one-half unit change around the median.}
+
+\item{n}{Number of \code{diffchange} units to change.}
 
 \item{R}{Number of simulations.}
 }

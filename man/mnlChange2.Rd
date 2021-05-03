@@ -4,7 +4,7 @@
 \alias{mnlChange2}
 \title{Average Effects for Multinomial Logistic Regression Models}
 \usage{
-mnlChange2(obj, varnames, data, diffchange = c("unit", "sd"), R = 1500)
+mnlChange2(obj, varnames, data, diffchange = c("unit", "sd"), n = 1, R = 1500)
 }
 \arguments{
 \item{obj}{An object of class \code{multinom}}
@@ -17,6 +17,8 @@ mnlChange2(obj, varnames, data, diffchange = c("unit", "sd"), R = 1500)
 calculate the discrete change. \code{sd} gives plus and minus one-half
 standard deviation change around the median and \code{unit} gives a plus and
 minus one-half unit change around the median.}
+
+\item{n}{Number of \code{diffchange} units to change.}
 
 \item{R}{Number of simulations.}
 }

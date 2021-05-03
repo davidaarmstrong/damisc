@@ -1348,6 +1348,7 @@ mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 #' the minimum and maximum, \code{sd} gives plus and minus one-half standard
 #' deviation change around the median and \code{unit} gives a plus and minus
 #' one-half unit change around the median.
+#' @param n Number of \code{diffchange} units to change. 
 #' @param sim Logical indicating whether simulated confidence bounds should be
 #' produced.
 #' @param R Number of simulations to perform if \code{sim = TRUE}
@@ -1374,7 +1375,7 @@ mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 #' 
 mnlChange <-
 function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
- 	sim=TRUE, R=1500){
+ 	n = 1, sim=TRUE, R=1500){
 	y <- model.response(model.frame(obj))
     vars <- all.vars(formula(obj))[-1]
     if(any(!(vars %in% names(data)))){
@@ -1416,13 +1417,13 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
         minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = TRUE)
 		}
 		if(mmc == "sd"){
-		  tmp <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
+		  tmp <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*n*sd(data[[vars[i]]], na.rm=TRUE)
 		  tmp[1] <- ifelse(tmp[1] < min(data[[vars[i]]], na.rm=TRUE), min(data[[vars[i]]], na.rm=TRUE), tmp[1])
 		  tmp[2] <- ifelse(tmp[2] > max(data[[vars[i]]], na.rm=TRUE), max(data[[vars[i]]], na.rm=TRUE), tmp[2])
 		  minmax[[vars[i]]] <- tmp
 		}
 		if(mmc == "unit"){
-        minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)
+        minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*n
 		}
         meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE)
     }
@@ -1500,6 +1501,7 @@ return(ret)
 #' calculate the discrete change. \code{sd} gives plus and minus one-half
 #' standard deviation change around the median and \code{unit} gives a plus and
 #' minus one-half unit change around the median.
+#' @param n Number of \code{diffchange} units to change. 
 #' @param R Number of simulations.
 #' @return A list with elements: \item{mean}{Average effect of the variable for
 #' each category of the dependent variable.} \item{lower}{Lower 95 percent
@@ -1518,7 +1520,7 @@ return(ret)
 #' 
 #' 
 mnlChange2 <-
-  function (obj, varnames, data, diffchange=c("unit", "sd"), R=1500)
+  function (obj, varnames, data, diffchange=c("unit", "sd"), n=1, R=1500)
   {
       vars <- all.vars(formula(obj))[-1]
       if(any(!(vars %in% names(data)))){
@@ -1540,8 +1542,8 @@ mnlChange2 <-
         d0 <- list()
         if(is.numeric(data[[varnames[m]]])){
           d0[[1]] <- d0[[2]] <- data
-          tmp0 <- d0[[1]][[varnames[m]]]-(.5*delt)
-          tmp1 <- d0[[2]][[varnames[m]]]+(.5*delt)
+          tmp0 <- d0[[1]][[varnames[m]]]-(.5*delt*n)
+          tmp1 <- d0[[2]][[varnames[m]]]+(.5*delt*n)
           tmp0 <- ifelse(tmp0 < min(d0[[1]][[varnames[m]]], na.rm=TRUE), 
                          min(d0[[1]][[varnames[m]]], na.rm=TRUE), tmp0)
           tmp1 <- ifelse(tmp1 > max(d0[[2]][[varnames[m]]], na.rm=TRUE), 
@@ -1641,6 +1643,7 @@ mnlChange2 <-
 #' the minimum and maximum, \code{sd} gives plus and minus one-half standard
 #' deviation change around the median and \code{unit} gives a plus and minus
 #' one-half unit change around the median.
+#' @param n Number of \code{diffchange} units to change. 
 #' @param sim Logical indicating whether or not simulations should be done to
 #' generate confidence intervals for the difference.
 #' @param R Number of simulations.
@@ -1667,7 +1670,7 @@ mnlChange2 <-
 #' 
 ordChange <-
 function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
- 	sim=TRUE, R=1500){
+ 	n=1, sim=TRUE, R=1500){
     vars <- all.vars(formula(obj))[-1]
     if(any(!(vars %in% names(data)))){
         vars <- vars[-which(!vars %in% names(data))]
@@ -1710,13 +1713,13 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
         minmax[[vars[i]]] <- range(data[[vars[i]]], na.rm = TRUE)
 		}
 		if(mmc == "sd"){
-		    tmp <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*sd(data[[vars[i]]], na.rm=TRUE)
+		    tmp <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*n*sd(data[[vars[i]]], na.rm=TRUE)
 		    tmp[1] <- ifelse(tmp[1] < min(data[[vars[i]]], na.rm=TRUE), min(data[[vars[i]]], na.rm=TRUE), tmp[1])
 		    tmp[2] <- ifelse(tmp[2] > max(data[[vars[i]]], na.rm=TRUE), max(data[[vars[i]]], na.rm=TRUE), tmp[2])
 		    minmax[[vars[i]]] <- tmp
 		}
 		if(mmc == "unit"){
-        minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)
+        minmax[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE) + c(-.5,.5)*n
 		}
         meds[[vars[i]]] <- median(data[[vars[i]]], na.rm = TRUE)
     }
@@ -1837,6 +1840,7 @@ invisible(ret)
 #' calculate the discrete change. \code{sd} gives plus and minus one-half
 #' standard deviation change around the median and \code{unit} gives a plus and
 #' minus one-half unit change around the median.
+#' @param n Number of \code{diffchange} units to change. 
 #' @param R Number of simulations.
 #' @return A list with the following elements: \item{diffs}{A matrix of
 #' calculated first differences} \item{minmax}{A matrix of values that were
@@ -1860,7 +1864,7 @@ invisible(ret)
 #' ordChange2(polr.mod, "age", data=france, diffchange="sd")	
 #' 
 ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
-      R=1500){
+      n=1, R=1500){
     vars <- all.vars(formula(obj))[-1]
     if(any(!(vars %in% names(data)))){
         vars <- vars[-which(!vars %in% names(data))]
@@ -1891,8 +1895,8 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
         d0 <- list()
         if(is.numeric(data[[varnames[m]]])){
           d0[[1]] <- d0[[2]] <- data
-          tmp0 <- d0[[1]][[varnames[m]]]-(.5*delt)
-          tmp1 <- d0[[2]][[varnames[m]]]+(.5*delt)
+          tmp0 <- d0[[1]][[varnames[m]]]-(.5*delt*n)
+          tmp1 <- d0[[2]][[varnames[m]]]+(.5*delt*n)
           tmp0 <- ifelse(tmp0 < min(d0[[1]][[varnames[m]]], na.rm=TRUE), 
                          min(d0[[1]][[varnames[m]]], na.rm=TRUE), tmp0)
           tmp1 <- ifelse(tmp1 > max(d0[[2]][[varnames[m]]], na.rm=TRUE), 

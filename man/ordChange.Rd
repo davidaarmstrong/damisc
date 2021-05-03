@@ -9,6 +9,7 @@ ordChange(
   data,
   typical.dat = NULL,
   diffchange = c("range", "sd", "unit"),
+  n = 1,
   sim = TRUE,
   R = 1500
 )
@@ -28,6 +29,8 @@ calculate the discrete change.  \code{range} gives the difference between
 the minimum and maximum, \code{sd} gives plus and minus one-half standard
 deviation change around the median and \code{unit} gives a plus and minus
 one-half unit change around the median.}
+
+\item{n}{Number of \code{diffchange} units to change.}
 
 \item{sim}{Logical indicating whether or not simulations should be done to
 generate confidence intervals for the difference.}
