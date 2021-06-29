@@ -4631,20 +4631,22 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
 #' testLoess(linmod, lomod)
 #' 
 testLoess <- function(lmobj, loessobj, alpha=.05){
-   n <- nrow(model.matrix(lmobj))
+  ## From Fox (2016) p. 546
+     n <- nrow(model.matrix(lmobj))
    if(n != loessobj$n){
        stop("Models estimated on different numbers of observations")
    }
+n <- nobs(lmobj)
 rss0 <- sum(lmobj$residuals^2)
 rss1 <- sum(loessobj$residuals^2)
-d1a <- loessobj$one.delta; d2a <- loessobj$two.delta
-dfdenom <- d1a^2/d2a
-dfnum <- (n - dfdenom) - lmobj$rank
-F0 <- ((rss0-rss1)/dfnum)/
-    (rss1 / dfdenom)
+df.linmod <- lmobj$rank
+df.lomod <- loessobj$trace.hat
+df.res <- n-df.lomod
+F0 <- ((rss0-rss1)/(df.lomod-df.linmod))/
+    (rss1 / df.res)
 cat("F = ", round(F0, 2), "\n", sep="")
-pval <- pf(F0, dfnum, dfdenom, lower.tail=FALSE)
-cat("Pr( > F) = ", round(pval, 2), "\n", sep="")
+pval <- pf(F0, (df.lomod-df.linmod), df.res, lower.tail=FALSE)
+cat("Pr( > F) = ", sprintf("%.3f", pval), "\n", sep="")
 if(pval < alpha){
     cat("LOESS preferred to alternative\n")
 }
