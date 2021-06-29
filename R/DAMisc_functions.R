@@ -3815,6 +3815,7 @@ crTest <- function(model,
                    var=NULL, 
                    span.as = TRUE, 
                    span = 0.75, ...){
+  # Consistent with Fox (2016, 546)
     cl <- attr(terms(model), "dataClasses")
 	cl <- cl[which(cl != "factor")]
     mf <- model.frame(model)
@@ -3856,10 +3857,10 @@ lin.mods <- lapply(terms.list, function(z)lm(y ~ x, data=z))
 n <- nrow(model.matrix(model))
 lo.rss <- sapply(lo.mods, function(x)sum(residuals(x)^2))
 lm.rss <- sapply(lin.mods, function(x)sum(residuals(x)^2))
-d1a <- sapply(lo.mods, function(x)x$one.delta)
-d2a <- sapply(lo.mods, function(x)x$two.delta)
-denom.df <- d1a^2/d2a
-num.df <- (n-denom.df) - sapply(lin.mods, function(x)x$rank)
+lo.df <- sapply(lo.mods, function(x)x$trace.hat)
+lin.df <- sapply(lin.mods, function(x)x$rank)
+num.df <- lo.df-lin.df
+denom.df <-n-lo.df
 F.stats <- ((lm.rss-lo.rss)/num.df)/(lo.rss/denom.df)
 pvals <- p.adjust(pf(F.stats, num.df, denom.df, lower.tail=FALSE), method=adjust.method)
 out <- data.frame(
