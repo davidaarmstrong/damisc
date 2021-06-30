@@ -8068,3 +8068,50 @@ unformulate <- function(form, keep_env=FALSE){
   }
   res
 }
+
+#' Tidy Bootstrap Confidence Intervals 
+#' 
+#' Returns a tibble with confidence intervals for all parameters from a bootstrapping
+#' object estimated with the \code{boot()} function.  
+#' 
+#' @param obj An object of class \code{boot}. 
+#' @param type The type of confidence interval to be produced.  Unlike \code{boot.ci()}, 
+#' "all" is not an option. 
+#' @param conf The confidence level to be used for the interval. 
+#' @param indices The column numbers of \code{obj$t} to be used in the calculation. 
+#' if \code{NULL}, all columns are used. 
+#' @param term_names The names of the parameters to be used as identifiers in the tibble. 
+#' @param ... Other arguments to be passed down to \code{boot.ci()}
+#' 
+#' @return A tibble with the term name, estimate, lower and upper confidence bounds. 
+#' 
+#' @importFrom boot boot.ci
+#' @importFrom dplyr tibble
+#' @export
+tidy_boot_ci <- function(obj, 
+                         indices=NULL, 
+                         type=c("norm", "basic", "stud", "perc", "bca"), 
+                         conf=.95, 
+                         term_names = NULL, 
+                         ...){
+  last2 <- function(x)x[(length(x)-1):length(x)]
+  type <- match.arg(type)
+  if(is.null(term_names) | length(term_names) != ncol(obj$t)){
+    trms <- paste0("parameter", 1:ncol(obj$t))
+  }else{
+    trms <- term_names
+  }
+  if(is.null(indices)){
+    indices <- 1:ncol(obj$t)
+  }
+  cis <- sapply(indices, function(i){
+    x <- boot.ci(obj, index=i, type=type, ...)
+    cix <- x[[length(x)]]
+    last2(cix)
+  })
+  tibble(term = trms, 
+         estimate = obj$t0[indices], 
+         conf.low = cis[1,], 
+         conf.high = cis[2,])
+  
+}
