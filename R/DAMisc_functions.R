@@ -3953,18 +3953,22 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", 
 #' 
 #' 
 #' @param data A data frame.
+#' @param numsd Number of standard deviations to divide by - defaults to 1. 
+#' @param nvals_fac Number of unique values required to standardize - variables with fewer than `nvals_fac` unique values will not be standardized. 
 #' @return A data frame with standardized quantitative variables
 #' 
-#' @importFrom dplyr mutate_if
+#' @importFrom dplyr mutate across 
+#' @importFrom tidyselect vars_select_helpers
 #' 
 #' @export
 #' 
 #' @author Dave Armstrong
-scaleDataFrame <-function(data){
+scaleDataFrame <-function(data, numsd=1, nvals_fac = 11){
   isNum <- function(x){
-    !(all(x%in% c(0,1,NA)) | inherits(x, "factor") | inherits(x, "character"))
+    !(all(x%in% c(0,1,NA)) | inherits(x, "factor") | inherits(x, "character") | length(unique(na.omit(x))) < nvals_fac)
   }
-  newdat <- data %>% mutate_if(isNum, scale)
+  newdat <- data %>% mutate(across(vars_select_helpers$where(isNum), 
+                                   ~(.x-mean(.x, na.rm=TRUE))/(numsd*sd(.x, na.rm=TRUE))))
   newdat
 }
 
