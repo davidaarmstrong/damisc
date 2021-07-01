@@ -3955,6 +3955,7 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", 
 #' @param data A data frame.
 #' @param numsd Number of standard deviations to divide by - defaults to 1. 
 #' @param nvals_fac Number of unique values required to standardize - variables with fewer than `nvals_fac` unique values will not be standardized. 
+#' @param exclude A character vector of names of variables to exclude from the standardization. 
 #' @return A data frame with standardized quantitative variables
 #' 
 #' @importFrom dplyr mutate across 
@@ -3963,12 +3964,17 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", 
 #' @export
 #' 
 #' @author Dave Armstrong
-scaleDataFrame <-function(data, numsd=1, nvals_fac = 11){
+scaleDataFrame <-function(data, numsd=1, nvals_fac = 11, exclude=NULL){
   isNum <- function(x){
     !(all(x%in% c(0,1,NA)) | inherits(x, "factor") | inherits(x, "character") | length(unique(na.omit(x))) < nvals_fac)
   }
   newdat <- data %>% mutate(across(vars_select_helpers$where(isNum), 
                                    ~(.x-mean(.x, na.rm=TRUE))/(numsd*sd(.x, na.rm=TRUE))))
+  
+  if(!is.null(exclude)){
+    newdat <- newdat %>% 
+      mutate(across(all_of(exclude), ~ data$.x))
+  }
   newdat
 }
 
