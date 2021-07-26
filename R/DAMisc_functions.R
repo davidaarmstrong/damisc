@@ -656,6 +656,7 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
 #' @author Dave Armstrong
 #' 
 #' @importFrom dplyr across rename left_join bind_rows
+#' @importFrom stats delete.response nobs
 #' @export
 #' 
 #' @examples
@@ -816,7 +817,7 @@ function (obj,
       mutate(v = names(prob.dat)[i]) %>% 
       pivot_wider(names_from="side", values_from=c("val", "fit")) %>% 
       mutate(diff = .data$fit_High-.data$fit_Low,
-             across(c(val_Low, val_High), ~sprintf("%.3f",.x)))
+             across(all_of(c("val_Low", "val_High")), ~sprintf("%.3f",.x)))
   })
   probw <- do.call(bind_rows, probw)
   if(sim){
@@ -4395,6 +4396,7 @@ aveEffPlot <- function (obj,
 		                 })
 		  }
 		  if(!is.numeric(data[[varname]])){
+		    l <- levels(data[[varname]])
 		    pl <- xyplot(mean ~ s, data=tmp, xlab="", ylab="Predicted Value", ...,
 		                 lower=tmp$lower, upper=tmp$upper,
 		                 prepanel = prepanel.ci,
@@ -6790,100 +6792,97 @@ is.Numeric <- function (x, length.arg = Inf, integer.valued = FALSE, positive = 
 #' @param vars A character vector of variable names. 
 #' @param byvar A character string giving a variable name of a stratifying variable.  The summaries of the \code{vars} will be provided for each level of \code{byvar}. 
 #' @param convertFactors Logical indicating whether factors should be converted to numeric first and then summarised. 
-#' @param weight If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the summary. 
-#' @param digits Number of digits to print in the output. 
 #'
 #' @importFrom stats weights 
 #' @importFrom survey svytotal
 #' @export
 #' 
 #' @return a vector of summary statistics for each variable or variable-group combination.
-sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL, digits=3){
+sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE){
   UseMethod("sumStats")
 }
 
 #' @method sumStats data.frame
+#' @importFrom dplyr group_by summarise across tibble
+#' @importFrom tidyr unnest
 #' @export
-sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE, weight=NULL, digits=3){
-  if(is.null(weight)){
-    d <- svydesign(ids = ~1, strata=NULL, weights=~1, data=data, digits=3)
-  }else{
-    wform <- as.formula(paste0("~", weight))
-    d <- svydesign(ids = ~1, strata=NULL, weights=wform, data=data, digits=3)
+sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
+  if(convertFactors){
+    data <- data %>% 
+      mutate(across(all_of(vars), as.numeric))
   }
-  sumStats(d, vars=vars, byvar=byvar, convertFactors=convertFactors, weight=weight)
+  if(!is.null(byvar)){
+    data <- data %>% 
+    group_by(across(all_of(byvar)))
+  }
+   data %>%    
+      summarise(across(all_of(vars), ~list(tibble(
+      mean = mean(.x, na.rm=TRUE),
+      sd = sd(.x, na.rm=TRUE),
+      iqr = diff(quantile(.x, c(.25,.75), na.rm=TRUE)), 
+      min = min(.x, na.rm=TRUE), 
+      q25 = quantile(.x, .25, na.rm=TRUE), 
+      q50 = median(.x, na.rm=TRUE), 
+      q75 = quantile(.x, .75, na.rm=TRUE), 
+      max = max(.x, na.rm=TRUE), 
+      n = n(), 
+      nNA = sum(is.na(.x))
+    )))) %>% 
+    unnest(all_of(vars))
+  
+  
 }
 
 #' @method sumStats survey.design
+#' @importFrom srvyr as_survey survey_mean survey_sd survey_quantile survey_count
 #' @export
-sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE, weight=NULL, digits=3){
-  d <- data
-  if(convertFactors){
-    for(i in 1:length(vars)){
-      if(is.factor(d$variables[[vars[i]]])){
-        d$variables[[vars[i]]] <- as.numeric(d$variables[[vars[i]]])
-      }
-    }
+sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE){
+  if(!inherits(data, "tbl_svy")){
+    d <- as_survey(data) 
+  }else{
+    d <- data
   }
-  if(is.null(byvar)){
-    out <- vector(mode="list", length=1)
-    forms <- lapply(vars, function(x)as.formula(paste0("~", x)))
-    means <- sapply(forms, function(x)as.vector(svymean(x, d, na.rm=TRUE)))
-    sds <- sapply(forms, function(x)sqrt(svyvar(x, d, na.rm=TRUE)[1]))
-    qtiles <- t(sapply(forms, function(x)svyquantile(x, d, quantiles=c(0,.25,.5,.75,1), na.rm=TRUE)))
-    iqr <- qtiles[,4]-qtiles[,2]
-    obs.mat <- as.matrix(!is.na(as.matrix(d$variables[,vars])))
-    obs.mat <- apply(obs.mat, 2, as.numeric)
-    if(is.null(weight)){
-      wtvec <- rep(1, nrow(d$variables))
-    }else {
-      wtvec <- weights(d)
+    if(convertFactors){
+      d %>% mutate(across(all_of(vars), as.numeric))
     }
-    n <- ceiling(c(wtvec %*% obs.mat))
-    na <- ceiling(c(wtvec %*% (1-obs.mat)))
-    tmpdf <- data.frame(group = "All Observations", variable= vars)
-    out[[1]] <- as.data.frame(cbind(round(cbind(means, sds, iqr, qtiles), digits=digits), n, na))
-    names(out[[1]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", "75%", "100%", "n", "NA")
-    out[[1]] <- cbind(tmpdf, out[[1]])
-    rownames(out[[1]]) <- NULL
+    if(is.null(byvar)){
+      n <- d %>% 
+        survey_count()
+      nNA <- d %>% 
+        mutate(wts = weights(d)) %>% 
+        group_by(across(all_of(byvar))) %>% 
+        summarise(nwt = sum(.data$wts)) %>% 
+        ungroup %>% 
+        mutate(nNA = n$n - .data$nwt) 
+    }else{
+      n <- d %>% 
+        group_by(across(all_of(byvar))) %>% 
+        survey_count()
+      nNA <- d %>% 
+        mutate(wts = weights(d)) %>% 
+        group_by(across(all_of(byvar))) %>% 
+        summarise(nwt = sum(.data$wts)) %>% 
+        ungroup %>% 
+        mutate(nNA = n$n - .data$nwt) 
+    }
+    out <- d %>% 
+      ungroup %>% 
+      group_by(across(all_of(byvar))) %>% 
+      summarise(across(all_of(vars), ~list(tibble(
+        mean = survey_mean(.x, na.rm=TRUE)$coef,
+        sd = survey_sd(.x, na.rm=TRUE)$coef,
+        min = survey_quantile(.x, 0, na.rm=TRUE)$`_q00`, 
+        q25 = survey_quantile(.x, .25, na.rm=TRUE)$`_q25`, 
+        median = survey_quantile(.x, .5, na.rm=TRUE)$`_q50`, 
+        q75 = survey_quantile(.x, .75, na.rm=TRUE)$`_q75`, 
+        max = survey_quantile(.x, 1, na.rm=TRUE)$`_q100`
+      )))) %>% 
+      unnest(all_of(vars))
+    out$n <- n$n
+    out$nNA = nNA$nNA
+    out
   }
-  else{
-    if(!is.factor(d$variables[[byvar]])){
-      d$variables[[byvar]] <- as.factor(d$variables[[byvar]])
-    }
-    out <- vector(mode="list", length=length(vars))
-    forms <- NULL
-    for(i in 1:length(vars))forms <- c(forms, as.formula(paste0("~", vars[i])))
-    byform <- as.formula(paste0("~", byvar))
-    means <- lapply(forms, function(x)svyby(x, byform, d, svymean, na.rm=TRUE))
-    sds <- lapply(forms, function(x)svyby(x, byform, d, svyvar, na.rm=TRUE))
-    for(i in 1:length(sds))sds[[i]][,vars[i]] <- sqrt(sds[[i]][,vars[i]])
-    qtiles <- lapply(forms, function(x)svyby(x, byform, d, svyquantile, 
-                                             quantiles=c(0,.25,.5,.75,1), na.rm=TRUE, keep.var=FALSE))
-    iqr <- lapply(qtiles, function(x)x[,4]-x[,2])
-    n <- vector(mode="list", length=length(vars))
-    for(i in 1:length(n)){
-      d$variables$tmp <- ifelse(is.na(d$variables[[vars[i]]]), 0, 1)
-      n[[i]] <- svyby(~tmp, byform, d, svytotal)[,2]
-    }
-    na <- vector(mode="list", length=length(vars))
-    for(i in 1:length(n)){
-      d$variables$tmp <- ifelse(!is.na(d$variables[[vars[i]]]), 0, 1)
-      na[[i]] <- svyby(~tmp, byform, d, svytotal)[,2]
-    }
-    for(i in 1:length(out)){
-      out[[i]] <- cbind(round(cbind(means[[i]][,2], sds[[i]][,2], iqr[[i]], qtiles[[i]][,-1]), digits=digits), round(n[[i]]), round(na[[i]]))
-      colnames(out[[i]]) <- c("Mean", "SD", "IQR", "0%", "25%", "50%", 
-                              "75%", "100%", "n", "NA")
-      tmpdf <- data.frame(group = factor(1:length(rownames(means[[1]])), labels=rownames(means[[1]])), 
-                          variable= vars[i])
-      out[[i]] <- cbind(tmpdf, as.data.frame(out[[i]]))
-      rownames(out[[i]]) <- NULL
-    }
-  }
-  out <- do.call(rbind, out)
-  out
-}
+  
 
 #' Cross-Tabulation of Weighted or Unweighted Data
 #' 
@@ -8040,7 +8039,7 @@ opt.span <- function(model, criterion = c("aicc", "gcv"),
 #' A sort of inverse of the \code{reformulate} function.
 #' 
 #' @param form A formula
-#' @param keep_inv Logical indicating whether the formula's
+#' @param keep_env Logical indicating whether the formula's
 #' environment should be returned with the result
 #' 
 #' @description Works as a sort of inverse to \code{reformulate} 

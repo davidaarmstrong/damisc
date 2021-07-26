@@ -9,7 +9,7 @@ unformulate(form, keep_env = FALSE)
 \arguments{
 \item{form}{A formula}
 
-\item{keep_inv}{Logical indicating whether the formula's
+\item{keep_env}{Logical indicating whether the formula's
 environment should be returned with the result}
 }
 \value{
