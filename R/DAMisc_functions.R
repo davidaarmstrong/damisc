@@ -4746,7 +4746,7 @@ inspect.data.frame <- function(data, x, includeLabels=FALSE, ...){
 #' @param data A data frame.
 #' @param iter Number of samples for the MCMC sampler.
 #' @param chains Number of parallel chains to be run.
-#' @param alg Algorithm used to do sampling.  See \code{\link{stan}} for more
+#' @param alg Algorithm used to do sampling.  See \code{stan} for more
 #' details.
 #' @param ... Other arguments to be passed down to \code{stanfit}.
 #' @return A list with the following elements:
@@ -4772,7 +4772,11 @@ inspect.data.frame <- function(data, x, includeLabels=FALSE, ...){
 #' Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression
 #' with Qualitative and Quantitative Variables: An Alternating Least Squares
 #' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
-balsos <- function(formula, data, iter=2500, chains = 1, alg = c("NUTS", "HMC", "Fixed_param"), ...){
+balsos <- function(formula, data, iter=2500, chains = 1, 
+                   alg = c("NUTS", "HMC", "Fixed_param"), ...){
+if(!requireNamespace("rstan")){
+  stop("The rstan package must be installed to use balsos.\n")
+}
 alg <- match.arg(alg)
 stancode <- "data{
   int N; //number of observations
@@ -4816,7 +4820,7 @@ y <- (y - min(y)) + 1L
 balsos.dat <- list(
   M=max(y), N=length(y), k = ncol(X), ybar = mean(y), sy = sd(y),
   y=y, X=X)
-fit <- stan(model_code=stancode, data = balsos.dat,
+fit <- rstan::stan(model_code=stancode, data = balsos.dat,
             iter = iter, chains = chains, algorithm=alg, ...)
 ret <- list(fit = fit, y=y, X=X, form=formula)
 class(ret) <- "balsos"
@@ -5955,10 +5959,16 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
         w1 <- which(l1 == vals[[vars[1]]][1])
         w2 <- which(l1 == vals[[vars[1]]][2])
         if(length(w1) == 0){
-          stop(glue("{vals[[vars[1]]][1]} not a level of {vars[1]}\n"))
+          stop(paste0(vals[[vars[1]]][1], 
+                      " not a level of ", 
+                      vars[1], 
+                      ".\n"))
         }
         if(length(w2) == 0){
-          stop(glue("{vals[[vars[1]]][2]} not a level of {vars[1]}\n"))
+          stop(paste0(vals[[vars[1]]][2], 
+                      " not a level of ", 
+                      vars[1], 
+                      ".\n"))
         }
         v1 <- factor(w1, levels=1:length(l1), labels=l1)
         v2 <- factor(w2, levels=1:length(l1), labels=l1)
@@ -5974,10 +5984,16 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
         w1 <- which(l1 == vals[[vars[2]]][1])
         w2 <- which(l1 == vals[[vars[2]]][2])
         if(length(w1) == 0){
-          stop(glue("{vals[[vars[2]]][1]} not a level of {vars[2]}\n"))
+          stop(paste0(vals[[vars[2]]][1], 
+                      " not a level of ", 
+                      vars[2], 
+                      ".\n"))
         }
         if(length(w2) == 0){
-          stop(glue("{vals[[vars2]][2]} not a level of {vars[2]}\n"))
+          stop(paste0(vals[[vars[2]]][2], 
+                      " not a level of ", 
+                      vars[2], 
+                      ".\n"))
         }
         v1 <- factor(w1, levels=1:length(l1), labels=l1)
         v2 <- factor(w2, levels=1:length(l1), labels=l1)
@@ -6070,7 +6086,7 @@ summary.secdiff <- function(object, ..., level=0.95, digits=3){
   type <- ifelse("ind" %in% names(object), "Average Marginal Effect", "Marginal Effect at Typical Values")
   cat("Second Difference Using the", type, "Approach\n\n")
   s <- c(mean(object$ave), quantile(object$ave, c(ll, ul)))
-  s <- sprintf(glue("%.{digits}f"), s)
+  s <- sprintf(paste0("%.", digits, "f"), s)
   if(type == "Average Marginal Effect"){
     cat("Overall: \n")
   }
@@ -6110,7 +6126,7 @@ plot.secdiff <- function(x, level=.95, ...){
       geom_segment(aes_string(x="x", xend="x", y="lower", yend="upper")) + 
       theme_bw() + 
       labs(x="", y="Second Difference") + 
-      ggtitle(glue("Plot of Second Differences\n{type} Approach"))
+      ggtitle(paste0("Plot of Second Differences\n", type, " Approach"))
   }
     if("ind" %in% names(x)){
     ind.df <- x$ind
@@ -6129,7 +6145,7 @@ plot.secdiff <- function(x, level=.95, ...){
                    size=1, col="red", alpha=.5) +
       theme_bw() + 
       labs(x="", y="Second Difference") + 
-      ggtitle(glue("Plot of Individual Second Differences\n{type} Approach"))
+      ggtitle(paste0("Plot of Individual Second Differences\n", type, " Approach"))
       }
 }
 
@@ -6499,8 +6515,8 @@ testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
                     pval = NA,
                     preferred = NA, stringsAsFactors=TRUE)
 
-  form1 <- glue("~ . -{var} + powerTrans({var}, {transPower})")
-  form2 <- glue("~ . -{var} + poly({var}, {polyOrder}, raw=TRUE)")
+  form1 <- paste0("~ . -", var, " + powerTrans(", var, ", ", transPower, ")")
+  form2 <- paste0("~ . -", var, " + poly(", var, ", ", polyOrder, ", raw=TRUE)")
   o1 <- update(obj, form1)
   t1 <- clarke_test(obj, o1)
   b <- min(t1$stat, t1$nobs - t1$stat)

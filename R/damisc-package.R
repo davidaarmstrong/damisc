@@ -51,7 +51,6 @@ NULL
 #' Milton.  (2012) Improving Tests of Theories Positing Interaction.  Journal
 #' of Politics 74, 653-671.
 #' 
-#' @importFrom glue glue
 #' @importFrom clarkeTest clarke_test
 #' @importFrom grDevices col2rgb dev.off pdf png
 #' postscript rgb setEPS
@@ -75,7 +74,6 @@ NULL
 #' @importFrom optiscale opscale
 #' @importFrom utils combn
 #' @importFrom effects Effect effect
-#' @importFrom rstan stan
 #' @importFrom MASS mvrnorm polr kde2d glm.nb
 #' @importFrom nnet multinom
 #' @importFrom splines bs
