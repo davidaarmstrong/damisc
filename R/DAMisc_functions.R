@@ -1,3 +1,5 @@
+
+
 utils::globalVariables("where") 
 
 pGumbel <- function (q, mu = 0, sigma = 1){
@@ -5379,6 +5381,7 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
 #' constant at typical values.
 #' @param returnProbs Whether or not the vecot/matrix of predicted probabilities
 #' should be returned as well. 
+#' @param calcPW Should the pairwise differences be calculated?
 #' @return An data frame with the following variables: \item{variables}{The
 #' variables and the values at which they are held constant.  For example,
 #' \code{tmp1} would be the first value of \code{tmp} used in the probability
@@ -5405,7 +5408,16 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
 #'     xvals = list(lrself = c(1,10)))
 #' out3
 #' 
-probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=5, xvals = NULL, type=c("aveEff", "aveCase"), returnProbs=FALSE){
+probci <- function(obj, 
+                   data, 
+                   .b = NULL, 
+                   .vcov=NULL, 
+                   changeX=NULL, 
+                   numQuantVals=5, 
+                   xvals = NULL, 
+                   type=c("aveEff", "aveCase"), 
+                   returnProbs=FALSE, 
+                   calcPW = FALSE){
     type <- match.arg(type)
     vn <- changeX
     if(length(vn) == 0){stop("Need at least one variable to change")}
@@ -5451,30 +5463,32 @@ probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=
         X <- model.matrix(formula(obj), data=alldat)
         probs <- t(family(obj)$linkinv(X %*% bmat))
         probci <- t(apply(probs, 2, quantile, c(.5,.025,.975)))[,,drop=FALSE]
-        dc <- combn(nrow(X), 2)
-        D <- matrix(0, nrow=nrow(X), ncol=ncol(dc))
-        D[cbind(dc[1,], 1:ncol(dc))] <- -1
-        D[cbind(dc[2,], 1:ncol(dc))] <- 1
-        diffprobs <- probs %*% D
-        ev <- sapply(1:ncol(egvals), function(i)paste(colnames(egvals)[i], "=", egvals[,i], sep=""))[,,drop=FALSE]
-        probn <- apply(ev, 1, paste, collapse=", ")
-        rownames(probci) <- probn
-        ev2 <- egvals[dc[2,], , drop=FALSE]
-        ev2 <- as.matrix(sapply(1:ncol(ev2), function(i)paste(colnames(ev2)[i], "=", ev2[,i], sep="")))
-        n1 <- apply(ev2, 1, paste, collapse=", ")
-
-        ev1 <- egvals[dc[1,], , drop=FALSE]
-        ev1 <- as.matrix(sapply(1:ncol(ev1), function(i)paste(colnames(ev1)[i], "=", ev1[,i], sep="")))
-        n2 <- apply(ev1, 1, paste, collapse=", ")
-        n <- paste("(", n1,  ") - (", n2, ")", sep="")
-        diffci <- t(apply(diffprobs, 2, quantile, c(.5,.025,.975)))[,,drop=FALSE]
-        rownames(diffci) <- n
-        colnames(diffci) <- colnames(probci) <- c("pred_prob", "lower", "upper")
-        tmp1 <- egvals[dc[1,], ]
-        tmp2 <- egvals[dc[2,], ]
-        names(tmp1) <- paste(names(tmp1), "1", sep="")
-        names(tmp2) <- paste(names(tmp2), "2", sep="")
-        diffci <- cbind(tmp1, tmp2, as.data.frame(diffci))[,,drop=FALSE]
+        if(calcPW){
+          dc <- combn(nrow(X), 2)
+          D <- matrix(0, nrow=nrow(X), ncol=ncol(dc))
+          D[cbind(dc[1,], 1:ncol(dc))] <- -1
+          D[cbind(dc[2,], 1:ncol(dc))] <- 1
+          diffprobs <- probs %*% D
+          ev <- sapply(1:ncol(egvals), function(i)paste(colnames(egvals)[i], "=", egvals[,i], sep=""))[,,drop=FALSE]
+          probn <- apply(ev, 1, paste, collapse=", ")
+          rownames(probci) <- probn
+          ev2 <- egvals[dc[2,], , drop=FALSE]
+          ev2 <- as.matrix(sapply(1:ncol(ev2), function(i)paste(colnames(ev2)[i], "=", ev2[,i], sep="")))
+          n1 <- apply(ev2, 1, paste, collapse=", ")
+  
+          ev1 <- egvals[dc[1,], , drop=FALSE]
+          ev1 <- as.matrix(sapply(1:ncol(ev1), function(i)paste(colnames(ev1)[i], "=", ev1[,i], sep="")))
+          n2 <- apply(ev1, 1, paste, collapse=", ")
+          n <- paste("(", n1,  ") - (", n2, ")", sep="")
+          diffci <- t(apply(diffprobs, 2, quantile, c(.5,.025,.975)))[,,drop=FALSE]
+          rownames(diffci) <- n
+          colnames(diffci) <- colnames(probci) <- c("pred_prob", "lower", "upper")
+          tmp1 <- egvals[dc[1,], ]
+          tmp2 <- egvals[dc[2,], ]
+          names(tmp1) <- paste(names(tmp1), "1", sep="")
+          names(tmp2) <- paste(names(tmp2), "2", sep="")
+          diffci <- cbind(tmp1, tmp2, as.data.frame(diffci))[,,drop=FALSE]
+        }
         probci <- as.data.frame(probci)
     }
     if(type == "aveEff"){
@@ -5491,35 +5505,41 @@ probci <- function(obj, data, .b = NULL, .vcov=NULL, changeX=NULL, numQuantVals=
         ev <- sapply(1:ncol(egvals), function(i)paste(colnames(egvals)[i], "=", egvals[,i], sep=""))[,,drop=FALSE]
         probn <- apply(ev, 1, paste, collapse=", ")
         rownames(probci) <- probn
-        dc <- combn(nrow(egvals), 2)
-        diffprobs <- matrix(NA, nrow=2500, ncol=ncol(dc))
-        for(i in 1:ncol(dc)){
-            diffprobs[,i] <- colMeans(probs[[dc[2,i]]] - probs[[dc[1,i]]])
+        if(calcPW){
+          dc <- combn(nrow(egvals), 2)
+          diffprobs <- matrix(NA, nrow=2500, ncol=ncol(dc))
+          for(i in 1:ncol(dc)){
+              diffprobs[,i] <- colMeans(probs[[dc[2,i]]] - probs[[dc[1,i]]])
+          }
+          ev2 <- egvals[dc[2,], , drop=FALSE]
+          ev2 <- as.matrix(sapply(1:ncol(ev2), function(i)paste(colnames(ev2)[i], "=", ev2[,i], sep="")))
+          n1 <- apply(ev2, 1, paste, collapse=", ")
+  
+          ev1 <- egvals[dc[1,], , drop=FALSE]
+          ev1 <- as.matrix(sapply(1:ncol(ev1), function(i)paste(colnames(ev1)[i], "=", ev1[,i], sep="")))
+          n2 <- apply(ev1, 1, paste, collapse=", ")
+          n <- paste("(", n1,  ") - (", n2, ")", sep="")
+          diffci <- t(apply(diffprobs, 2, quantile, c(.5,.025,.975)))[,,drop=FALSE]
+          rownames(diffci) <- n
+          colnames(diffci) <- colnames(probci) <- c("pred_prob", "lower", "upper")
+          tmp1 <- egvals[dc[1,], ]
+          tmp2 <- egvals[dc[2,], ]
+          names(tmp1) <- paste(names(tmp1), "1", sep="")
+          names(tmp2) <- paste(names(tmp2), "2", sep="")
+          diffci <- cbind(tmp1, tmp2, as.data.frame(diffci))[,,drop=FALSE]
         }
-        ev2 <- egvals[dc[2,], , drop=FALSE]
-        ev2 <- as.matrix(sapply(1:ncol(ev2), function(i)paste(colnames(ev2)[i], "=", ev2[,i], sep="")))
-        n1 <- apply(ev2, 1, paste, collapse=", ")
-
-        ev1 <- egvals[dc[1,], , drop=FALSE]
-        ev1 <- as.matrix(sapply(1:ncol(ev1), function(i)paste(colnames(ev1)[i], "=", ev1[,i], sep="")))
-        n2 <- apply(ev1, 1, paste, collapse=", ")
-        n <- paste("(", n1,  ") - (", n2, ")", sep="")
-        diffci <- t(apply(diffprobs, 2, quantile, c(.5,.025,.975)))[,,drop=FALSE]
-        rownames(diffci) <- n
-        colnames(diffci) <- colnames(probci) <- c("pred_prob", "lower", "upper")
-        tmp1 <- egvals[dc[1,], ]
-        tmp2 <- egvals[dc[2,], ]
-        names(tmp1) <- paste(names(tmp1), "1", sep="")
-        names(tmp2) <- paste(names(tmp2), "2", sep="")
-        diffci <- cbind(tmp1, tmp2, as.data.frame(diffci))[,,drop=FALSE]
         probci <- as.data.frame(probci)
     }
     g <- grep("^tmp[1-2]", names(diffci))
-    if(length(g) == 2 & length(changeX) == 1){
+    res <- list("Predicted Probabilities"=probci, 
+                plot.data = cbind(egvals, probci))
+    if(calcPW){
+      if(length(g) == 2 & length(changeX) == 1){
         names(diffci) <- gsub("tmp", changeX, names(diffci))
+      }
+      rownames(diffci) <- NULL
+      res[["Difference in Predicted Probabilities"]] <- diffci 
     }
-    rownames(diffci) <- NULL
-    res <- list("Predicted Probabilities"=probci, "Difference in Predicted Probabilities"=diffci, plot.data = cbind(egvals, probci))
     if(returnProbs){
       res$probs <- probs
     }

@@ -13,7 +13,8 @@ probci(
   numQuantVals = 5,
   xvals = NULL,
   type = c("aveEff", "aveCase"),
-  returnProbs = FALSE
+  returnProbs = FALSE,
+  calcPW = FALSE
 )
 }
 \arguments{
@@ -48,6 +49,8 @@ constant at typical values.}
 
 \item{returnProbs}{Whether or not the vecot/matrix of predicted probabilities
 should be returned as well.}
+
+\item{calcPW}{Should the pairwise differences be calculated?}
 }
 \value{
 An data frame with the following variables: \item{variables}{The
