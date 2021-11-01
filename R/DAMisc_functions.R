@@ -6843,6 +6843,7 @@ sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE){
 #' @importFrom tidyr unnest
 #' @export
 sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
+## Thanks to John Santos for proposing a solution to a bug. 
   if(convertFactors){
     data <- data %>% 
       mutate(across(all_of(vars), as.numeric))
@@ -6851,22 +6852,25 @@ sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
     data <- data %>% 
     group_by(across(all_of(byvar)))
   }
-   data %>%    
-      summarise(across(all_of(vars), ~list(tibble(
+  out <- data %>%
+    summarise(across(all_of(vars), ~list(tibble(
       mean = mean(.x, na.rm=TRUE),
       sd = sd(.x, na.rm=TRUE),
-      iqr = diff(quantile(.x, c(.25,.75), na.rm=TRUE)), 
-      min = min(.x, na.rm=TRUE), 
-      q25 = quantile(.x, .25, na.rm=TRUE), 
-      q50 = median(.x, na.rm=TRUE), 
-      q75 = quantile(.x, .75, na.rm=TRUE), 
-      max = max(.x, na.rm=TRUE), 
-      n = n(), 
-      nNA = sum(is.na(.x))
-    )))) %>% 
-    unnest(all_of(vars))
-  
-  
+      iqr = diff(quantile(.x, c(.25,.75), na.rm=TRUE)),
+      min = min(.x, na.rm=TRUE),
+      q25 = quantile(.x, .25, na.rm=TRUE),
+      q50 = median(.x, na.rm=TRUE),
+      q75 = quantile(.x, .75, na.rm=TRUE),
+      max = max(.x, na.rm=TRUE),
+      n = n(),
+      nNA = sum(is.na(.x)))
+    ))) %>%
+    pivot_longer(cols = all_of(vars), names_to = "variable") %>%
+    unnest_wider("value")
+  if(length(vars) > 1){
+    out <- out %>% arrange(variable, vars(byvar))
+  }
+  out %>% select(variable, all_of(byvar), everything())
 }
 
 #' @method sumStats survey.design
