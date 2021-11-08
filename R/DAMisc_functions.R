@@ -7012,16 +7012,71 @@ xt.survey.design <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL
 #' @method xt data.frame
 #' @export
 xt.data.frame <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL,  ...){
-  if(is.null(weight)){
-    d <- svydesign(ids = ~1, strata=NULL, weights=~1, data=data, digits=3)
-    d$variables[["weight"]] <- 1
-    weight <- "weight"
-  }else{
-    wform <- as.formula(paste0("~", weight))
-    d <- svydesign(ids = ~1, strata=NULL, weights=wform, data=data, digits=3)
-  }
-  xt(d, var, byvar, controlvar, weight=weight, )
-  }
+  d <- data
+  tab <- list()
+  chi2 <- list()
+  stats <- list()
+  if(is.null(byvar)){
+    tmptab <- table(data[[var]], data[[byvar]])
+    tmptab <- tmptab %>% as.data.frame() %>% 
+      adorn_totals("row") %>%
+      adorn_percentages("col") %>% 
+      adorn_pct_formatting(rounding = "half up", digits = 0) %>%
+      adorn_ns()
+    chi2 <- NULL
+    tab[[1]] <- tmptab
+    chi2[[1]] <- NULL
+    stats[[1]] <- NULL
+  } else{
+    if(is.null(controlvar)){
+      tmptab <- table(d[[var]], d[[byvar]])
+      chi2[[1]] <- chisq.test(tmptab)
+      tmptab <- tmptab %>% 
+        as.data.frame() %>% 
+        as_tibble() %>% 
+        pivot_wider(names_from="Var2", values_from = "Freq") %>% 
+        as.data.frame  
+      attr(tmptab, "var_names") <- list(row = var, col = byvar)
+      tmptab <- tmptab %>% 
+        adorn_totals(c("row", "col")) %>%
+        adorn_percentages("col") %>% 
+        adorn_pct_formatting(rounding = "half up", digits = 0) %>%
+        adorn_ns() %>%
+        adorn_title("combined") 
+      tab[[1]] <- tmptab
+      stats[[1]] <- make_assoc_stats(d[[var]], d[[byvar]], weight=NULL, ...)
+    } else{
+      if(!is.null(levels(d[[controlvar]]))){
+        levs <- levels(d[[controlvar]])
+      } else{
+        levs <- unique(na.omit(d[[controlvar]]))
+      }
+      for(l in 1:length(levs)){
+        tmpd <- subset(d, d[[controlvar]] == levs[l])
+        tmptab <- table(d[[var]], d[[byvar]])
+        chi2[[l]] <- chisq.test(tmptab)
+        tmptab <- tmptab %>% 
+          as.data.frame() %>% 
+          as_tibble() %>% 
+          pivot_wider(names_from="Var2", values_from = "Freq") %>% 
+          as.data.frame  
+        attr(tmptab, "var_names") <- list(row = var, col = byvar)
+        tmptab <- tmptab %>% 
+          adorn_totals(c("row", "col")) %>%
+          adorn_percentages("col") %>% 
+          adorn_pct_formatting(rounding = "half up", digits = 0) %>%
+          adorn_ns() %>%
+          adorn_title("combined") 
+        tab[[l]] <- tmptab
+        stats[[l]] <- make_assoc_stats(tmpd[[var]], tmpd[[byvar]], weight=NULL, ...)
+      }
+      names(tab) <- levs
+    }
+  } 
+  res <- list(tab=tab, chisq=chi2, stats=stats)
+  class(res) <- "xt"
+  res
+}
 
 #' @method print xt
 #' @export
