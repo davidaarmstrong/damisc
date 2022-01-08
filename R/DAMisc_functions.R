@@ -5530,10 +5530,10 @@ probci <- function(obj,
         }
         probci <- as.data.frame(probci)
     }
-    g <- grep("^tmp[1-2]", names(diffci))
     res <- list("Predicted Probabilities"=probci, 
                 plot.data = cbind(egvals, probci))
     if(calcPW){
+      g <- grep("^tmp[1-2]", names(diffci))
       if(length(g) == 2 & length(changeX) == 1){
         names(diffci) <- gsub("tmp", changeX, names(diffci))
       }
