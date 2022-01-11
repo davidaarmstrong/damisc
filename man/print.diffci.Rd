@@ -4,10 +4,21 @@
 \alias{print.diffci}
 \title{Print Confidence Intervals for Predicted Probabilities and Their Differences}
 \usage{
-\method{print}{diffci}(x, ..., digits = 4, filter = NULL, const = NULL, onlySig = FALSE)
+\method{print}{diffci}(
+  x,
+  type = c("pr", "pw"),
+  ...,
+  digits = 4,
+  filter = NULL,
+  const = NULL,
+  onlySig = FALSE
+)
 }
 \arguments{
 \item{x}{A object of class \code{diffci} produced by \code{\link{probci}}.}
+
+\item{type}{Which kind of result to print - predictions (\code{pr}) or 
+pairwise differences in predictions (\code{pw}).}
 
 \item{...}{Other arguments to be passed down to print, currently
 unimplemented.}
@@ -19,7 +30,7 @@ to be filtered and the values in the vector indicate the values to include
 for the filtering variable.}
 
 \item{const}{A string identifying the name of the variable to be held
-constant across comparisons.}
+constant across comparisons.  Only applies if \code{type = "pw"}.}
 
 \item{onlySig}{Logical indicating whether all differes should be displayed
 or only those significant at the 95\% two-tailed level.}
@@ -42,13 +53,15 @@ Print method for output from the \code{probci} function.
 data(france)
 left.mod <- glm(voteleft ~ male + age + retnat + 
 	poly(lrself, 2, raw=TRUE), data=france, family=binomial)
+data(france)
+left.mod <- glm(voteleft ~ male + age + retnat + 
+                  poly(lrself, 2, raw=TRUE), data=france, family=binomial)
 out <- probci(left.mod, france, numQuantVals=3, 
-    changeX=c("retnat", "lrself"))
+              changeX=c("retnat", "lrself"), calcPW = TRUE)
 print(out, filter=list(retnat=c("Better", "Worse")))
-print(out, filter=list(retnat=c("Better", "Worse")),
-     const="lrself")
-print(out, const="retnat")
-
+print(out, type="pw", 
+      filter=list(retnat=c("Better", "Worse")),
+      const="lrself")
 }
 \author{
 Dave Armstrong

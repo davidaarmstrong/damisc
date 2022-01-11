@@ -5260,12 +5260,14 @@ central <- function(x){
 #' 
 #' 
 #' @param x A object of class \code{diffci} produced by \code{\link{probci}}.
+#' @param type Which kind of result to print - predictions (\code{pr}) or 
+#'        pairwise differences in predictions (\code{pw}).
 #' @param digits How many digits to round output.
 #' @param filter A named list of values where the names indicate the variable
 #' to be filtered and the values in the vector indicate the values to include
 #' for the filtering variable.
 #' @param const A string identifying the name of the variable to be held
-#' constant across comparisons.
+#' constant across comparisons.  Only applies if \code{type = "pw"}. 
 #' @param onlySig Logical indicating whether all differes should be displayed
 #' or only those significant at the 95\% two-tailed level.
 #' @param ... Other arguments to be passed down to print, currently
@@ -5288,16 +5290,25 @@ central <- function(x){
 #' data(france)
 #' left.mod <- glm(voteleft ~ male + age + retnat + 
 #' 	poly(lrself, 2, raw=TRUE), data=france, family=binomial)
+#' data(france)
+#' left.mod <- glm(voteleft ~ male + age + retnat + 
+#'                   poly(lrself, 2, raw=TRUE), data=france, family=binomial)
 #' out <- probci(left.mod, france, numQuantVals=3, 
-#'     changeX=c("retnat", "lrself"))
+#'               changeX=c("retnat", "lrself"), calcPW = TRUE)
 #' print(out, filter=list(retnat=c("Better", "Worse")))
-#' print(out, filter=list(retnat=c("Better", "Worse")),
-#'      const="lrself")
-#' print(out, const="retnat")
-#' 
-print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FALSE){
-    D <- x[[2]]
-    if(!is.null(filter)){
+#' print(out, type="pw", 
+#'       filter=list(retnat=c("Better", "Worse")),
+#'       const="lrself")
+print.diffci <- function(x, type = c("pr", "pw"), 
+                        ..., digits=4, filter=NULL, const = NULL, onlySig=FALSE){
+  type <- match.arg(type)
+  if(type == "pr"){
+    D <- x$plot.data
+  }else{
+    D <- x$`Difference in Predicted Probabilities`
+  }
+  if(type == "pw"){
+      if(!is.null(filter)){
         vn <- names(filter)
         w <- array(dim=c(nrow(D), length(vn)))
         for(i in 1:length(filter)){
@@ -5311,18 +5322,29 @@ print.diffci <- function(x, ..., digits=4, filter=NULL, const = NULL, onlySig=FA
         else{
             D <- D[w, ]
         }
-    }
-    if(onlySig){
-        sig <- which(sign(D$lower) == sign(D$upper))
-        if(length(sig) == 0){
-            stop("No observations matching filter conditions that are also significant")
-        }
-        else{
-            D <- D[sig, ]
-        }
       }
-    if(!is.null(const)){
-      D <- D[which(D[[paste0(const, "1")]] == D[[paste0(const, "2")]]), ]
+      if(!is.null(const)){
+        D <- D[which(D[[paste0(const, "1")]] == D[[paste0(const, "2")]]), ]
+      }
+  }else{
+    if(!is.null(filter)){
+      for(i in 1:length(filter)){
+        D <- D %>% filter(get(names(filter)[i]) %in% filter[[i]]) 
+      }
+      if(nrow(D) == 0){
+        stop("No observations matching filter conditions")
+      }
+    }
+  }
+  
+    if(onlySig){
+      sig <- which(sign(D$lower) == sign(D$upper))
+      if(length(sig) == 0){
+        stop("No observations matching filter conditions that are also significant")
+      }
+      else{
+        D <- D[sig, ]
+      }
     }
     cnd <- colnames(D)
     D2 <- array(dim=dim(D))
@@ -6839,8 +6861,8 @@ sumStats <- function(data, vars, byvar=NULL, convertFactors=TRUE){
 }
 
 #' @method sumStats data.frame
-#' @importFrom dplyr group_by summarise across tibble
-#' @importFrom tidyr unnest
+#' @importFrom dplyr group_by summarise across tibble arrange everything
+#' @importFrom tidyr unnest unnest_wider
 #' @export
 sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
 ## Thanks to John Santos for proposing a solution to a bug. 
@@ -6868,9 +6890,9 @@ sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
     pivot_longer(cols = all_of(vars), names_to = "variable") %>%
     unnest_wider("value")
   if(length(vars) > 1){
-    out <- out %>% arrange(variable, vars(byvar))
+    out <- out %>% arrange(vars("variable"), vars(byvar))
   }
-  out %>% select(variable, all_of(byvar), everything())
+  out %>% select("variable", all_of(byvar), everything())
 }
 
 #' @method sumStats survey.design
