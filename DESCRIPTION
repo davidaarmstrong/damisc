@@ -40,4 +40,4 @@ Description: Miscellaneous set of functions I use in my teaching either at the U
 Depends: R (>= 4.0.0)
 License: GPL (>=2)
 LazyLoad: yes
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0

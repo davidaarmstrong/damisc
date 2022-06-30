@@ -303,8 +303,11 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL,
         v2 <- varnames[2]
         v1 <- gsub(")", "\\)", gsub("(", "\\(", v1, fixed=TRUE), fixed=TRUE)
         v2 <- gsub(")", "\\)", gsub("(", "\\(", v2, fixed=TRUE), fixed=TRUE)
-        ind <- unique(c(grep(v1, names(obj$coef)), grep(v2, names(obj$coef))))
-        ind <- ind[order(ind)]
+        ind1 <- grep(v1, names(obj$coef))
+        ind2 <- grep(v2, names(obj$coef))
+        ind <- c(setdiff(ind1, ind2), setdiff(ind2, ind1), intersect(ind2, ind1))
+        # ind <- unique(c(grep(v1, names(obj$coef)), grep(v2, names(obj$coef))))
+        # ind <- ind[order(ind)]
         b <- obj$coef[ind]
         mod.x <- model.matrix(obj)
         not.ind <- c(1:ncol(mod.x))[!(c(1:ncol(mod.x)) %in% ind)]
@@ -8203,6 +8206,8 @@ unformulate <- function(form, keep_env=FALSE){
 #' @param indices The column numbers of \code{obj$t} to be used in the calculation. 
 #' if \code{NULL}, all columns are used. 
 #' @param term_names The names of the parameters to be used as identifiers in the tibble. 
+#' @param flag_sig Logical indicating whether significant results should be flagged with an asterisk. 
+#' @param sig_value Scalar indicating the one-sided p-value required to achieve statistical significance. 
 #' @param ... Other arguments to be passed down to \code{boot.ci()}
 #' 
 #' @return A tibble with the term name, estimate, lower and upper confidence bounds. 
@@ -8215,6 +8220,8 @@ tidy_boot_ci <- function(obj,
                          type=c("norm", "basic", "stud", "perc", "bca"), 
                          conf=.95, 
                          term_names = NULL, 
+                         flag_sig = FALSE, 
+                         sig_value = .95,
                          ...){
   last2 <- function(x)x[(length(x)-1):length(x)]
   type <- match.arg(type)
@@ -8227,13 +8234,24 @@ tidy_boot_ci <- function(obj,
     indices <- 1:ncol(obj$t)
   }
   cis <- sapply(indices, function(i){
-    x <- boot.ci(obj, index=i, type=type, ...)
+    x <- boot.ci(obj, index=i, type=type, conf=conf, ...)
     cix <- x[[length(x)]]
     last2(cix)
   })
-  tibble(term = trms, 
-         estimate = obj$t0[indices], 
-         conf.low = cis[1,], 
-         conf.high = cis[2,])
+  if(flag_sig){
+    pvals <- apply(obj$t, 2, function(x)mean(x > 0))
+    pvals <- ifelse(pvals < .5, 1-pvals, pvals)
+    sig <- ifelse(pvals > sig_value, "*", "")
+    tibble(term = trms, 
+           estimate = obj$t0[indices], 
+           sig = sig, 
+           conf.low = cis[1,], 
+           conf.high = cis[2,])
+  }else{
+    tibble(term = trms, 
+           estimate = obj$t0[indices], 
+           conf.low = cis[1,], 
+           conf.high = cis[2,])
+  }
   
 }

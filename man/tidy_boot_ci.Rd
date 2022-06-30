@@ -10,6 +10,8 @@ tidy_boot_ci(
   type = c("norm", "basic", "stud", "perc", "bca"),
   conf = 0.95,
   term_names = NULL,
+  flag_sig = FALSE,
+  sig_value = 0.95,
   ...
 )
 }
@@ -25,6 +27,10 @@ if \code{NULL}, all columns are used.}
 \item{conf}{The confidence level to be used for the interval.}
 
 \item{term_names}{The names of the parameters to be used as identifiers in the tibble.}
+
+\item{flag_sig}{Logical indicating whether significant results should be flagged with an asterisk.}
+
+\item{sig_value}{Scalar indicating the one-sided p-value required to achieve statistical significance.}
 
 \item{...}{Other arguments to be passed down to \code{boot.ci()}}
 }
