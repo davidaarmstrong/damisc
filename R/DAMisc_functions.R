@@ -650,6 +650,8 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
 #' difference should be calculated and presented.
 #' @param R Number of simulations to perform if \code{sim} is \code{TRUE}
 #' @param qtiles Quantiles to calculate if \code{sim=TRUE}. 
+#' @param ci_anchors Logical indicating whether the confidence intervals for the 
+#' \code{fit_Low} and \code{fit_High} values are returned. 
 #' @param adjust String identifying how range should be changed if it goes out of
 #' the bounds of the observed data.  Trimming will simply truncate the size of 
 #' the change to make it fit in bounds.  Shifting will shift the interval so 
@@ -688,6 +690,7 @@ function (obj,
           sim=FALSE, 
           R=1000, 
           qtiles=c(.025, .975), 
+          ci_anchors=FALSE, 
           adjust=c("none", "shift", "trim"))
 {
   diffchange <- match.arg(diffchange)
@@ -846,6 +849,13 @@ function (obj,
       ap <- apply(p, 2, diff)
       q <- quantile(ap, probs=qtiles)
       names(q) <- paste("q_", gsub("\\%", "", names(q)), sep="")
+      if(ci_anchors){
+        lp <- apply(p, 1, \(x)quantile(x, qtiles[1]))
+        names(lp) <- c("fit_Low_lwr", "fit_High_lwr")
+        up <- apply(p, 1, \(x)quantile(x, qtiles[2]))
+        names(up) <- c("fit_Low_upr", "fit_High_upr")
+        q <- c(lp, up, q)
+      }
       q <- do.call(data.frame, as.list(q))
       q$focal <- x$focal[1]
       q
@@ -856,6 +866,12 @@ function (obj,
     probw <- left_join(probw, se.dat)
   }  
   probw <- probw %>% select(-c("v"))
+  for(i in 1:nrow(probw)){
+    if(inherits(data[[probw$focal[i]]], "factor")){
+      probw$val_Low[i] <- levels(data[[probw$focal[i]]])[as.integer(probw$val_Low[i])]
+      probw$val_High[i] <- levels(data[[probw$focal[i]]])[as.integer(probw$val_High[i])]
+    }
+  }
   attr(probw, "meds") <- do.call(data.frame, meds)
   return(probw)
 }

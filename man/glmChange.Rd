@@ -17,6 +17,7 @@ glmChange(
   sim = FALSE,
   R = 1000,
   qtiles = c(0.025, 0.975),
+  ci_anchors = FALSE,
   adjust = c("none", "shift", "trim")
 )
 }
@@ -63,6 +64,9 @@ difference should be calculated and presented.}
 \item{R}{Number of simulations to perform if \code{sim} is \code{TRUE}}
 
 \item{qtiles}{Quantiles to calculate if \code{sim=TRUE}.}
+
+\item{ci_anchors}{Logical indicating whether the confidence intervals for the 
+\code{fit_Low} and \code{fit_High} values are returned.}
 
 \item{adjust}{String identifying how range should be changed if it goes out of
 the bounds of the observed data.  Trimming will simply truncate the size of 

@@ -39,5 +39,6 @@ Authors@R: person("Dave", "Armstrong", email = "dave@quantoid.net", role = c("au
 Description: Miscellaneous set of functions I use in my teaching either at the University of Western Ontario or the Inter-university Consortium for Political and Social Research (ICPSR) Summer Program in Quantitative Methods.  Broadly, the functions help with presentation and interpretation of LMs and GLMs, but also implement some new tools like Alternating Least Squares Optimal Scaling for dependent variables, a Bayesian analog to the ALSOS algorithm.  There are also tools to help understand interactions in both LMs and binary GLMs. 
 Depends: R (>= 4.0.0)
 License: GPL (>=2)
+Encoding: UTF-8
 LazyLoad: yes
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
