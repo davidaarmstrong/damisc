@@ -1058,7 +1058,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         d3f
     derivcc <- b[int.var] * d2f + b1b4x2 * b2b4x1 * d3f
     others <- X[, -c(1, match(c(vars, int.var), names(b)))]
-    if (!("matrix" %in% class(others))) {
+    if (!inherits(others, "matrix")){
         others <- matrix(others, nrow = nrow(X))
     }
     colnames(others) <- colnames(X)[-c(1, match(c(vars, int.var),
@@ -1109,7 +1109,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     deriv3 <- phi1 + (b[cont] + b[int.var]) * d2f1 * X[, cont, drop=FALSE]
     deriv0 <- (b[cont] + b[int.var]) * d2f1 - b[cont] * d2f2
     others <- X[, -c(1, match(c(vars, int.var), names(b))), drop=FALSE]
-    if (!("matrix" %in% class(others))) {
+    if (!inherits(others, "matrix")) {
         others <- matrix(others, nrow = nrow(X))
     }
     colnames(others) <- colnames(X)[-c(1, match(c(vars, int.var),
@@ -1164,7 +1164,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     deriv3 <- phi11
     deriv0 <- (phi11 - phi01) - (phi10 - phi00)
     others <- X[, -c(1, match(c(vars, int.var), names(b)))]
-    if (!("matrix" %in% class(others))) {
+    if (!inherits(others, "matrix")) {
         others <- matrix(others, nrow = nrow(X))
     }
     colnames(others) <- colnames(X)[-c(1, match(c(vars, int.var),
@@ -1773,23 +1773,23 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
 	    rownames(preds.min) <- rownames(preds.max) <- rownames(diffs) <- rn
 	}
 	if(sim){
-        if("polr" %in% class(obj)){
+        if(inherits(obj, "polr")){
             b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
         }
-        if("clm" %in% class(obj)){
+        if(inherits(obj, "clm")){
             zeta.ind <- grep("|", names(coef(obj)), fixed=TRUE)
             b.ind <- (1:length(coef(obj)))[-zeta.ind]
             b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]),
                 vcov(obj)[c(b.ind, zeta.ind),c(b.ind, zeta.ind)])
         }
-        if(!(class(obj) %in% c("clm", "polr"))){stop("Simulation requires either a clm or polr object\n")}
+        if(!inherits(obj, "polr") & !inherits(obj, "clm")){stop("Simulation requires either a clm or polr object\n")}
 
     X <- model.matrix(update(formula(obj), NULL ~ .), data=tmp.df)
 	intlist <- list()
-    if(class(obj) == "polr"){
+    if(inherits(obj, "polr")){
         ylev <- obj$lev
     }
-    if(class(obj) == "clm"){
+    if(inherits(obj, "clm")){
         ylev <- obj$y.levels
     }
 
@@ -1893,16 +1893,16 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
     }
     rn <- vars
     var.classes <- sapply(vars, function(x) class(data[[x]]))
-    if("polr" %in% class(obj)){
+    if(inherits(obj, "polr")){
         b <- mvrnorm(R, c(-coef(obj), obj$zeta), vcov(obj))
     }
-    if("clm" %in% class(obj)){
+    if(inherits(obj, "clm")){
         zeta.ind <- grep("|", names(coef(obj)), fixed=TRUE)
         b.ind <- (1:length(coef(obj)))[-zeta.ind]
         b <- mvrnorm(R, c(-coef(obj)[b.ind], coef(obj)[zeta.ind]),
             vcov(obj)[c(b.ind, zeta.ind),c(b.ind, zeta.ind)])
     }
-    if(!(class(obj) %in% c("clm", "polr"))){stop("Simulation requires either a clm or polr object\n")}
+    if(!inherits(obj, "polr") & !inherits(obj, "clm")){stop("Simulation requires either a clm or polr object\n")}
     change <- match.arg(diffchange)
     allmean <- alllower <- allupper <- NULL
 
@@ -1935,10 +1935,10 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
         }
     	Xmats <- lapply(d0, function(x)model.matrix(formula(obj), data=x)[,-1])
     	intlist <- list()
-            if("polr" %in% class(obj)){
+            if(inherits(obj, "polr")){
                 ylev <- obj$lev
             }
-            if("clm" %in% class(obj)){
+            if(inherits(obj, "clm")){
                 ylev <- obj$y.levels
             }
         		for(i in 1:(length(ylev)-1)){
@@ -1992,7 +1992,7 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
 ##' @method print ordChange
 print.ordChange <- function(x, ..., digits=3){
     diffs <- x$diffs
-    if("list" %in% class(diffs)){
+    if(inherits(diffs, "list")){
         sig <- ifelse(sign(diffs$lower) == sign(diffs$upper), "*", " ")
         leads <- ifelse(sign(diffs$mean) == -1, "", " ")
         out <- array(paste(leads, sprintf(paste("%0.", digits, "f", sep=""), diffs$mean), sig, sep=""), dim=dim(diffs$mean))
@@ -2488,7 +2488,7 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, retur
 poisGOF <-
 function (obj)
 {
-    if (!("glm" %in% class(obj))) {
+    if (!inherits(obj, "glm")) {
         stop("poisGOF only works on objects of class glm (with a poisson family)\n")
     }
     if (!("y" %in% names(obj))) {
@@ -2577,7 +2577,7 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
       f2 <- paste(f2[[2]], f2[[3]], sep="~")
       mod2 <- MASS::polr(f2, data=data2)
     }
-    if ("glm" %in% class(mod1)) {
+    if (inherits(mod1, "glm")) {
         if (!(family(mod1)$link %in% c("logit", "probit", "cloglog",
             "cauchit"))) {
             stop("PRE only calculated for models with logit, probit, cloglog or cauchit links\n")
@@ -2621,7 +2621,7 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
             epre.sim <- (epcp.sim - epmc.sim)/(1 - epmc.sim)
         }
     }
-    if ("multinom" %in% class(mod1)) {
+    if (inherits(mod1, "multinom")) {
         mod1 <- update(mod1, ".~.", model = TRUE, trace = FALSE)
         if (is.null(mod2)) {
             mod2 <- update(mod1, ". ~ 1", data = mod1$model,
@@ -2679,7 +2679,7 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
             epre.sim <- (epcp.sim - epmc.sim)/(1 - epmc.sim)
         }
     }
-    if ("polr" %in% class(mod1)) {
+    if (inherits(mod1, "polr")){
         if (is.null(mod1$Hess)) {
             mod1 <- update(mod1, Hess = TRUE)
         }
@@ -2823,7 +2823,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
         d3f
     derivcc <- b[int.var] * d2f + b1b4x2 * b2b4x1 * d3f
     others <- X[, -c(1, match(c(vars, int.var), names(b)))]
-    if (!("matrix" %in% class(others))) {
+    if (!inherits(others, "matrix")) {
         others <- matrix(others, nrow = nrow(X))
     }
     colnames(others) <- colnames(X)[-c(1, match(c(vars, int.var),
@@ -2872,7 +2872,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     deriv3 <- phi1 + (b[cont] + b[int.var]) * d2f1 * X[, cont]
     deriv0 <- (b[cont] + b[int.var]) * d2f1 - b[cont] * d2f2
     others <- X[, -c(1, match(c(vars, int.var), names(b)))]
-    if (!("matrix" %in% class(others))) {
+    if (!inherits(others, "matrix")) {
         others <- matrix(others, nrow = nrow(X))
     }
     colnames(others) <- colnames(X)[-c(1, match(c(vars, int.var),
@@ -2931,7 +2931,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
     deriv3 <- phi11
     deriv0 <- (phi11 - phi01) - (phi10 - phi00)
     others <- X[, -c(1, match(c(vars, int.var), names(b)))]
-    if (!("matrix" %in% class(others))) {
+    if (!inherits(others, "matrix")){
         others <- matrix(others, nrow = nrow(X))
     }
     colnames(others) <- colnames(X)[-c(1, match(c(vars, int.var),
@@ -3438,7 +3438,7 @@ else{int.ind <- int.ind2}}
 inds <- cbind(main.ind, int.ind)
 nc <- ncol(inds)
 dn <- dimnames(inds)
-if(!("matrix" %in% class(inds))){inds <- matrix(inds, nrow=1)}
+if(!inherits(inds, "matrix")){inds <- matrix(inds, nrow=1)}
 outind <- which(main.ind == 0)
 inds <- inds[-outind, ]
 if(length(inds) == nc){
@@ -5132,7 +5132,7 @@ optim_yj <- function(pars, form, data, trans.vars, ...){
 #' @export
 #' 
 #' @author Dave Armstrong
-cv.lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=TRUE),
+cv_lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=TRUE),
     K = n, numiter = 100, which=c("corrected", "raw")) {
     sample0 <- function (x, ...)x[sample.int(length(x), ...)]
     w <- match.arg(which)
@@ -5255,22 +5255,36 @@ summary.balsos <- function(object, ...){
     summary(object$fit, pars=c(colnames(object$X), paste0("y_", sort(unique(object$object)))))
 }
 
-central <- function(x){
+
+##' Generate central values of a varaible
+##' 
+##' @description Function generates central values of a variable.  If the variable is numeric with 
+##' more than \code{n_unique_fac} values, then the median is returned.  If the variable is
+##' a factor or numeric with fewer than or equal to \code{n_unique_fac} unique values, 
+##' then the modal value is returned.  
+##' 
+##' @param x A vector of values. 
+##' @param n_unique_fac number of unique values below which the variable will be treated like a factor.
+##' @param ... currently unimplemented. 
+##' 
+##' @export
+##' 
+##' @return A scalar value giving the central value of the variable. 
+central <- function(x, n_unique_fac=10, ...){
     if(is.factor(x)){
         tab <- table(x)
         m <- which.max(tab)
         cent <- factor(m, levels=1:length(levels(x)), labels=levels(x))
     }
-    if(!is.factor(x) & length(unique(na.omit(x))) <= 10){
+    if(!is.factor(x) & length(unique(na.omit(x))) <= n_unique_fac){
         tab <- table(x)
         cent <- as.numeric(names(tab)[which.max(tab)])
     }
-    if(!is.factor(x) & length(unique(na.omit(x))) > 10){
+    if(!is.factor(x) & length(unique(na.omit(x))) > n_unique_fac){
         cent <- median(x, na.rm=TRUE)
     }
     return(cent)
 }
-
 
 
 #' Print Confidence Intervals for Predicted Probabilities and Their Differences
@@ -5717,10 +5731,10 @@ testGAMint <- function(m1, m2, data, R=1000, ranCoef=FALSE){
         if(ranCoef){
             b1 <- mvrnorm(1, coef(m1), vcov(m1))
         }
-        if(all("lm" %in% class(m1))){
+        if(inherits(m1, "lm")){
             sig <- summary(m1)$sigma
         }
-        if("gam" %in% class(m1)){
+        if(inherits(m1, "gam")){
             sig <- sqrt(summary(m1)$scale)
         }
         e <- rnorm(nrow(X), 0, sig)

@@ -6,3 +6,4 @@ News.md
 \.gitignore
 ^doc$
 ^Meta$
+^LICENSE\.md$
