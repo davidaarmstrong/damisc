@@ -5938,30 +5938,6 @@ print.iqq <- function(x, ...){
     invisible(x)
 }
 
-central <- function(x, ...){
-    UseMethod("central")
-}
-
-##' @method central factor
-central.factor  <- function(x, ...){
-    tab <- table(droplevels(x))
-    res <- x[1]
-    res[1] <- names(tab)[which.max(tab)]
-    return(res)
-}
-
-##' @method central numeric
-central.numeric <- function(x, type=c("median", "mean"), ...){
-    type <- match.arg(type)
-    if(type == "median"){
-        res <- median(x, na.rm=TRUE, ...)
-    }
-    else{
-        res <- mean(x, na.rm=TRUE, ...)
-    }
-    return(res)
-}
-
 
 #' Calculate Cross-Derivative and its Variability
 #' 

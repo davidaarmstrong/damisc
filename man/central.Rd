@@ -4,14 +4,14 @@
 \alias{central}
 \title{Generate central values of a varaible}
 \usage{
-central(x, ...)
+central(x, n_unique_fac = 10, ...)
 }
 \arguments{
 \item{x}{A vector of values.}
 
-\item{...}{currently unimplemented.}
-
 \item{n_unique_fac}{number of unique values below which the variable will be treated like a factor.}
+
+\item{...}{currently unimplemented.}
 }
 \value{
 A scalar value giving the central value of the variable.
