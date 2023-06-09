@@ -7048,7 +7048,7 @@ xt.data.frame <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL,  
   chi2 <- list()
   stats <- list()
   if(is.null(byvar)){
-    tmptab <- table(data[[var]], data[[byvar]])
+    tmptab <- table(data[[var]])
     tmptab <- tmptab %>% as.data.frame() %>% 
       adorn_totals("row") %>%
       adorn_percentages("col") %>% 
