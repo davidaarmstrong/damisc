@@ -6946,6 +6946,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
     if(length(vars) > 1){
       out <- out %>% arrange(variable, vars(byvar))
     }
+    }
     out
   }
   
