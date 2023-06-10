@@ -6926,31 +6926,26 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
         ungroup %>% 
         mutate(nNA = n$n - .data$nwt) 
     }else{
-      n <- d %>% 
-        group_by(across(all_of(byvar))) %>% 
-        survey_count()
-      nNA <- d %>% 
-        mutate(wts = weights(d)) %>% 
-        group_by(across(all_of(byvar))) %>% 
-        summarise(nwt = sum(.data$wts)) %>% 
-        ungroup %>% 
-        mutate(nNA = n$n - .data$nwt) 
-    }
     out <- d %>% 
+      srvyr::mutate(wts = weights(.)) %>% 
       ungroup %>% 
-      group_by(across(all_of(byvar))) %>% 
-      summarise(across(all_of(vars), ~list(tibble(
+      srvyr::group_by(across(all_of(byvar))) %>% 
+      srvyr::summarise(across(all_of(vars), ~list(tibble(
         mean = survey_mean(.x, na.rm=TRUE)$coef,
         sd = survey_sd(.x, na.rm=TRUE)$coef,
         min = survey_quantile(.x, 0, na.rm=TRUE)$`_q00`, 
         q25 = survey_quantile(.x, .25, na.rm=TRUE)$`_q25`, 
         median = survey_quantile(.x, .5, na.rm=TRUE)$`_q50`, 
         q75 = survey_quantile(.x, .75, na.rm=TRUE)$`_q75`, 
-        max = survey_quantile(.x, 1, na.rm=TRUE)$`_q100`
+        max = survey_quantile(.x, 1, na.rm=TRUE)$`_q100`, 
+        n = sum(wts*!is.na(.x)), 
+        nNA = sum(wts*is.na(.x))
       )))) %>% 
-      unnest(all_of(vars))
-    out$n <- n$n
-    out$nNA = nNA$nNA
+      pivot_longer(cols = all_of(vars), names_to = "variable") %>%
+      unnest_wider("value")
+    if(length(vars) > 1){
+      out <- out %>% arrange(variable, vars(byvar))
+    }
     out
   }
   
