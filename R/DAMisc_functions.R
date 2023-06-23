@@ -2537,8 +2537,10 @@ function (obj)
 #' expected proportional reduction in error} \item{m1form}{The formula for
 #' model 1} \item{m2form}{The formula for model 2} \item{pcp}{The percent
 #' correctly predicted by model 1} \item{pmc}{The percent correctly predicted
-#' by model 2} \item{epcp}{The expected percent correctly predicted by model 1}
-#' \item{epmc}{The expected percent correctly predicted by model 2}
+#' by model 2 or the proportion in the modal category in the observed data 
+#' if \code{mod2} is \code{NULL}} \item{epcp}{The expected percent correctly predicted by model 1}
+#' \item{epmc}{The expected percent correctly predicted by model 2 or 
+#' by the null model if \code{mod2} is \code{NULL}.}
 #' \item{pre.sim}{A vector of bootstrapped PRE values if \code{sim=TRUE}}
 #' \item{epre.sim}{A vector of bootstrapped ePRE values if \code{sim=TRUE}}
 #' @author Dave Armstrong
