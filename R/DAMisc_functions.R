@@ -1,5 +1,3 @@
-
-
 utils::globalVariables("where") 
 
 pGumbel <- function (q, mu = 0, sigma = 1){
@@ -4491,8 +4489,10 @@ NKnots <- function(form, var, data, degree=3, min.knots=1,
    crit <- match.arg(criterion)
    k <- seq(min.knots, max.knots, by=1)
    forms <- vector("list", ifelse(includePoly, length(k)+3, length(k)))
+   df_poly <- NULL
    m <- 1
    if(includePoly){
+      df_poly <- 1:3
       forms[[1]]<- as.formula(paste(as.character(form)[2], "~",
       as.character(form)[3], " + ", var, sep=""))
       forms[[2]]<- as.formula(paste(as.character(form)[2], "~",
@@ -4501,7 +4501,9 @@ NKnots <- function(form, var, data, degree=3, min.knots=1,
       as.character(form)[3], "+ poly(", var,  ", 3)", sep=""))
       m <- 4
    }
+   df_spline <- NULL
    for(i in 1:length(k)){
+      df_spline <- c(df_spline, degree+i)
       forms[[m]]<- as.formula(paste(as.character(form)[2], "~",
       as.character(form)[3], "+ bs(", var, ", df=", degree+k[i],
         ", Boundary.knots=c(", min(data[[var]], na.rm=TRUE),", ", max(data[[var]], na.rm=TRUE), "))", sep=""))
@@ -4530,7 +4532,7 @@ NKnots <- function(form, var, data, degree=3, min.knots=1,
       plot(k, stats, type="o", pch=16, col="black", xlab="# Degrees of Freedom", ylab = crit)
       points(k[which.min(stats)], min(stats), pch=16, col="red")
    }else{
-     return(data.frame(df = k, stat=stats))
+     return(data.frame(df = c(df_poly, df_spline), stat=stats))
    }
 }
 
