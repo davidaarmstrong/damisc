@@ -5,17 +5,19 @@
 \alias{print.ordfit}
 \title{Fit Statistics for Proportional Odds Logistic Regression Models}
 \usage{
-ordfit(obj)
+ordfit(obj, data)
 }
 \arguments{
-\item{obj}{A model object of class \code{polr}.}
+\item{obj}{A model object of class \code{polr} or \code{clm}.}
+
+\item{data}{A data frame used to fit `obj`.}
 }
 \value{
 An object of class \code{ordfit} which is a matrix containing
 statistics and specification tests.
 }
 \description{
-For objects of class \code{polr}, it calculates a number of fit statistics
+For objects of class \code{polr} or \code{clm}, it calculates a number of fit statistics
 and specification tests.
 }
 \examples{

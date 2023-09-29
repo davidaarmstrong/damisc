@@ -2140,12 +2140,13 @@ print.ordfit <- function(x,..., digits=3){
 
 #' Fit Statistics for Proportional Odds Logistic Regression Models
 #' 
-#' For objects of class \code{polr}, it calculates a number of fit statistics
+#' For objects of class \code{polr} or \code{clm}, it calculates a number of fit statistics
 #' and specification tests.
 #' 
 #' 
 #' @aliases ordfit print.ordfit
-#' @param obj A model object of class \code{polr}.
+#' @param obj A model object of class \code{polr} or \code{clm}.
+#' @param data A data frame used to fit `obj`. 
 #' @return An object of class \code{ordfit} which is a matrix containing
 #' statistics and specification tests.
 #' @author Dave Armstrong
@@ -2166,7 +2167,7 @@ print.ordfit <- function(x,..., digits=3){
 #' polr.mod <- polr(vote ~ age + male + retnat + lrself, data=france)
 #' ordfit(polr.mod)
 #' 
-ordfit <- function(obj){
+ordfit <- function(obj, data){
 	# combfun <- function(mytab){
 	# 	lt <- sum(mytab[,2] < 5)
 	# 	while(lt > 0){
@@ -2212,7 +2213,7 @@ ordfit <- function(obj){
 	# facs <- which(attr(obj$terms, "dataClasses") == "factor")[-1]
 	# mf <- model.frame(obj)
 	# pats <- factor(apply(mf[, facs, drop=F], 1, function(x)paste(x, collapse=":")))
-	predcat <- predict(obj, type="class")
+	predcat <- predict(obj, newdata = data, type="class")
 	if(inherits(predcat, "list"))predcat <- predcat$fit
 	# prchi2 <- 0
 	# prD <- 0
