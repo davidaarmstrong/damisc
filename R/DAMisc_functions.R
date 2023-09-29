@@ -2527,10 +2527,12 @@ function (obj)
 #' @param mod2 A model of the same class as \code{mod1} against which
 #' proportional reduction in error will be measured.  If \code{NULL}, the null
 #' model will be used.
+#' @param data The data used to fit the models. 
 #' @param sim A logical argument indicating whether a parametric bootstrap
 #' should be used to calculate confidence bounds for (e)PRE.  See
 #' \code{Details} for more information.
 #' @param R Number of bootstrap samples to be drawn if \code{sim=TRUE}.
+#' @param ... Other arguments to be passed down. 
 #' @return An object of class \code{pre}, which is a list with the following
 #' elements: \item{pre}{The proportional reduction in error} \item{epre}{The
 #' expected proportional reduction in error} \item{m1form}{The formula for
@@ -2556,7 +2558,7 @@ function (obj)
 #' pre(left.mod)
 #' 
 pre <-
-function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
+function (mod1, mod2 = NULL, data = NULL, sim = FALSE, R = 2500, ...)
 {
     if (!is.null(mod2)) {
         if (mean(class(mod1) == class(mod2)) != 1) {
@@ -2567,16 +2569,16 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
         stop("pre only works on models of class glm (with binomial family), polr or multinom\n")
     }
     if(inherits(mod1, "clm")){
-        data <- mod1$model
+        if(is.null(data))stop("For clm objects, the dataset used to fit the model is required.\n")
         f1 <- as.character(mod1$formula)
         f1 <- paste(f1[[2]], f1[[3]], sep="~")
         mod1 <- MASS::polr(f1, data=data)
     }
     if(inherits(mod2, "clm")){
-      data2 <- mod2$model
+      if(is.null(data))stop("For clm objects, the dataset used to fit the model is required.\n")
       f2 <- as.character(mod1$formula)
       f2 <- paste(f2[[2]], f2[[3]], sep="~")
-      mod2 <- MASS::polr(f2, data=data2)
+      mod2 <- MASS::polr(f2, data=data)
     }
     if (inherits(mod1, "glm")) {
         if (!(family(mod1)$link %in% c("logit", "probit", "cloglog",
@@ -2587,7 +2589,7 @@ function (mod1, mod2 = NULL, sim = FALSE, R = 2500)
             y <- mod1[["y"]]
             mod2 <- update(mod1, ". ~ 1", data=model.frame(mod1))
         }
-        pred.mod2 <- as.numeric(predict(mod2, type = "response") >=
+        pred.mod2 <- as.numeric(predict(mod2, newdata= data, type = "response") >=
             0.5)
         pmc <- mean(mod2$y == pred.mod2)
         pred.y <- as.numeric(predict(mod1, type = "response") >=

@@ -4,7 +4,7 @@
 \alias{pre}
 \title{Proportional and Expected Proportional Reductions in Error}
 \usage{
-pre(mod1, mod2 = NULL, sim = FALSE, R = 2500)
+pre(mod1, mod2 = NULL, data = NULL, sim = FALSE, R = 2500, ...)
 }
 \arguments{
 \item{mod1}{A model of class \code{glm} (with family \code{binomial}),
@@ -14,11 +14,15 @@ pre(mod1, mod2 = NULL, sim = FALSE, R = 2500)
 proportional reduction in error will be measured.  If \code{NULL}, the null
 model will be used.}
 
+\item{data}{The data used to fit the models.}
+
 \item{sim}{A logical argument indicating whether a parametric bootstrap
 should be used to calculate confidence bounds for (e)PRE.  See
 \code{Details} for more information.}
 
 \item{R}{Number of bootstrap samples to be drawn if \code{sim=TRUE}.}
+
+\item{...}{Other arguments to be passed down.}
 }
 \value{
 An object of class \code{pre}, which is a list with the following
