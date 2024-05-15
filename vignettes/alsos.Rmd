@@ -33,6 +33,7 @@ The ALSOS model can be estimated with the `alsos()` function in the `{DAMisc}` p
 
 ```{r}
 library(DAMisc)
+library(optiscale)
 mod <- alsos(choice ~ party + ideol + econ4yr, data=elec92, scale_dv=TRUE)
 ```
 

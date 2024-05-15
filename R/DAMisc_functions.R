@@ -7823,7 +7823,7 @@ alsos <- function(os_form, raw_form = ~1, data, scale_dv=FALSE, maxit=30,
     niter <- niter + 1
     if(scale_dv){
       dvar.pred <- predict(reg.os)
-      opscaled.dvar <- opscale(orig_data[[dv]], dvar.pred, level = level[1], process = process[1])
+      opscaled.dvar <- optiscale::opscale(orig_data[[dv]], dvar.pred, level = level[1], process = process[1])
       tmpdata[[dv]] <- opscaled.dvar$os
     }
     if(length(scale_vars) > 0){
@@ -7834,7 +7834,7 @@ alsos <- function(os_form, raw_form = ~1, data, scale_dv=FALSE, maxit=30,
         scale_var <- orig_data[[scale_vars[i]]]
         others <- rowSums(tms[,-which(colnames(tms) == scale_vars[i])])
         pred.scale <- (model.response(model.frame(reg.os)) - (b[1] + others))/b[scale_vars[i]]
-        opscaled.var <- opscale(scale_var, pred.scale, level = level[(i+scale_dv)], process = process[(i+scale_dv)])
+        opscaled.var <- optiscale::opscale(scale_var, pred.scale, level = level[(i+scale_dv)], process = process[(i+scale_dv)])
         tmpdata[[scale_vars[i]]] <- opscaled.var$os
       }
     }
