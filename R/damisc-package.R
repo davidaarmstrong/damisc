@@ -1,35 +1,9 @@
-
-
-#' Example data for btscs function
-#' 
-#' A subset of data from Alvarez et. al. (1996).
-#' 
-#' 
-#' @name aclp
-#' @docType data
-#' @format A data frame with 4126 observations on the following 7 variables.
-#' \describe{ \item{cname}{Country name} \item{country}{Numeric
-#' country identifier} \item{year}{Year of observation}
-#' \item{reg}{A dichotomous variable coded 1 for dictatorship, 0 for
-#' democracy} \item{gdpw}{GDP/worker, 1985 prices}
-#' \item{popg}{Population growth} \item{democ}{A dichotomous
-#' variable coded 1 for democracy, 0 for dictatorship, (1-\code{reg})} }
-#' @references Alvarez, M., J.A. Cheibub, F. Limongi and A. Przeworski. 1996.
-#' Classifying political regimes. Studies in Comparative International
-#' Development 31 (Summer): 1-37.
-#' @keywords datasets
-NULL
-
-
-
-
-
 #' Dave Armstrong's Miscellaneous Functions
 #' 
 #' Functions to aid in the presentation of linear model results
 #' 
 #' \tabular{ll}{ Package: \tab DAMisc\cr Type: \tab Package\cr Version: \tab
-#' 1.4-8\cr Date: \tab 2018-05-16\cr License: \tab GPL (>=2)\cr LazyLoad: \tab
+#' 1.4-8\cr Date: \tab 2024-05-15\cr License: \tab GPL (>=2)\cr LazyLoad: \tab
 #' yes\cr } These are functions that help present linear model results.
 #' Largely, the represent alternatives in presentation to other R packages.
 #' For example, the \code{factorplot} function offers an alternative to David
@@ -41,7 +15,6 @@ NULL
 #' 
 #' @name DAMisc-package
 #' @aliases DAMisc-package DAMisc
-#' @docType package
 #' @author Dave Armstrong\cr Maintainer: Dave Armstrong
 #' <davearmstrong.ps@@gmail.com>
 #' @references Armstrong, D.A.  (2013) factorplot: Improving Presentation of
@@ -71,7 +44,6 @@ NULL
 #' @importFrom coda as.mcmc
 #' @importFrom latticeExtra useOuterStrips
 #' @importFrom AICcmodavg AICc
-#' @importFrom optiscale opscale
 #' @importFrom utils combn
 #' @importFrom effects Effect effect
 #' @importFrom MASS mvrnorm polr kde2d glm.nb
@@ -101,10 +73,12 @@ NULL
 #' @importFrom tidyselect all_of
 #' @importFrom rlang .data
 #' @importFrom jtools svycor
+#' @keywords internal
+"_PACKAGE"
 
+## usethis namespace: start
+## usethis namespace: end
 NULL
-
-
 
 
 #' Example data for factorplot function
@@ -147,6 +121,30 @@ NULL
 #' \describe{ \item{y}{a numeric vector} \item{x1}{a numeric
 #' vector} \item{x2}{a numeric vector} \item{z}{a numeric
 #' vector} }
+#' @keywords datasets
+NULL
+
+
+
+
+
+#' Example data for btscs function
+#' 
+#' A subset of data from Alvarez et. al. (1996).
+#' 
+#' 
+#' @name aclp
+#' @docType data
+#' @format A data frame with 4126 observations on the following 7 variables.
+#' \describe{ \item{cname}{Country name} \item{country}{Numeric
+#' country identifier} \item{year}{Year of observation}
+#' \item{reg}{A dichotomous variable coded 1 for dictatorship, 0 for
+#' democracy} \item{gdpw}{GDP/worker, 1985 prices}
+#' \item{popg}{Population growth} \item{democ}{A dichotomous
+#' variable coded 1 for democracy, 0 for dictatorship, (1-\code{reg})} }
+#' @references Alvarez, M., J.A. Cheibub, F. Limongi and A. Przeworski. 1996.
+#' Classifying political regimes. Studies in Comparative International
+#' Development 31 (Summer): 1-37.
 #' @keywords datasets
 NULL
 

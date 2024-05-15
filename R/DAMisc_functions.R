@@ -1,4 +1,4 @@
-utils::globalVariables("where") 
+utils::globalVariables(c("where", "variable"))
 
 pGumbel <- function (q, mu = 0, sigma = 1){
   stopifnot(sigma > 0)
@@ -6913,6 +6913,7 @@ sumStats.data.frame <- function(data, vars, byvar=NULL, convertFactors=TRUE){
 
 #' @method sumStats survey.design
 #' @importFrom srvyr as_survey survey_mean survey_sd survey_quantile survey_count
+#' @importFrom rlang .data
 #' @export
 sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE){
   if(!inherits(data, "tbl_svy")){
@@ -6925,7 +6926,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
     }
     if(is.null(byvar)){
     out <- d %>% 
-      srvyr::mutate(wts = weights(.)) %>% 
+      srvyr::mutate(wts = weights(.data)) %>% 
       ungroup %>% 
       srvyr::summarise(across(all_of(vars), ~list(tibble(
         mean = survey_mean(.x, na.rm=TRUE)$coef,
@@ -6942,7 +6943,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
       unnest_wider("value")
     }else{
     out <- d %>% 
-      srvyr::mutate(wts = weights(.)) %>% 
+      srvyr::mutate(wts = weights(.data)) %>% 
       ungroup %>% 
       srvyr::group_by(across(all_of(byvar))) %>% 
       srvyr::summarise(across(all_of(vars), ~list(tibble(
