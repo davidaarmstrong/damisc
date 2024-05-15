@@ -7771,6 +7771,10 @@ alsosDV <- function(form, data, maxit = 30, level = 2, process = 1, starts = NUL
 #' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
 alsos <- function(os_form, raw_form = ~1, data, scale_dv=FALSE, maxit=30, 
                   level=2, process=1, starts=NULL,...){
+  if(!requireNamespace("optiscale")){
+    stop("The optiscale package must be installed to use alsos or alsosDV\n")
+  }
+  
   rownames(data) <- 1:nrow(data)
   previous.rsquared <- niter <- 0
   rsquared.differ <- 1.0
