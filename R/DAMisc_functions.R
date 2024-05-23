@@ -6830,9 +6830,10 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
     if(convertFactors){
       d %>% mutate(across(all_of(vars), as.numeric))
     }
-    if(is.null(byvar)){
+  wts <- weights(d)
+  if(is.null(byvar)){
     out <- d %>% 
-      srvyr::mutate(wts = weights(.data)) %>% 
+      srvyr::mutate(wts = wts) %>% 
       ungroup %>% 
       srvyr::summarise(across(all_of(vars), ~list(tibble(
         mean = survey_mean(.x, na.rm=TRUE)$coef,
@@ -6849,7 +6850,7 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
       unnest_wider("value")
     }else{
     out <- d %>% 
-      srvyr::mutate(wts = weights(.data)) %>% 
+      srvyr::mutate(wts = wts) %>% 
       ungroup %>% 
       srvyr::group_by(across(all_of(byvar))) %>% 
       srvyr::summarise(across(all_of(vars), ~list(tibble(
