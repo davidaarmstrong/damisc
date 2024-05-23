@@ -59,3 +59,8 @@ A matrix of statistics and p-values.
 Makes several common measures of association for contingency tables.  The 
 p-values are obtained through simulation.
 }
+\examples{
+data(france)
+make_assoc_stats(france$retnat, france$vote, chisq=TRUE, phi=FALSE, lambda=TRUE)
+
+}

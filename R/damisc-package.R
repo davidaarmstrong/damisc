@@ -149,4 +149,21 @@ NULL
 NULL
 
 
+#' Example data for makeHypSurv function
+#' 
+#' A subset of data from King, Alt, Burns and Laver (1990)
+#' 
+#' @name cabinet
+#' @docType data
+#' @format A data frame with 303 observations on the following 4 variables.
+#' \describe{ \item{durat}{Cabinet Duration} 
+#'            \item{censor}{Indicator of duration censoring (0/1)}
+#'            \item{invest}{Indicator of investiture (1=no, 2=yes)}
+#'            \item{polar}{Measure of political polarization}}
+#' @references Gary King, James Alt, Nancy Burns, and Michael Laver. 1990. 
+#' "A Unified Model of Cabinet Dissolution in Parliamentary Democracies." 
+#' American Journal of Political Science, 34, Pp. 846–871.
+#' @keywords datasets
+NULL
+
 

@@ -20,5 +20,6 @@ A scalar value giving the central value of the variable.
 Function generates central values of a variable.  If the variable is numeric with 
 more than \code{n_unique_fac} values, then the median is returned.  If the variable is
 a factor or numeric with fewer than or equal to \code{n_unique_fac} unique values, 
-then the modal value is returned.
+then the modal value is returned.  This is a function that is used internally by 
+other functions in the package.
 }

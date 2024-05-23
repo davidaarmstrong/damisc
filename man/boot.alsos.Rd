@@ -62,3 +62,9 @@ alsos algorithm to get uncertainty estimates
 for the optimally scaled values of the 
 variables.
 }
+\examples{
+data(france)
+res <- boot.alsos(lrself ~ 1, ~retnat + male + age, data=france, scale_dv=TRUE,
+return = "both")
+res
+}

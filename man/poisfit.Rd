@@ -10,7 +10,7 @@ poisfit(obj)
 \item{obj}{A model of class \code{glm} with \code{family=poisson}.}
 }
 \value{
-A named vector of scalar measures of fit
+A named vector of scalar measures of fit.
 }
 \description{
 Calculates scalar measures of fit for models with count dependent variables

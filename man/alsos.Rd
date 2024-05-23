@@ -59,6 +59,12 @@ optimally scaled DV}
 Estimates the Alternating Least Squares Optimal Scaling (ALSOS) solution for
 qualitative variables.
 }
+\examples{
+data(france)
+res <- alsos(lrself ~ 1, ~retnat + male + age, data=france, scale_dv=TRUE)
+summary(res$result)
+
+}
 \references{
 Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political
 Research: An Optimistic View} American Journal of Political Science 43(1):

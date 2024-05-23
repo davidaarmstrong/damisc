@@ -11,6 +11,9 @@ predictor.names(model, ...)
 
 \item{...}{Other arguments passed down, currently not implemented}
 }
+\value{
+A character vector of names of predictor variables from the model
+}
 \description{
 Retrieve predictor names from model
 }

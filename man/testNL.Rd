@@ -42,6 +42,12 @@ is whether the original specification is preferred to the polynomial model.
 The third is whether the power transformation is preferred to the polynomial
 model.  All tests are done with the Clarke test.
 }
+\examples{
+data(aclp)
+mod <- glm(democ ~ gdpw, data=na.omit(aclp), family=binomial)
+testNL(mod, "gdpw", transPower=.5, polyOrder=3)
+
+}
 \references{
 Kevin Clarke.  2007.  "A Simple Distribution-Free Test for
 Nonnested Hypotheses."  \emph{Political Analysis} 15(3): 347--363.

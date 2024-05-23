@@ -16,8 +16,14 @@ tTest(x, y, data, ...)
 \item{...}{Other arguments to be passed down to \code{t.test}.}
 }
 \value{
-an object of class \code{tTest}
+an object of class \code{tTest} that contains the results from base `t.test` along with 
+summary statistics (mean, n, se) for both groups and the difference.
 }
 \description{
 This function is a wrapper to the \code{t.test} function but produces more information in the output.
+}
+\examples{
+data(aclp)
+tTest("democ", "gdpw", aclp)
+
 }

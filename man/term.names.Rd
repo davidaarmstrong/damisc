@@ -11,6 +11,9 @@ term.names(model, ...)
 
 \item{...}{Other arguments passed down, currently not implemented}
 }
+\value{
+A character vector of term names from the model
+}
 \description{
 Retrieve term names from model
 }

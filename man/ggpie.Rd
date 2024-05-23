@@ -14,8 +14,14 @@ ggpie(data, variable, addPct = c("pie", "none", "legend"))
 \item{addPct}{Where labels should be added - "none" gives no labels, "legend" addes percentages to the color legend, "pie" addes the legends to the pie pieces.}
 }
 \value{
+A ggplot pie chart
+
 a ggplot
 }
 \description{
 This function produces pie charts with ggplot2.
+}
+\examples{
+data(france)
+ggpie(france, "vote")
 }

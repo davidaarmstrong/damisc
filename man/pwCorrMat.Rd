@@ -49,3 +49,8 @@ The "sim" method uses a permutation test to build the sampling distribution of t
 correlation under the null hypothesis and then calculates a p-value from that 
 distribution.
 }
+\examples{
+data(InteractionEx)
+pwCorrMat(~y + x1 + x2 + z, data=InteractionEx)
+
+}

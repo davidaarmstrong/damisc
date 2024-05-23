@@ -18,7 +18,7 @@ xt(data, var, byvar = NULL, controlvar = NULL, weight = NULL, ...)
 
 \item{controlvar}{The name of a categorical control variable.}
 
-\item{weight}{A vector of weights to be applied to the table.}
+\item{weight}{If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the cross-tabulation.}
 
 \item{...}{Other arguments to be passed down to \code{make_assoc_stats}.  You can use this to calculate different statistics.  By default, you get Chi-squared, Cramer's V, Gamma and Kendall's Tau-b. 
 
@@ -29,4 +29,9 @@ A list with two elements - table of class \code{tabyl} and the returned results 
 }
 \description{
 Cross-Tabulation of Weighted or Unweighted Data
+}
+\examples{
+data(france)
+xt(france, "vote", "retnat")
+
 }

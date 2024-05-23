@@ -14,7 +14,8 @@ probgroup(obj, ...)
 \item{...}{Currently not implemented.}
 }
 \value{
-A plot.
+A plot giving the probability with which each observations is 
+classified as its observed value.
 }
 \description{
 Plots predicted probabilities by value of the dependent variable for

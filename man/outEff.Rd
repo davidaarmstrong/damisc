@@ -33,8 +33,21 @@ removed manually, rather than using \code{stat}.}
 cumulatively, or each one in turn, replacing the other outlying
 observations.}
 }
+\value{
+An effects plot that shows the effect of sequentially removing outliers 
+as defined by `stat`.
+}
 \description{
 Plots the effect of a variable sequentially removing outlying observations.
+}
+\examples{
+data(aclp)
+mod <- glm(democ ~ gdpw + popg,
+           data = subset(aclp, year == 1980), 
+           family=binomial)
+
+outEff(mod, "gdpw", subset(aclp, year==1980))
+
 }
 \author{
 Dave Armstrong

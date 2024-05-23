@@ -11,6 +11,9 @@ response(model, ...)
 
 \item{...}{Other arguments passed down, currently not implemented}
 }
+\value{
+A vector of matrix of response variable values used in the model.
+}
 \description{
 Retrieve model response
 }

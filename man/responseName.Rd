@@ -11,6 +11,9 @@ responseName(model, ...)
 
 \item{...}{Other arguments passed down, currently not implemented}
 }
+\value{
+A vector of response variable name(s).
+}
 \description{
 Retrieve response name from model
 }

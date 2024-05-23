@@ -9,6 +9,10 @@ is.aliased(model)
 \arguments{
 \item{model}{A model object}
 }
+\value{
+A logical value indicating whether any coefficients in the model 
+are aliased.
+}
 \description{
 Identifies whether there are aliased coefficients in model
 }

@@ -21,7 +21,8 @@ lower and upper bounds of y.
 This prepanel function is defined so as to allow room for all confidence
 intervals plotted in a lattice display. Note, both lower and upper must be
 passed directly to \code{xyplot} as they will be passed down to the prepanel
-function.
+function.  This function is used internally by several other functions in the 
+package
 }
 \author{
 Dave Armstrong

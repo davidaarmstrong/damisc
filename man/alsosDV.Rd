@@ -44,6 +44,12 @@ which allows optimal scaling of both dependent and independent
 variables.  I retain the old operationalization of \code{alsosDV} 
 for backward compatability purposes.
 }
+\examples{
+data(france)
+res <- alsosDV(lrself ~ retnat + male + age, data=france)
+summary(res$result)
+
+}
 \references{
 Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political
 Research: An Optimistic View} American Journal of Political Science 43(1):

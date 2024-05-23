@@ -13,6 +13,13 @@
 
 \item{digits}{Number of digits to print}
 }
+\value{
+Printed output where the rows correspond to the terms in the model
+and the columns refer to the levels of the dependent variable.  The cell entries
+give the changes in predicted probabilities of being in the column level for 
+the imposed change in the row term.  An asterisk is placed by the value if 
+the change is significantly different from zero.
+}
 \description{
 Print methods for objects of class \code{ordChange}
 }

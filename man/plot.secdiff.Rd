@@ -13,6 +13,20 @@
 
 \item{...}{Other arguments to be passed down, currently not implemented.}
 }
+\value{
+A plot of the second difference on the x-axis and the index 
+(i.e., observation number) on the y-axis. The plot has individual second
+differences and 95% confidence intervals.
+}
 \description{
 Plots the results of the \code{secondDiff} function.
+}
+\examples{
+data(aclp)
+mod <- glm(democ ~ gdpw + popg,
+           data = subset(aclp, year == 1980), 
+           family=binomial)
+
+secdiff <- secondDiff(mod, c("gdpw", "popg"), data = subset(aclp, year == 1980))
+(plot(secdiff))
 }

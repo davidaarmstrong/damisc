@@ -16,10 +16,23 @@ variables are the values.  Combinations will be made with
 \item{...}{currently not implemented.}
 }
 \value{
-A data frame.
+A data frame with the variables in `l` and: 
+\item{p.fail}{The probability of vailure given `time`}
+\item{time}{The time at which the failure probability is evaluated. }
 }
 \description{
 Calculates survival probabilities for hypothetical data.
+}
+\examples{
+data(cabinet)
+library(survival)
+mod <- survreg(Surv(durat, censor) ~ invest + polar, data=cabinet, 
+               dist="exponential")
+l= list(invest = 0, 
+        polar = c(5,15,25))
+out <- makeHypSurv(l, mod)
+head(out)
+
 }
 \author{
 Dave Armstrong

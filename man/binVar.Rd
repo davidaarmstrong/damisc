@@ -33,10 +33,16 @@ binVar(
 Function adapted from \code{binVariable} from the \pkg{RcmdrMisc} pacakge.}
 }
 \value{
-A factor
+A factor binned according to the instructions,
 }
 \description{
 Bins a continuous variable into a categorical variable
+}
+\examples{
+data(aclp)
+bv <- binVar(aclp$gdpw, method="proportions")
+table(bv)
+
 }
 \author{
 John Fox

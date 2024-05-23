@@ -50,6 +50,16 @@ Pr(Y=1|x1=min, x2=max)) - (Pr(Y=1|x1=max, x2=min) - Pr(Y=1|x1=min, x2=min)).
 The function uses a parametric bootstrap to calculate the sampling
 distribution of the second difference.
 }
+\examples{
+data(aclp)
+mod <- glm(democ ~ gdpw + popg,
+           data = subset(aclp, year == 1980), 
+           family=binomial)
+
+secdiff <- secondDiff(mod, c("gdpw", "popg"), data = subset(aclp, year == 1980))
+summary(secdiff)
+
+}
 \author{
 Dave Armstrong
 }

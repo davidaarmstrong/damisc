@@ -66,7 +66,7 @@ with the smallest prediction to the level with the largest prediction.
 
 library(nnet)
 data(france)
-mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
+mnl.mod <- nnet::multinom(vote ~ age + male + retnat + lrself, data=france)
 typical.france <- data.frame(
 	age = 35, 
 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 

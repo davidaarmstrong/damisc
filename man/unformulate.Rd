@@ -27,3 +27,7 @@ implicated in the formula.
 \details{
 A sort of inverse of the \code{reformulate} function.
 }
+\examples{
+unformulate(y ~ x1 + x2)
+
+}

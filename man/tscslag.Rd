@@ -24,6 +24,12 @@ A vector giving the lagged values of \code{x}.
 \description{
 Lags (or leads) a variable in a time-series corss-sectional dataset.
 }
+\examples{
+data(aclp)
+aclp$lag_gdpw <- tscslag(aclp, "gdpw", "country", "year")
+head(aclp)
+
+}
 \author{
 Dave Armstrong
 }

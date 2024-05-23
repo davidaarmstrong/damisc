@@ -15,6 +15,21 @@
 
 \item{digits}{Number of digits to print}
 }
+\value{
+Printed output giving the overall average second difference and 
+95% confidence interval along with summarized individual results that give
+the number of significant positive and negative as well as insignificant
+second differences.
+}
 \description{
 Summary method for objects of class \code{secdiff}.
+}
+\examples{
+data(aclp)
+mod <- glm(democ ~ gdpw + popg,
+           data = subset(aclp, year == 1980), 
+           family=binomial)
+
+secdiff <- secondDiff(mod, c("gdpw", "popg"), data = subset(aclp, year == 1980))
+summary(secdiff)
 }

@@ -59,6 +59,17 @@ The F-test is performed and the F-statistic saved for each iteraction.  The
 algorithm then calculates the probability of being to the right of the
 observed F-statistic in the simulated F-distribution.
 }
+\examples{
+library(mgcv)
+data(InteractionEx)
+lmod <- lm(y ~ x1*x2 + z, data=InteractionEx)
+gmod <- gam(y ~ te(x1) + te(x2) + ti(x1,x2) + z, data=InteractionEx)
+
+out <- testGAMint(lmod, gmod, data=InteractionEx, R=100)
+## calculate p-value
+mean(out$Fdist > out$obsF)
+
+}
 \author{
 Dave Armstrong
 }

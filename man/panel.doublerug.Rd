@@ -32,9 +32,14 @@ start and end values on the y and x scales respectively). See
 \item{lty, lwd}{Line type and width arguments (see \code{par} for more
 details).}
 }
+\value{
+A panel function that generates a stacked rug plot suitable for 
+inclusion in a lattice graph.
+}
 \description{
 This panel function is defined to plot two rugs, one on top of the other in
-a multi-panel lattice display.
+a multi-panel lattice display. This is a function that is used intenally by 
+`intQualQuant()`.
 }
 \author{
 Dave Armstrong

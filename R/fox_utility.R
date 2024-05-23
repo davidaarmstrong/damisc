@@ -9,6 +9,7 @@
 #' 
 #' @param model A model object
 #' @param ... Other arguments passed down, currently not implemented
+#' @returns Logical value indicating whether the model has an intercept term
 #' @export
 has.intercept <- function (model, ...) {
 	UseMethod("has.intercept")
@@ -22,6 +23,7 @@ has.intercept.default <- function(model, ...) any(names(coefficients(model))=="(
 #' 
 #' @param model A model object
 #' @param ... Other arguments passed down, currently not implemented
+#' @returns A character vector of term names from the model
 #' @export
 term.names <- function (model, ...) {
 	UseMethod("term.names")
@@ -39,6 +41,7 @@ term.names.default <- function (model, ...) {
 #' 
 #' @param model A model object
 #' @param ... Other arguments passed down, currently not implemented
+#' @returns A character vector of names of predictor variables from the model
 #' @export
 predictor.names <- function(model, ...) {
 	UseMethod("predictor.names")
@@ -55,6 +58,7 @@ predictor.names.default <- function(model, ...){
 #' 
 #' @param model A model object
 #' @param ... Other arguments passed down, currently not implemented
+#' @returns A vector of response variable name(s). 
 #' @export
 responseName <- function (model, ...) {
 	UseMethod("responseName")
@@ -68,6 +72,7 @@ responseName.default <- function (model, ...) deparse(attr(terms(model), "variab
 #' 
 #' @param model A model object
 #' @param ... Other arguments passed down, currently not implemented
+#' @return A vector of matrix of response variable values used in the model. 
 #' @export
 response <- function(model, ...) {
 	UseMethod("response")
@@ -82,6 +87,8 @@ response.default <- function (model, ...) model.response(model.frame(model))
 #' Identifies whether there are aliased coefficients in model
 #' @param model A model object
 #' @importFrom stats alias
+#' @returns A logical value indicating whether any coefficients in the model 
+#' are aliased. 
 #' @export
 is.aliased <- function(model){
 	!is.null(alias(model)$Complete)
@@ -92,6 +99,8 @@ is.aliased <- function(model){
 #' @param model A model object
 #' @param term A model term
 #' @param ... Other arguments passed down, currently not implemented
+#' @returns A scalar indicating the degrees of freedom used for a term in the 
+#' model. 
 #' @export
 df.terms <- function(model, term, ...){
 	UseMethod("df.terms")

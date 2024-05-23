@@ -37,6 +37,15 @@ confidence intervals for the effects will not be calculated using profile
 likelihood as they are in the Firth logit, but will be calculated using the
 appropriate variance-covariance matrix.
 }
+\examples{
+data(aclp)
+library(logistf)
+library(effects)
+mod <- logistf(democ ~ gdpw, data=na.omit(aclp), family=binomial)
+effs <- effect_logistf("gdpw", mod, na.omit(aclp))
+effs
+
+}
 \author{
 Dave Armstrong
 }

@@ -7,8 +7,7 @@
 yj_trans(form, data, trans.vars, round.digits = 3, ...)
 }
 \arguments{
-\item{form}{A formula with a dependent variable that will be optimally
-scaled}
+\item{form}{A formula}
 
 \item{data}{A data frame.}
 
@@ -26,6 +25,12 @@ transformed variables.
 \description{
 Uses \code{nlminb} to find the optimal Yeo-Johnson transformation parameters
 conditional on a parametric model specification.
+}
+\examples{
+data(aclp)
+mod <- yj_trans(gdpw ~ popg + as.factor(reg) + year, data=aclp, 
+                trans.vars="gdpw")
+summary(mod)
 }
 \author{
 Dave Armstrong

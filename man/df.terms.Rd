@@ -13,6 +13,10 @@ df.terms(model, term, ...)
 
 \item{...}{Other arguments passed down, currently not implemented}
 }
+\value{
+A scalar indicating the degrees of freedom used for a term in the 
+model.
+}
 \description{
 Retrieve term degrees of freedom from model
 }

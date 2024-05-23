@@ -36,6 +36,15 @@ The cross-validation error from the loess curve.
 Function provides the cross-validation error for the loess curve in a manner
 that is amenable to optimization of the span.
 }
+\examples{
+\dontrun{
+set.seed(207)
+tempdat <- data.frame(x=runif(250, 1, 1000))
+tempdat$y <- log(tempdat$x) + rnorm(250, 0, .5) 
+   optimize(cv_lo2, c(.1, .9), form=y ~ x, data=tempdat)
+}
+
+}
 \author{
 Dave Armstrong
 }

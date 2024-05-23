@@ -45,7 +45,7 @@ Fit a local polynomial regression with automatic smoothing parameter selection. 
 \item{span.range}{The range in which to look for the optimal span}
 }
 \value{
-An object of class \code{loess}.
+An object of class \code{loess} with optimal smoothing parameter.
 }
 \description{
 Fit a local polynomial regression with automatic smoothing parameter selection. Two methods are available for the selection of the smoothing parameter: bias-corrected Akaike information criterion (aicc); and generalized cross-validation (gcv).

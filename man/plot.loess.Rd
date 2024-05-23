@@ -33,7 +33,7 @@ the figure idtntifying the postion of individual observations.}
 \item{col.alpha}{Value for alpha channel of the RGB color palette.}
 }
 \value{
-A plot.
+A plot of predicted values from the loess model.
 }
 \description{
 Plots the loess curve of the fitted values against a focal x-variable. .

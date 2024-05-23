@@ -9,6 +9,9 @@ describe_data(data)
 \arguments{
 \item{data}{A dataset to be described.}
 }
+\value{
+A datatable with variable names and descriptive labels.
+}
 \description{
 Makes an interactive list of variables and their descriptive labels.  Uses the \pkg{DT} package to generate the table.
 }

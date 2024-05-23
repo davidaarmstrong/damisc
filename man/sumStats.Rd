@@ -18,9 +18,16 @@ sumStats(data, vars, byvar = NULL, convertFactors = TRUE)
 \item{convertFactors}{Logical indicating whether factors should be converted to numeric first and then summarised.}
 }
 \value{
+a matrix of summary statistics for variables, optionally by the values of another variable.
+
 a vector of summary statistics for each variable or variable-group combination.
 }
 \description{
 Provides summary statistics (mean, sd, quartiles, IQR, missing n, valid n)
 for the variables in a data frame.
+}
+\examples{
+data(aclp)
+sumStats(aclp, vars=c("gdpw", "popg"), byvar="democ")
+
 }

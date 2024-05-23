@@ -18,9 +18,14 @@ alsos procedure for which a meausrement function should be returned.}
 \item{...}{arguments to be passed in, currently not implemented.}
 }
 \value{
-A plot.
+A plot of the original and optimally scaled values.
 }
 \description{
 Makes a plot or optionally returns data for user-generated
 plots from an alsos object
+}
+\examples{
+data(france)
+res <- alsos(lrself ~ 1, ~retnat + male + age, data=france, scale_dv=TRUE)
+plot(res)
 }

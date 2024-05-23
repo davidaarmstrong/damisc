@@ -17,11 +17,15 @@ panel.transci(x, y, groups, lower, upper, ca = 0.25, ...)
 
 \item{...}{Other arguments to be passed down to the plotting functions.}
 }
+\value{
+A panel function that can be used in a lattice plot to print 
+semi-opaque confidnece envelopes around predicted values.
+}
 \description{
 This panel function is defined to plot translucent confidence intervals in a
 single-panel, grouped (i.e., superposed) lattice display. Note, both lower
 and upper must be passed directly to \code{xyplot} as they will be passed
-down to the panel function.
+down to the panel function.  This is a function that is used by `intQualQuant()`
 }
 \author{
 Dave Armstrong

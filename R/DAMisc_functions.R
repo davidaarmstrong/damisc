@@ -1,11 +1,5 @@
 utils::globalVariables(c("where", "variable"))
 
-pGumbel <- function (q, mu = 0, sigma = 1){
-  stopifnot(sigma > 0)
-  exp(-exp(-((q - mu)/sigma)))
-}
-
-
 #' Scalar Measures of Fit for Binary Variable Models
 #' 
 #' Calculates scalar measures of fit for models with binary dependent variables
@@ -16,7 +10,7 @@ pGumbel <- function (q, mu = 0, sigma = 1){
 #' binary dependent variable.
 #' 
 #' @param mod A model of class \code{glm} with \code{family=binomial}.
-#' @return A named vector of scalar measures of fit
+#' @returns A named vector of scalar measures of fit
 #' @author Dave Armstrong
 #' @references Long, J.S.  1997.  Regression Models for Categorical and Limited
 #' Dependent Variables.  Thousand Oaks, CA: Sage.
@@ -84,7 +78,7 @@ function (mod)
 #' @param csunit Character string giving the name of the cross-sectional unit.
 #' @param pad.ts Logical indicating whether the time-series should be filled
 #' in, when panels are unbalanced.
-#' @return The original data frame with one additional variable.  The
+#' @returns The original data frame with one additional variable.  The
 #' \code{spell} variable identifies the number of observed periods since the
 #' last event.
 #' @author Dave Armstrong
@@ -178,7 +172,7 @@ function (data, event, tvar, csunit, pad.ts = FALSE)
 #' 
 #' 
 #' @param obj An object of class \code{multinom}.
-#' @return A matrix of test statistics and p-values.
+#' @returns A matrix of test statistics and p-values.
 #' @author Dave Armstrong
 #' 
 #' @export
@@ -271,7 +265,7 @@ combTest <- function(obj){
 #' @param hcols Vector of four colors to color increasingly high density areas
 #' @param ... Other arguments to be passed down to the initial call to
 #' \code{persp}
-#' @return \item{x1}{Values of the first element of \code{varnames} used to
+#' @returns \item{x1}{Values of the first element of \code{varnames} used to
 #' make predictions.} \item{x2}{Values of the second element of \code{varnames}
 #' used to make predictions.} \item{pred}{The predictions based on the values
 #' \code{x1} and \code{x2}.} \item{graph}{A graph is produced, but no other
@@ -427,7 +421,7 @@ function (obj, varnames, theta = 45, phi = 10, xlab=NULL, ylab=NULL,
 #' \sQuote{screen}, where the one of the first three will produce two graphs
 #' starting with \code{name.stem} written to the appropriate file type and the
 #' third will produce graphical output on the screen.
-#' @return \item{graphs}{Either a single graph is printed on the screen (using
+#' @returns \item{graphs}{Either a single graph is printed on the screen (using
 #' \code{par(mfrow=c(1,2))}) or two figures starting with \code{name.stem} are
 #' produced where each gives the conditional effect of one variable based on
 #' the values of another.}
@@ -655,7 +649,7 @@ function (obj, varnames, varcov=NULL, rug = TRUE, ticksize = -0.03, hist = FALSE
 #' the change to make it fit in bounds.  Shifting will shift the interval so 
 #' both ends are in bounds. If the shifted interval is wider than the range of
 #' the data, the change will be truncated to the range of the data. 
-#' @return A list with the following elements: \item{diffs}{A matrix of
+#' @returns A list with the following elements: \item{diffs}{A matrix of
 #' calculated first differences} \item{minmax}{A matrix of values that were
 #' used to calculate the predicted changes}
 #' @author Dave Armstrong
@@ -886,7 +880,7 @@ function (obj,
 #' @param obj A binary logit or probit model estimated with \code{glm}.
 #' @param vars A vector of the two variables involved in the interaction.
 #' @param data A data frame used in the call to \code{obj}.
-#' @return A list is returned with two elements - \code{byobs} and
+#' @returns A list is returned with two elements - \code{byobs} and
 #' \code{atment}.  The \code{byobs} result gives the interaction effect
 #' evaluated at each observation.  The \code{atmean} element has the marginal
 #' effect evaluated at the mean.  Each eleement contains an element \code{int}
@@ -1012,7 +1006,7 @@ function (obj, vars, data)
 #' @param vars A vector of the two variables involved in the interaction.
 #' @param b Coefficients from the \code{glm} object.
 #' @param X Model matrix from the \code{glm} object.
-#' @return A data frame with the following variable: \item{int_eff}{The
+#' @returns A data frame with the following variable: \item{int_eff}{The
 #' correctly calucalted marginal effect.} \item{linear}{The incorrectly
 #' calculated marginal effect following the linear model analogy.}
 #' \item{phat}{Predicted Pr(Y=1|X).} \item{se_int_eff}{Standard error of
@@ -1201,7 +1195,7 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 #' beside coefficients which are significant at the \code{pval} level.
 #' @param insig.blank Logical indicating whether coefficients which are not
 #' significant at the \code{pval} level should be blank in the output.
-#' @return A data frame suitable for printing with the (optionally
+#' @returns A data frame suitable for printing with the (optionally
 #' significance-flagged) coefficients from a multinomial logit model.
 #' @author Dave Armstrong
 #' 
@@ -1254,7 +1248,7 @@ function (obj, pval = 0.05, two.sided = TRUE, flag.sig = TRUE,
 #' @param plot Logical indicating whether a plot should be produced (if
 #' \code{TRUE}) or numerical results should be returned (if \code{FALSE}).
 #' @param \dots Other arguments to be passed down to \code{xyplot}.
-#' @return Either a plot or a data frame with variables \item{mean}{The average
+#' @returns Either a plot or a data frame with variables \item{mean}{The average
 #' effect (i.e., predicted probability)} \item{lower}{The lower 95\% confidence
 #' bound} \item{upper}{The upper 95\% confidence bound} \item{y}{The values of
 #' the dependent variable being predicted} \item{x}{The values of the
@@ -1372,7 +1366,7 @@ mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 #' @param sim Logical indicating whether simulated confidence bounds should be
 #' produced.
 #' @param R Number of simulations to perform if \code{sim = TRUE}
-#' @return A list with the following elements: \item{diffs}{A matrix of
+#' @returns A list with the following elements: \item{diffs}{A matrix of
 #' calculated first differences} \item{minmax}{A matrix of values that were
 #' used to calculate the predicted changes} \item{minPred}{A matrix of
 #' predicted probabilities when each variable is held at its minimum value, in
@@ -1386,7 +1380,7 @@ mnlAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE,...){
 #' 
 #' library(nnet)
 #' data(france)
-#' mnl.mod <- multinom(vote ~ age + male + retnat + lrself, data=france)
+#' mnl.mod <- nnet::multinom(vote ~ age + male + retnat + lrself, data=france)
 #' typical.france <- data.frame(
 #' 	age = 35, 
 #' 	retnat = factor(1, levels=1:3, labels=levels(france$retnat)), 
@@ -1481,20 +1475,21 @@ function (obj, data, typical.dat = NULL, diffchange=c("range", "sd", "unit"),
     preds.min <- as.matrix(preds[seq(1, nrow(preds), by = 2), ])
     preds.max <- as.matrix(preds[seq(2, nrow(preds), by = 2), ])
     b <- mvrnorm(R, c(t(coef(obj))), vcov(obj))
-	X <- model.matrix(as.formula(paste("~", as.character(formula(obj))[3], sep="")), data=tmp.df)
-	xb <- lapply(1:nrow(b), function(z)cbind(1, exp(X %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=TRUE)))))
-	probs <- lapply(xb, function(x)t(apply(x, 1, function(z)z/sum(z))))
-	pminlist <- lapply(probs, function(x)x[seq(1, nrow(probs[[1]]), by=2), ])
-	pmaxlist <- lapply(probs, function(x)x[seq(2, nrow(probs[[1]]), by=2), ])
-	difflist <- lapply(1:length(probs), function(i)pmaxlist[[i]]-pminlist[[i]])
-	eg <- as.matrix(expand.grid(1:nrow(difflist[[1]]), 1:ncol(difflist[[1]])))
-	means <- matrix(sapply(1:nrow(eg), function(ind)mean(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]))), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))
-	lower <- matrix(sapply(1:nrow(eg), function(ind)quantile(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]), .025)), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))
-	upper <- matrix(sapply(1:nrow(eg), function(ind)quantile(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]), .975)), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))
-
-	colnames(means) <- colnames(lower) <- colnames(upper) <- colnames(preds.min) <- colnames(preds.max) <- levels(y)
-	rownames(means) <- rownames(lower) <- rownames(upper) <- rownames(preds.min) <- rownames(preds.max) <- colnames(tmp.df)
-	diffs <- list(mean = means, lower=lower, upper=upper)
+    unf <- unformulate(formula(obj))
+    X <- model.matrix(reformulate(unf$termlabels), data=tmp.df)
+  	xb <- lapply(1:nrow(b), function(z)cbind(1, exp(X %*% t(matrix(c(t(b[z,])), ncol=ncol(coef(obj)), byrow=TRUE)))))
+  	probs <- lapply(xb, function(x)t(apply(x, 1, function(z)z/sum(z))))
+  	pminlist <- lapply(probs, function(x)x[seq(1, nrow(probs[[1]]), by=2), ])
+  	pmaxlist <- lapply(probs, function(x)x[seq(2, nrow(probs[[1]]), by=2), ])
+  	difflist <- lapply(1:length(probs), function(i)pmaxlist[[i]]-pminlist[[i]])
+  	eg <- as.matrix(expand.grid(1:nrow(difflist[[1]]), 1:ncol(difflist[[1]])))
+  	means <- matrix(sapply(1:nrow(eg), function(ind)mean(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]))), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))
+  	lower <- matrix(sapply(1:nrow(eg), function(ind)quantile(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]), .025)), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))
+  	upper <- matrix(sapply(1:nrow(eg), function(ind)quantile(sapply(difflist, function(x)x[eg[ind,1], eg[ind,2]]), .975)), ncol=ncol(difflist[[1]]), nrow=nrow(difflist[[1]]))
+  
+  	colnames(means) <- colnames(lower) <- colnames(upper) <- colnames(preds.min) <- colnames(preds.max) <- levels(y)
+  	rownames(means) <- rownames(lower) <- rownames(upper) <- rownames(preds.min) <- rownames(preds.max) <- colnames(tmp.df)
+  	diffs <- list(mean = means, lower=lower, upper=upper)
 }
 minmax.mat <- do.call(data.frame, c(minmax, stringsAsFactors=TRUE))
 minmax.mat <- rbind(do.call(data.frame, c(meds, stringsAsFactors=TRUE)), minmax.mat)
@@ -1523,7 +1518,7 @@ return(ret)
 #' minus one-half unit change around the median.
 #' @param n Number of \code{diffchange} units to change. 
 #' @param R Number of simulations.
-#' @return A list with elements: \item{mean}{Average effect of the variable for
+#' @returns A list with elements: \item{mean}{Average effect of the variable for
 #' each category of the dependent variable.} \item{lower}{Lower 95 percent
 #' confidence bound} \item{upper}{Upper 95 percent confidence bound}
 #' @author Dave Armstrong
@@ -1667,7 +1662,7 @@ mnlChange2 <-
 #' @param sim Logical indicating whether or not simulations should be done to
 #' generate confidence intervals for the difference.
 #' @param R Number of simulations.
-#' @return A list with the following elements: \item{diffs}{A matrix of
+#' @returns A list with the following elements: \item{diffs}{A matrix of
 #' calculated first differences} \item{minmax}{A matrix of values that were
 #' used to calculate the predicted changes} \item{minPred}{A matrix of
 #' predicted probabilities when each variable is held at its minimum value, in
@@ -1862,7 +1857,7 @@ invisible(ret)
 #' minus one-half unit change around the median.
 #' @param n Number of \code{diffchange} units to change. 
 #' @param R Number of simulations.
-#' @return A list with the following elements: \item{diffs}{A matrix of
+#' @returns A list with the following elements: \item{diffs}{A matrix of
 #' calculated first differences} \item{minmax}{A matrix of values that were
 #' used to calculate the predicted changes} \item{minPred}{A matrix of
 #' predicted probabilities when each variable is held at its minimum value, in
@@ -1986,6 +1981,11 @@ ordChange2 <- function (obj, varnames, data, diffchange=c("sd", "unit"),
 ##' @param x Object of class \code{ordChange}
 ##' @param ... Other arguments to be passed down to the function
 ##' @param digits Number of digits to print
+##' @returns Printed output where the rows correspond to the terms in the model
+##' and the columns refer to the levels of the dependent variable.  The cell entries
+##' give the changes in predicted probabilities of being in the column level for 
+##' the imposed change in the row term.  An asterisk is placed by the value if 
+##' the change is significantly different from zero. 
 ##' @export
 ##' @method print ordChange
 print.ordChange <- function(x, ..., digits=3){
@@ -2017,7 +2017,7 @@ print.ordChange <- function(x, ..., digits=3){
 #' @param obj An object of class \code{multinom}
 #' @param permute Logical indicating whether to check all base categories for
 #' the Fagerland et. al. specification test.
-#' @return A list with elements: \item{result}{Fit statistics.}
+#' @returns A list with elements: \item{result}{Fit statistics.}
 #' \item{permres}{The results of the base category permutation exercise.}
 #' @author Dave Armstrong
 #' @references Fagerland M. W., D. W. Hosmer and A. M. Bonfi.  2008.
@@ -2106,6 +2106,7 @@ mnlfit <- function(obj, permute=FALSE){
 	return(out)
 }
 
+
 ##' @method print mnlfit
 print.mnlfit <- function(x, ..., digits=3){
 	fmt <- paste("%.", digits, "f", sep="")
@@ -2147,7 +2148,7 @@ print.ordfit <- function(x,..., digits=3){
 #' @aliases ordfit print.ordfit
 #' @param obj A model object of class \code{polr} or \code{clm}.
 #' @param data A data frame used to fit `obj`. 
-#' @return An object of class \code{ordfit} which is a matrix containing
+#' @returns An object of class \code{ordfit} which is a matrix containing
 #' statistics and specification tests.
 #' @author Dave Armstrong
 #' @references Lipsitz, S. R., Fitzmaurice, G. M. and Mohlenberghs, G.  1996.
@@ -2329,7 +2330,7 @@ ordfit <- function(obj, data){
 #' @param returnMprob Logical indicating whether marginal probabilities,
 #' averaged over individuals, should be returned.
 #' @param \dots Arguments passed down to the call to \code{xyplot}
-#' @return Either a plot or a list with a data frame containing the variables
+#' @returns Either a plot or a list with a data frame containing the variables
 #' \item{mean}{The average effect (i.e., predicted probability)}
 #' \item{lower}{The lower 95\% confidence bound} \item{upper}{The upper 95\%
 #' confidence bound} \item{y}{The values of the dependent variable being
@@ -2464,7 +2465,7 @@ ordAveEffPlot <- function(obj, varname, data, R=1500, nvals=25, plot=TRUE, retur
 #' 
 #' 
 #' @param obj A model object of class \code{glm} (with \code{family=poisson}).
-#' @return A 2x2 data frame with rows representing the different types of
+#' @returns A 2x2 data frame with rows representing the different types of
 #' statistics (Deviance and Chi-squared) and columns representing the test
 #' statistic and p-value.
 #' @author Dave Armstrong
@@ -2533,7 +2534,7 @@ function (obj)
 #' \code{Details} for more information.
 #' @param R Number of bootstrap samples to be drawn if \code{sim=TRUE}.
 #' @param ... Other arguments to be passed down. 
-#' @return An object of class \code{pre}, which is a list with the following
+#' @returns An object of class \code{pre}, which is a list with the following
 #' elements: \item{pre}{The proportional reduction in error} \item{epre}{The
 #' expected proportional reduction in error} \item{m1form}{The formula for
 #' model 1} \item{m2form}{The formula for model 2} \item{pcp}{The percent
@@ -2767,6 +2768,11 @@ function (mod1, mod2 = NULL, data = NULL, sim = FALSE, R = 2500, ...)
 #' @param sim.ci Coverage for the simulated confidence interval, if
 #' \code{sim=TRUE} in the call to \code{pre}.
 #' @param ... Other arguments passed to print, currently not implemented
+#' @returns Printed results that given the proportion in the modal category (PMC), 
+#' proportion correctly predicted by the model (PCP) and the proportional reduction
+#' in error (PRE).  The ePMC, ePCP and ePRE are the expected versions of the terms 
+#' above that take into account model uncertainty.  The two models being compared
+#' are also identified. 
 #' @author Dave Armstrong
 #' 
 #' @export
@@ -2970,10 +2976,13 @@ function (obj = obj, int.var = int.var, vars = vars, b = b, X = X)
 #' @aliases searchVarLabels searchVarLabels.data.frame searchVarLabels.tbl_df
 #' @param dat a data frame whose variable labels you want to search.
 #' @param str string used to search variable labels.
-#' @return \item{matrix}{A matrix of dimensions n-matches x 2 is returned,
+#' @returns \item{matrix}{A matrix of dimensions n-matches x 2 is returned,
 #' where the first column is the column number of the matching variable and the
 #' second column is the variable label.  The row names of the matrix are the
 #' variable names.}
+#' @examples
+#' data(france)
+#' searchVarLabels(france,"vote")
 #' 
 #' @export
 #' 
@@ -2985,14 +2994,19 @@ searchVarLabels <- function(dat, str) UseMethod("searchVarLabels")
 searchVarLabels.data.frame <-
 function (dat, str)
 {
+    vlat <- NULL
     if ("var.labels" %in% names(attributes(dat))) {
-        vlat <- "var.labels"
+        vlat <- attr(dat, "var.labels")
     }
     if ("variable.labels" %in% names(attributes(dat))) {
-        vlat <- "variable.labels"
+        vlat <- attr(dat, "variable.labels")
     }
-    ind <- sort(union(grep(str, attr(dat, vlat), ignore.case = TRUE), grep(str, names(dat), ignore.case = TRUE)))
-    vldf <- data.frame(ind = ind, label = attr(dat, vlat)[ind], stringsAsFactors=TRUE)
+    
+    if(is.null(vlat)){
+      vlat <- rep("", ncol(dat))
+    }
+    ind <- sort(union(grep(str, vlat, ignore.case = TRUE), grep(str, names(dat), ignore.case = TRUE)))
+    vldf <- data.frame(ind = ind, label = vlat[ind], stringsAsFactors=TRUE)
     rownames(vldf) <- names(dat)[ind]
     vldf
 }
@@ -3002,7 +3016,7 @@ function (dat, str)
 searchVarLabels.tbl_df <-
 function (dat, str)
 {
-    vlat <- unlist(sapply(1:ncol(dat), function(i)attr(dat[[i]], "label")))
+    vlat <- unlist(sapply(1:ncol(dat), function(i)ifelse(is.null(attr(dat[[i]], "label")), "", attr(dat[[i]], "label"))))
     ind <- sort(union(grep(str, vlat, ignore.case = TRUE), grep(str, names(dat), ignore.case = TRUE)))
     vldf <- data.frame(ind = ind, label = vlat[ind], stringsAsFactors=TRUE)
     rownames(vldf) <- names(dat)[ind]
@@ -3022,7 +3036,7 @@ function (dat, str)
 #' model.
 #' @param coefs A vector of coefficients where elements 1 to \code{n.coef} give
 #' model coefficients and elements \code{n.coef}+1 to k have intercepts.
-#' @return An n x m-category matrix of predicted probabilities
+#' @returns An n x m-category matrix of predicted probabilities
 #' 
 #' @export
 #' 
@@ -3086,7 +3100,7 @@ function (object, coefs, n.coef)
 #' @param type Character string of either \sQuote{count} (to obtain changes in
 #' predicted counts) or \sQuote{zero} (to obtain changes in the predicted
 #' probability of membership in the zero group).
-#' @return A list with the following elements: \item{diffs}{A matrix of
+#' @returns A list with the following elements: \item{diffs}{A matrix of
 #' calculated first differences} \item{minmax}{A matrix of values that were
 #' used to calculate the predicted changes}
 #' @author Dave Armstrong
@@ -3192,7 +3206,7 @@ function (obj, data, typical.dat = NULL, type = "count")
 #' \code{NULL}, the levels of the factor will be used
 #' @param colnames An optional vector of column names for the table, if
 #' \code{NULL}, the levels of the factor will be used
-#' @return A matrix of fitted values and confidence intervals
+#' @returns A matrix of fitted values and confidence intervals
 #' @author Dave Armstrong
 #' 
 #' @export
@@ -3255,7 +3269,7 @@ cat2Table <- function(eff.obj, digits=2, rownames = NULL, colnames=NULL){
 #' @param level Type I error rate for the tests.
 #' @param two.sided Logical indicating whether the tests should be two-sided
 #' (if \code{TRUE}, the default) or one-sided (if \code{FALSE}).
-#' @return A matrix giving five t-tests.
+#' @returns A matrix giving five t-tests.
 #' @author Dave Armstrong
 #' 
 #' @export
@@ -3359,7 +3373,7 @@ BGMtest <- function(obj, vars, digits = 3, level = 0.05, two.sided=TRUE){
 #' output.
 #' @param ... Other arguments to be passed down to \code{effect} if
 #' \code{plot.type} = \sQuote{slopes}.
-#' @return For \code{type} = \sQuote{facs} and \code{plot} = \code{FALSE}, a
+#' @returns For \code{type} = \sQuote{facs} and \code{plot} = \code{FALSE}, a
 #' data frame with the following values: \item{fit}{The expected difference
 #' between the two factor levels at the specified value of the conditioning
 #' variable.} \item{se.fit}{The standard error of the expected differences. }
@@ -3634,7 +3648,7 @@ if(plot){
 #' This panel function is defined to plot translucent confidence intervals in a
 #' single-panel, grouped (i.e., superposed) lattice display. Note, both lower
 #' and upper must be passed directly to \code{xyplot} as they will be passed
-#' down to the panel function.
+#' down to the panel function.  This is a function that is used by `intQualQuant()`
 #' 
 #' 
 #' @param x,y Data from the call to \code{xyplot}.
@@ -3642,7 +3656,8 @@ if(plot){
 #' @param lower,upper 95\% lower and upper bounds of \code{y}.
 #' @param ca Value of the alpha channel in [0,1]
 #' @param ... Other arguments to be passed down to the plotting functions.
-#' 
+#' @returns A panel function that can be used in a lattice plot to print 
+#' semi-opaque confidnece envelopes around predicted values. 
 #' @export
 #' 
 #' @author Dave Armstrong
@@ -3675,7 +3690,8 @@ panel.transci <- function(x,y,groups,lower,upper, ca=.25, ...){
 #' Lattice panel function for two rug plots
 #' 
 #' This panel function is defined to plot two rugs, one on top of the other in
-#' a multi-panel lattice display.
+#' a multi-panel lattice display. This is a function that is used intenally by 
+#' `intQualQuant()`. 
 #' 
 #' 
 #' @param xa,xb Numeric vectors to be plotted.
@@ -3689,7 +3705,8 @@ panel.transci <- function(x,y,groups,lower,upper, ca=.25, ...){
 #' \code{panel.rug} for more details.
 #' @param lty,lwd Line type and width arguments (see \code{par} for more
 #' details).
-#' 
+#' @returns A panel function that generates a stacked rug plot suitable for 
+#' inclusion in a lattice graph. 
 #' @export
 #' 
 #' @author Dave Armstrong
@@ -3713,7 +3730,8 @@ panel.doublerug <- function (xa = NULL, xb = NULL,
 #' 
 #' This panel function is defined to plot confidence intervals in a multi-panel
 #' lattice display. Note, both lower and upper must be passed directly to
-#' \code{xyplot} as they will be passed down to the prepanel function.
+#' \code{xyplot} as they will be passed down to the panel function.  This function 
+#' is used internally by several other functions in the package.  
 #' 
 #' 
 #' @param x,y Data from the call to \code{xyplot}.
@@ -3721,7 +3739,8 @@ panel.doublerug <- function (xa = NULL, xb = NULL,
 #' @param lower,upper 95\% lower and upper bounds of \code{y}.
 #' @param zl Logical indicating whether or not a horizontal dotted line at zero
 #' is desired.
-#' 
+#' @returns A panel function that plots confidence envelopes with dotted lines 
+#' suitable for inclusion in a lattice graph
 #' @export
 #' 
 #' @author Dave Armstrong
@@ -3739,7 +3758,8 @@ panel.ci <- function(x,y,subscripts,lower,upper,zl){
 #' This prepanel function is defined so as to allow room for all confidence
 #' intervals plotted in a lattice display. Note, both lower and upper must be
 #' passed directly to \code{xyplot} as they will be passed down to the prepanel
-#' function.
+#' function.  This function is used internally by several other functions in the 
+#' package
 #' 
 #' 
 #' @param x,y Data from the call to \code{xyplot}.
@@ -3774,6 +3794,8 @@ prepanel.ci <- function(x,y,subscripts, lower,upper){
 #' @param subscripts Variable used to created the juxtaposed panels.
 #' @param lower,upper 95\% lower and upper bounds of \code{y}.
 #' @param length Length of the arrow head lines.
+#' @returns A panel function that prints capped error bars.  The function is suitable
+#' for inclusion in a lattice graph. 
 #' @author Dave Armstrong
 #' 
 #' @export
@@ -3817,7 +3839,7 @@ panel.2cat <- function(x,y,subscripts,lower,upper, length=.2){
 #' @param span Span to be passed down to the \code{loess} function if
 #' \code{span.as=FALSE}.
 #' @param ... Other arguments to be passed down to the call to \code{loess}.
-#' @return A matrix with the following columns for each variable:
+#' @returns A matrix with the following columns for each variable:
 #' \item{RSSp}{Residual sum-of-squares for the parametric (linear) model.}
 #' \item{RSSnp}{Residual sum-of-squares for the non-parametric (loess) model.}
 #' \item{DFnum}{Numerator degrees of freedom for the F-test: tr(S)-(k+1).}
@@ -3922,7 +3944,7 @@ return(out)
 #' across the various span parameters, but not across variables within the same
 #' model.  \sQuote{none} refers to a pass-through option of no multiple testing
 #' procedure.
-#' @return A list with two elements: \item{x}{Sequence of span values used in
+#' @returns A list with two elements: \item{x}{Sequence of span values used in
 #' testing} \item{y}{p-values for each variable for each span parameter}
 #' @author Dave Armstrong
 #' 
@@ -3981,7 +4003,7 @@ function(model, spfromto, n=10, adjust.method = "none", adjust.type = c("none", 
 #' @param numsd Number of standard deviations to divide by - defaults to 1. 
 #' @param nvals_fac Number of unique values required to standardize - variables with fewer than `nvals_fac` unique values will not be standardized. 
 #' @param exclude A character vector of names of variables to exclude from the standardization. 
-#' @return A data frame with standardized quantitative variables
+#' @returns A data frame with standardized quantitative variables and untransformed variables that are either factors or have sufficiently few values. 
 #' 
 #' @importFrom dplyr mutate across 
 #' @importFrom tidyselect vars_select_helpers
@@ -4030,7 +4052,7 @@ scaleDataFrame <-function(data, numsd=1, nvals_fac = 11, exclude=NULL){
 #' and \code{latex} indicates LaTeX code will be generated.
 #' @param file Connection where the file will be written, if \code{NULL} the
 #' output will only be written to the console
-#' @return A file containing LaTeX Code or CSV data to make a table
+#' @returns A file containing LaTeX Code or CSV data to make a table
 #' 
 #' @export
 #' 
@@ -4119,7 +4141,7 @@ outXT <- function(obj, count=TRUE, prop.r = TRUE, prop.c = TRUE, prop.t = TRUE,
 #' both ends are in bounds. If the shifted interval is wider than the range of
 #' the data, the change will be truncated to the range of the data. 
 #' @param ... Allows user to specify legacy argument \code{change}
-#' @return \item{res}{A vector of values giving the average and 95 percent
+#' @returns \item{res}{A vector of values giving the average and 95 percent
 #' confidence bounds} \item{ames}{The average change in predicted probability
 #' (across all N observations) for each of the R simulations.}
 #' \item{avesamp}{The average change in predicted probability for each of the N
@@ -4336,7 +4358,15 @@ function (obj,
 #' @param return Character string indicating what should be returned.  Multiple 
 #' entries are supported. 
 #' @param ... Other arguments to be passed down to \code{xyplot}.
-#' @return A plot or a data frame
+#' @returns A plot or a list depending on the value of `plot`.  If: 
+#' \item{TRUE}{The plot gives the
+#' average predicted probability and confidence bounds moving across the values  
+#' of the independent variable of interest}
+#' \item{FALSE}{A list with three elements - `ci` which has the values of the independent
+#' variable (labelled `s`), the predicted probability in `mean` and the lower and upper
+#' confidence bounds in `lower` and `upper` respectively; an empty element named `plot` and
+#' an element named `sim` that contains the actual simulated values that can be recovered if
+#' desired.}
 #' @author Dave Armstrong
 #' 
 #' @export
@@ -4475,7 +4505,7 @@ aveEffPlot <- function (obj,
 #' @param cviter Number of iterations of cross-validation to average over.  10
 #' is the default but in real-world applications, this should be somewhere
 #' around 200.
-#' @return A plot, if \code{plot=TRUE}, otherwise a data frame with the degrees
+#' @returns A plot, if \code{plot=TRUE}, otherwise a data frame with the degrees
 #' of freedom and corresponding fit measure.
 #' @author Dave Armstrong
 #' 
@@ -4559,7 +4589,7 @@ NKnots <- function(form, var, data, degree=3, min.knots=1,
 #' @param max.knots Maximum number of internal B-spline knots to be evaluated.
 #' @param adjust Method by which p-values will be adjusted (see
 #' \code{\link{p.adjust}})
-#' @return A matrix with the following columns: \item{F}{F statistics of test
+#' @returns A matrix with the following columns: \item{F}{F statistics of test
 #' of candidate models against target model} \item{DF1}{Numerator DF from
 #' F-test} \item{DF2}{Denominator DF from F-test} \item{p(F)}{p-value from the
 #' F-test} \item{Clarke}{Test statistic from the Clarke test}
@@ -4659,7 +4689,7 @@ NKnotsTest <- function(form, var, data, targetdf = 1, degree=3, min.knots=1,
 #' @param lmobj An object of class \code{lm}.
 #' @param loessobj An object of class \code{loess}.
 #' @param alpha Desired Type I error rate of test.
-#' @return Printed output describing the results of the test.
+#' @returns Printed output describing the results of the test.
 #' @author Dave Armstrong
 #' 
 #' @export
@@ -4709,7 +4739,7 @@ else{
 #' @param x A string identifying the name of the variable to be inspected.
 #' @param includeLabels Logical indicating whether value labels should also be included.
 #' @param ... Other arguments to be passed down, currently unimplemented.
-#' @return A list with a variable label (if present), factor levels/value
+#' @returns A list with a variable label (if present), factor levels/value
 #' labels (if present) and a frequency distribution
 #' @author Dave Armstrong
 #' 
@@ -4760,100 +4790,6 @@ inspect.data.frame <- function(data, x, includeLabels=FALSE, ...){
   return(out)
 }
 
-#' Bayesian Alternating Least Squares Optimal Scaling
-#' 
-#' Estimates a Bayesian analog to the the Alternating Least Squares Optimal
-#' Scaling (ALSOS) solution for qualitative dependent variables.
-#' 
-#' \code{balsos} estimates a Bayesian analog to the Alternating Least Squares
-#' Optimal Scaling solution on the dependent variable.  This permits testing
-#' linearity assumptions on the original scale of the dependent variable.
-#' 
-#' @param formula A formula with a dependent variable that will be optimally
-#' scaled
-#' @param data A data frame.
-#' @param iter Number of samples for the MCMC sampler.
-#' @param chains Number of parallel chains to be run.
-#' @param alg Algorithm used to do sampling.  See \code{stan} for more
-#' details.
-#' @param ... Other arguments to be passed down to \code{stanfit}.
-#' @return A list with the following elements:
-#' 
-#' \item{fit}{The fitted stan output}
-#' 
-#' \item{y}{The dependent variable values used in the regression. }
-#' 
-#' \item{X}{The design matrix for the regression}
-#' @author Dave Armstrong
-#' 
-#' @export
-#' 
-#' @references
-#' 
-#' Jacoby, William G.  1999.  \sQuote{Levels of Measurement and Political
-#' Research: An Optimistic View} American Journal of Political Science 43(1):
-#' 271-301.
-#' 
-#' Young, Forrest.  1981.  \sQuote{Quantitative Analysis of Qualitative Data}
-#' Psychometrika, 46: 357-388.
-#' 
-#' Young, Forrest, Jan de Leeuw and Yoshio Takane.  1976.  \sQuote{Regression
-#' with Qualitative and Quantitative Variables: An Alternating Least Squares
-#' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
-balsos <- function(formula, data, iter=2500, chains = 1, 
-                   alg = c("NUTS", "HMC", "Fixed_param"), ...){
-if(!requireNamespace("rstan")){
-  stop("The rstan package must be installed to use balsos.\n")
-}
-alg <- match.arg(alg)
-stancode <- "data{
-  int N; //number of observations
-  int M; //number of DV categories
-  int k; //number of columns of model matrix
-  real ybar; //mean of y
-  real sy; //sd of y
-  int y[N]; //untransformed DV
-  matrix[N,k] X; //model matrix
-}
-parameters {
-  vector[k] beta; //regression coefficients
-  real<lower=0> sigma; //standard deviation
-  ordered[M] y_star; //transformed dependent variable
-}
-transformed parameters {
-  vector[N] linpred; //linear predictor
-  vector[N] y_new; //vector of transformed DV values
-  real sd_new; //sd of transformed y
-  real mean_new; //mean of transformed y
-  vector[N] y_new2; //rescaled y_new;
-  linpred = X*beta;
-  for(i in 1:N){
-    y_new[i] = y_star[y[i]]; //vector of transformed DV values
-  }
-  sd_new = sd(y_new);
-  mean_new = mean(y_new);
-  y_new2 = (y_new - mean_new)*(sy/sd_new) + ybar;
-}
-model{
-  beta[1] ~ cauchy(0,10); //prior on intercept
-  for(i in 2:k){
-    beta[i] ~ cauchy(0, 2.5); //prior on regression coefficients
-  }
-    target += normal_lpdf(y_new2 | linpred, sigma);
-}"
-
-X <- model.matrix(formula, data)
-y <- as.integer(model.response(model.frame(formula, data)))
-y <- (y - min(y)) + 1L
-balsos.dat <- list(
-  M=max(y), N=length(y), k = ncol(X), ybar = mean(y), sy = sd(y),
-  y=y, X=X)
-fit <- rstan::stan(model_code=stancode, data = balsos.dat,
-            iter = iter, chains = chains, algorithm=alg, ...)
-ret <- list(fit = fit, y=y, X=X, form=formula)
-class(ret) <- "balsos"
-return(ret)
-}
 
 #figure out whether we need the col.alpha parameter in the panel.transci function.
 
@@ -4874,7 +4810,7 @@ return(ret)
 #' the figure idtntifying the postion of individual observations.
 #' @param col.alpha Value for alpha channel of the RGB color palette.
 #' @param ... Other arguments to be passed down to \code{xyplot}.
-#' @return A plot.
+#' @return A plot of predicted values from the loess model. 
 #' @method plot loess
 #' 
 #' @export
@@ -4935,7 +4871,7 @@ plot.loess <- function(x, ..., ci=TRUE, level=.95, linear=FALSE, addPoints=FALSE
 #' 
 #' @param obj An object of class \code{loess}.
 #' @param delta Small change to be induced to estimate derivative.
-#' @return A vector of first derivative values evaluated at each original
+#' @returns A vector of first derivative values evaluated at each original
 #' x-value.
 #' 
 #' @export
@@ -4964,7 +4900,7 @@ loessDeriv <- function(obj, delta=.00001){
 #' @param vars A character vector of the names of the two variables involved in
 #' the interaction.
 #' @param alpha Critical p-value of the test.
-#' @return Printed output that identifies the change-points in statistical
+#' @returns Printed output that identifies the change-points in statistical
 #' significance.
 #' 
 #' @export
@@ -5046,33 +4982,6 @@ changeSig <- function(obj, vars, alpha=.05){
 
 
 
-#' Testing Measurement Level Assumptions.
-#' 
-#' Uses the algorithm discussed in Armstrong and Jacoby 2018) to test the
-#' intervality of a variable scaled by the Bayesian ALSOS method.
-#' 
-#' 
-#' @param obj An object of class \code{balsos}.
-#' @param cor.type Type of correlation to be used in the p-value calculation.
-#' @return Printed output giving the Bayesian p-value evaluating the null that
-#' ther eis no interesting difference between the original values and the
-#' optimally scaled values.
-#' 
-#' @export
-#' 
-#' @author Dave Armstrong
-test.balsos <- function(obj, cor.type=c("pearson", "spearman")){
-    cor.type <- match.arg(cor.type)
-    chains <- as.matrix(obj$fit)
-    chains <- t(chains[,grep("y_new2", colnames(chains))])
-    yvals <- aggregate(1:length(obj$y), list(obj$y), min)
-    chains <- chains[yvals[,2], ]
-    r1 <- c(cor(chains, yvals[,1], method=cor.type)^2)
-    refs <- sample(1:ncol(chains), ncol(chains), replace=FALSE)
-    r0 <- diag(cor(chains, chains[,refs])^2)
-    cat("Test of Linearity (higher values indicate higher probability of linearity)\n")
-    sprintf("%.3f", mean(r1 >= r0))
-}
 
 
 
@@ -5082,49 +4991,55 @@ test.balsos <- function(obj, cor.type=c("pearson", "spearman")){
 #' conditional on a parametric model specification.
 #' 
 #' 
-#' @param form A formula with a dependent variable that will be optimally
-#' scaled
+#' @param form A formula 
 #' @param data A data frame.
 #' @param trans.vars A character string identifying the variables that should
 #' be transformed
 #' @param round.digits Number of digits to round the transformation parameters.
 #' @param ... Other arguments to be passed down to \code{lm}.
-#' @return A linear model object that was estimated on the optimally
+#' @returns A linear model object that was estimated on the optimally
 #' transformed variables.
 #' 
+#' @examples
+#' data(aclp)
+#' mod <- yj_trans(gdpw ~ popg + as.factor(reg) + year, data=aclp, 
+#'                 trans.vars="gdpw")
+#' summary(mod)
 #' @export
 #' 
 #' @author Dave Armstrong
 yj_trans <- function(form, data, trans.vars, round.digits = 3, ...){
-optim_yj <- function(pars, form, data, trans.vars, ...){
-    form <- as.character(form)
-    for(i in 1:length(trans.vars)){
-        form <- gsub(trans.vars[i], paste("yeo.johnson(", trans.vars[i], ",", pars[i], ")", sep=""), form)
-    }
-    form <- as.formula(paste0(form[2], form[1], form[3]))
-    m <- lm(form, data=data)
-    ll <- logLik(m)
-    -ll
-}
-    opt.pars <- nlminb(rep(1, length(trans.vars)), optim_yj, form=form, data=data, trans.vars = trans.vars, lower=0, upper=2)
-    if(!is.null(round.digits)){
-        opt.pars$par <- round(opt.pars$par, round.digits)
-    }
-    form <- as.character(form)
-    for(i in 1:length(trans.vars)){
-        form <- gsub(trans.vars[i], paste("yeo.johnson(", trans.vars[i], ",", opt.pars$par[i], ")", sep=""), form)
-    }
-    form <- as.formula(paste0(form[2], form[1], form[3]))
-    out <- lm(form, data=data, ...)
-    return(out)
+  opt.pars <- nlminb(rep(1, length(trans.vars)), optim_yj, form=form, data=data, trans.vars = trans.vars, lower=0, upper=2)
+  if(!is.null(round.digits)){
+    opt.pars$par <- round(opt.pars$par, round.digits)
+  }
+  form <- unformulate(form)
+  for(i in 1:length(trans.vars)){
+    form$response <- gsub(trans.vars[i], paste("yeo.johnson(", trans.vars[i], ",", opt.pars[i], ")", sep=""), form$response)
+    form$termlabels <- gsub(trans.vars[i], paste("yeo.johnson(", trans.vars[i], ",", opt.pars[i], ")", sep=""), form$termlabels)
+  }
+  form <- reformulate(form$termlabels, response=form$response)
+  out <- lm(form, data=data, ...)
+  return(out)
 }
 
+optim_yj <- function(pars, form, data, trans.vars, ...){
+  form <- unformulate(form)
+  for(i in 1:length(trans.vars)){
+    form$response <- gsub(trans.vars[i], paste("yeo.johnson(", trans.vars[i], ",", pars[i], ")", sep=""), form$response)
+    form$termlabels <- gsub(trans.vars[i], paste("yeo.johnson(", trans.vars[i], ",", pars[i], ")", sep=""), form$termlabels)
+  }
+  form <- reformulate(form$termlabels, response=form$response)
+  m <- lm(form, data=data)
+  ll <- logLik(m)
+  -ll
+}
 
 
 #' Cross-validating Loess curve
 #' 
 #' Function provides the cross-validation error for the loess curve in a manner
-#' that is amenable to optimization of the span.
+#' that is amenable to optimization of the span.  
 #' 
 #' 
 #' @param span The span of the loess smoother.
@@ -5134,9 +5049,17 @@ optim_yj <- function(pars, form, data, trans.vars, ...){
 #' @param K Number of folds for the cross-validation
 #' @param numiter Number of times over which the cv error will be aggregated
 #' @param which Return raw or corrected cv error
-#' @return The cross-validation error from the loess curve.
+#' @returns The cross-validation error from the loess curve.
 #' 
 #' @export
+#' 
+#' @examples
+#' \dontrun{
+#' set.seed(207)
+#' tempdat <- data.frame(x=runif(250, 1, 1000))
+#' tempdat$y <- log(tempdat$x) + rnorm(250, 0, .5) 
+#'    optimize(cv_lo2, c(.1, .9), form=y ~ x, data=tempdat)
+#' }
 #' 
 #' @author Dave Armstrong
 cv_lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2, na.rm=TRUE),
@@ -5172,103 +5095,13 @@ cv_lo2 <- function (span, form, data, cost = function(y, yhat) mean((y - yhat)^2
     return(switch(w, raw=mean(out.cv), corrected=mean(out.cv+out.cost0)))
 }
 
-
-
-
-
-#' Plot Results from BALSOS
-#' 
-#' Plots the optimally scaled points with posterior 95\% credible intervals.
-#' 
-#' 
-#' @param x Object of class \code{balsos}.
-#' @param freq Logical indicating whether you want the frequentist result
-#' plotted alongside the Bayesian result.
-#' @param offset If \code{freq=T}, the Bayesian points will be plotted at
-#' \code{x-offset} and the frequentist points will be plotted at
-#' \code{x+offset}.
-#' @param ... Other arguments to be passed down, currently not implement and
-#' may conflict with the lattice figure.  To change the figure the best advice
-#' would be to save the plot as an oject and use the \code{update} function to
-#' change its features.
-#' @param plot Logical indicating whether the plot should be returned or just the data. 
-#' @return A lattice graph produce by a call to \code{xyplot}.
-#' @method plot balsos
-#' 
-#' @export
-#' 
-#' @author Dave Armstrong
-plot.balsos <- function(x, ..., freq=TRUE, offset=.1, plot=TRUE){
-if(freq){
-    Xdat <- as.data.frame(x$X[,-1])
-    names(Xdat) <- paste("var", 1:ncol(Xdat), sep="")
-    Xdat$y <- x$y
-
-    a1 <- alsosDV(y ~ ., data=Xdat)
-}
-
-mins <- aggregate(1:length(x$y), list(x$y), min)
-chains <- as.matrix(x$fit)
-chains <- chains[,grep("y_new2", colnames(chains))]
-os <- chains[, mins[,2]]
-
-s<- summary(as.mcmc(os))
-
-newdf <- data.frame(
-    freq = a1$result$os[mins[,2]],
-    os = s$statistics[,1],
-    lower = s$quantiles[,1],
-    upper = s$quantiles[,5],
-    orig = sort(unique(x$y)), stringsAsFactors=TRUE
-)
-if(!plot){
-  return(newdf)
-}else{
-tp <- trellis.par.get()$superpose.symbol
-if(!freq){
-xyplot(os ~ orig, data=newdf,
-    panel = function(x,y, ...){
-        panel.points(x,y, cex=.6, col=tp$col[1], pch=tp$pch[1])
-        panel.segments(x, newdf$lower, x, newdf$upper, col="black", cols=tp$col[1])
-    })
-}
-else{
-    xyplot(os ~ orig, data=newdf,
-        panel = function(x,y, ...){
-            panel.points(x-offset,y, cex=.6, col=tp$col[1], pch=tp$pch[1])
-            panel.segments(x-offset, newdf$lower, x-offset, newdf$upper, col=tp$col[1])
-            panel.points(x+offset, newdf$freq, col=tp$col[2], pch=tp$pch[2])
-        })
-    }
-
-  }
-}
-
-##' Summry method for Bayesian ALSOS
-##' 
-##' @description summary method for objects of class \code{balsos}
-##' @param object Object of class \code{balsos}
-##' @param ... Other arguments, currently unimplemented
-##' 
-##' @export
-##' 
-##' @method summary balsos
-summary.balsos <- function(object, ...){
-    coef.inds <- grep("^b", names(object$fit))
-    mins <- aggregate(1:length(object$y), list(object$y), min)
-    os.inds <- sapply(paste("y_new2[", mins[,2], "]", sep=""), function(z)grep(z, names(object$fit), fixed=TRUE))
-    names(object$fit)[c(coef.inds, os.inds)] <- c(colnames(object$X),
-        paste0("y_", sort(unique(object$y))))
-    summary(object$fit, pars=c(colnames(object$X), paste0("y_", sort(unique(object$object)))))
-}
-
-
 ##' Generate central values of a varaible
 ##' 
 ##' @description Function generates central values of a variable.  If the variable is numeric with 
 ##' more than \code{n_unique_fac} values, then the median is returned.  If the variable is
 ##' a factor or numeric with fewer than or equal to \code{n_unique_fac} unique values, 
-##' then the modal value is returned.  
+##' then the modal value is returned.  This is a function that is used internally by 
+##' other functions in the package. 
 ##' 
 ##' @param x A vector of values. 
 ##' @param n_unique_fac number of unique values below which the variable will be treated like a factor.
@@ -5276,7 +5109,7 @@ summary.balsos <- function(object, ...){
 ##' 
 ##' @export
 ##' 
-##' @return A scalar value giving the central value of the variable. 
+##' @returns A scalar value giving the central value of the variable. 
 central <- function(x, n_unique_fac=10, ...){
     if(is.factor(x)){
         tab <- table(x)
@@ -5312,7 +5145,7 @@ central <- function(x, n_unique_fac=10, ...){
 #' or only those significant at the 95\% two-tailed level.
 #' @param ... Other arguments to be passed down to print, currently
 #' unimplemented.
-#' @return An data frame with the following variables: \item{variables}{The
+#' @returns An data frame with the following variables: \item{variables}{The
 #' variables and the values at which they are held constant.  For example,
 #' \code{tmp1} would be the first value of \code{tmp} used in the probability
 #' calculation and \code{tmp2} would be the second value of \code{tmp} used in
@@ -5444,7 +5277,7 @@ print.diffci <- function(x, type = c("pr", "pw"),
 #' @param returnProbs Whether or not the vecot/matrix of predicted probabilities
 #' should be returned as well. 
 #' @param calcPW Should the pairwise differences be calculated?
-#' @return An data frame with the following variables: \item{variables}{The
+#' @returns An data frame with the following variables: \item{variables}{The
 #' variables and the values at which they are held constant.  For example,
 #' \code{tmp1} would be the first value of \code{tmp} used in the probability
 #' calculation and \code{tmp2} would be the second value of \code{tmp} used in
@@ -5716,9 +5549,19 @@ plot.diffci <- function(x, ..., xvar = NULL, condvars = NULL){
 #' @param ranCoef Logcial indicating whether the coefficients should be treated
 #' as fixed or whether they should be drawn from their implied sampling
 #' distribution for each iteration of the simulation.
-#' @return \item{obsF}{The observed F-statistic from the test on the original
+#' @returns \item{obsF}{The observed F-statistic from the test on the original
 #' models.} \item{Fdist}{The \code{R} different F-statistics calculated at each
 #' iteration of the simulation.}
+#' 
+#' @examples
+#' library(mgcv)
+#' data(InteractionEx)
+#' lmod <- lm(y ~ x1*x2 + z, data=InteractionEx)
+#' gmod <- gam(y ~ te(x1) + te(x2) + ti(x1,x2) + z, data=InteractionEx)
+#' 
+#' out <- testGAMint(lmod, gmod, data=InteractionEx, R=100)
+#' ## calculate p-value
+#' mean(out$Fdist > out$obsF)
 #' 
 #' @export
 #' 
@@ -5916,27 +5759,12 @@ function (obj, varnames, varcov=NULL, name.stem = "cond_eff",
     }
 }
 
-##' Print method for glmChange objects
-##' 
-##' @description Print method for object of class \code{glmc2}. 
-##' 
-##' @param x Object of class \code{glmc2}
-##' @param ... Currently unimplemented. 
-##' @export
 ##' @method print glmc2
 print.glmc2 <- function(x, ...){
     print.default(x$res)
     invisible(x)
 }
 
-##' Print method for intQualQuant objects. 
-##' 
-##' @description Print method for objects of class \code{iqq} calculated
-##' with the \code{intQualQuant} function.
-##' 
-##' @param x Object of class \code{iqq}
-##' @param ... Currently unimplmeneted
-##' @export 
 ##' @method print iqq
 print.iqq <- function(x, ...){
     cat("Conditional Effect of ", x$mainvar, " given ", x$givenvar, "\n")
@@ -5968,7 +5796,7 @@ print.iqq <- function(x, ...){
 #' @param vals A named list of length 2 where each element gives the minimum
 #' and maximum values used in the calculation.
 #' @param typical A named vector of values at which to hold variables constant.
-#' @return A list with two elements:
+#' @returns A list with two elements:
 #' 
 #' \item{ave}{The average second difference in each iteration of the
 #' bootstrap.} \item{ind}{If \code{type == 'AME'}, \code{ind} is returned with
@@ -5978,6 +5806,15 @@ print.iqq <- function(x, ...){
 #' probabilities for the four conditions.}
 #'
 #' @export
+#' @examples
+#' data(aclp)
+#' mod <- glm(democ ~ gdpw + popg,
+#'            data = subset(aclp, year == 1980), 
+#'            family=binomial)
+#' 
+#' secdiff <- secondDiff(mod, c("gdpw", "popg"), data = subset(aclp, year == 1980))
+#' summary(secdiff)
+#' 
 #' @author Dave Armstrong
 secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typical = NULL){
     disc <- sapply(vars, function(x)is.factor(data[[x]]))
@@ -6135,8 +5972,19 @@ secondDiff <- function(obj, vars, data, method=c("AME", "MER"), vals = NULL, typ
 ##' @param level Confidence level for the confidence intervals
 ##' @param digits Number of digits to print
 ##' @param ... Other arguments to be passed down to \code{summary}. 
-##' 
+##' @returns Printed output giving the overall average second difference and 
+##' 95% confidence interval along with summarized individual results that give
+##' the number of significant positive and negative as well as insignificant
+##' second differences. 
 ##' @method summary secdiff
+#' @examples
+#' data(aclp)
+#' mod <- glm(democ ~ gdpw + popg,
+#'            data = subset(aclp, year == 1980), 
+#'            family=binomial)
+#' 
+#' secdiff <- secondDiff(mod, c("gdpw", "popg"), data = subset(aclp, year == 1980))
+#' summary(secdiff)
 ##' @export
 summary.secdiff <- function(object, ..., level=0.95, digits=3){
   ll <- (1-level)/2
@@ -6168,8 +6016,18 @@ summary.secdiff <- function(object, ..., level=0.95, digits=3){
 ##' @param x An object of class \code{secdiff} 
 ##' @param level The confidence level of the confidence interval(s)
 ##' @param ... Other arguments to be passed down, currently not implemented. 
-##' 
+##' @returns A plot of the second difference on the x-axis and the index 
+##' (i.e., observation number) on the y-axis. The plot has individual second
+##' differences and 95% confidence intervals. 
 ##' @method plot secdiff
+#' @examples
+#' data(aclp)
+#' mod <- glm(democ ~ gdpw + popg,
+#'            data = subset(aclp, year == 1980), 
+#'            family=binomial)
+#' 
+#' secdiff <- secondDiff(mod, c("gdpw", "popg"), data = subset(aclp, year == 1980))
+#' (plot(secdiff))
 ##' @export
 plot.secdiff <- function(x, level=.95, ...){
   ll <- (1-level)/2
@@ -6226,8 +6084,16 @@ plot.secdiff <- function(x, level=.95, ...){
 #' @param cumulative Logical indicating whether the outliers should be removed
 #' cumulatively, or each one in turn, replacing the other outlying
 #' observations.
-#' 
+#' @returns An effects plot that shows the effect of sequentially removing outliers 
+#' as defined by `stat`.  
 #' @export
+#' @examples
+#' data(aclp)
+#' mod <- glm(democ ~ gdpw + popg,
+#'            data = subset(aclp, year == 1980), 
+#'            family=binomial)
+#' 
+#' outEff(mod, "gdpw", subset(aclp, year==1980))
 #' 
 #' @author Dave Armstrong
 outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson"), nOut = 10, whichOut=NULL, cumulative=FALSE){
@@ -6307,10 +6173,9 @@ outEff <- function(obj, var, data, stat =c("cooksD", "hat", "deviance", "pearson
 #' @param ordc The output from \code{ordChange}.
 #' @param plot Logical indicating whether a plot (if \code{TRUE}) or data (if
 #' \code{FALSE}) should be returned.
-#' @return Either a \code{lattice} plot or a \code{data.frame} depending on the
+#' @returns Either a \code{lattice} plot or a \code{data.frame} depending on the
 #' specification of the \code{plot} argument.
 #' @author Dave Armstrong
-#' 
 #' @export
 #' 
 #' @examples
@@ -6362,7 +6227,8 @@ oc2plot <- function(ordc, plot=TRUE){
 #' @aliases probgroup probgroup.polr probgroup.multinom
 #' @param obj Object of class \code{polr} or \code{multinom} where appropraite.
 #' @param ... Currently not implemented.
-#' @return A plot.
+#' @returns A plot giving the probability with which each observations is 
+#' classified as its observed value. 
 #' 
 #' @export
 #' 
@@ -6413,7 +6279,7 @@ probgroup.multinom <- function(obj, ...){
 #' count dependent variable.
 #' 
 #' @param obj A model of class \code{glm} with \code{family=poisson}.
-#' @return A named vector of scalar measures of fit
+#' @returns A named vector of scalar measures of fit.
 #' @author Dave Armstrong
 #' 
 #' @export
@@ -6467,7 +6333,19 @@ poisfit <- function(obj){
 #' \code{expand.grid}.
 #' @param obj A model object estimated with \code{survreg}.
 #' @param ... currently not implemented.
-#' @return A data frame.
+#' @returns A data frame with the variables in `l` and: 
+#' \item{p.fail}{The probability of vailure given `time`}
+#' \item{time}{The time at which the failure probability is evaluated. }
+#' 
+#' @examples
+#' data(cabinet)
+#' library(survival)
+#' mod <- survreg(Surv(durat, censor) ~ invest + polar, data=cabinet, 
+#'                dist="exponential")
+#' l= list(invest = 0, 
+#'         polar = c(5,15,25))
+#' out <- makeHypSurv(l, mod)
+#' head(out)
 #' 
 #' @export
 #' 
@@ -6480,7 +6358,7 @@ makeHypSurv <- function(l,obj, ...){
     plot.data <- data.frame(
         p.fail = rep(p, each=nrow(preds)),
         time = c(preds), stringsAsFactors=TRUE)
-    plot.data <- cbind(plot.data, tmp[rep(1:3, nrow(plot.data)/3), ])
+    plot.data <- cbind(plot.data, tmp[rep(1:nrow(tmp), nrow(plot.data)/nrow(tmp)), ])
     rownames(plot.data) <- NULL
     return(plot.data)
 }
@@ -6498,7 +6376,12 @@ makeHypSurv <- function(l,obj, ...){
 #' @param time A string identifying the name of the time variable.
 #' @param lagLength The length of the lag, use negative values for leading
 #' variables.
-#' @return A vector giving the lagged values of \code{x}.
+#' @returns A vector giving the lagged values of \code{x}.
+#' 
+#' @examples
+#' data(aclp)
+#' aclp$lag_gdpw <- tscslag(aclp, "gdpw", "country", "year")
+#' head(aclp)
 #' 
 #' @export
 #' 
@@ -6535,9 +6418,13 @@ tscslag <- function(dat, x, id, time, lagLength=1){
 #' @param polyOrder The order of the polynomial to be used.
 #' @param plot Logical indicating whether the effects should be plotted
 #' @param ... Currently not implemented.
-#' @return A plot or a data frame giving the results of the tests identified
+#' @returns A plot or a data frame giving the results of the tests identified
 #' above.
 #' @author Dave Armstrong
+#' @examples
+#' data(aclp)
+#' mod <- glm(democ ~ gdpw, data=na.omit(aclp), family=binomial)
+#' testNL(mod, "gdpw", transPower=.5, polyOrder=3)
 #' 
 #' @export
 #' 
@@ -6545,23 +6432,6 @@ tscslag <- function(dat, x, id, time, lagLength=1){
 #' Nonnested Hypotheses."  \emph{Political Analysis} 15(3): 347--363.
 testNL <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
   UseMethod("testNL")
-}
-
-##' Power Transformation Function
-##' 
-##' @description Power transformation function that treats everything with
-##' absolute power transform < .01 as the log transform.  
-##' @param x Vector of values to be transformed
-##' @param transPower The power of the transformation
-##' @return A vector of transformed values
-##' @export
-powerTrans <- function(x, transPower){
-  if(abs(transPower) > .01){
-    x <- I(x^transPower)
-  }  else {
-    x <- log(x)
-  }
-  x
 }
 
 ##' @rdname testNL
@@ -6662,6 +6532,26 @@ testNL.glm <- function(obj, var, transPower, polyOrder, plot=FALSE, ...){
 ##' @method testNL lm
 testNL.lm <- testNL.glm
 
+##' Power Transformation Function
+##' 
+##' @description Power transformation function that treats everything with
+##' absolute power transform < .01 as the log transform.  
+##' @param x Vector of values to be transformed
+##' @param transPower The power of the transformation
+##' @returns A vector of transformed values
+##' @examples
+##' data(aclp)
+##' ## Calculate log transform of gdpw from the aclp data
+##' powerTrans(aclp$gdpw, 0)
+##' @export
+powerTrans <- function(x, transPower){
+  if(abs(transPower) > .01){
+    x <- I(x^transPower)
+  }  else {
+    x <- log(x)
+  }
+  x
+}
 
 
 #' Plot Effects from Firth Logit
@@ -6686,8 +6576,15 @@ testNL.lm <- testNL.glm
 #' @param data A data frame.
 #' @param ... Other arguments to be passed down to the \code{\link{Effect}}
 #' function.
-#' @return An object of class \code{eff} that can be used with other functions
+#' @returns An object of class \code{eff} that can be used with other functions
 #' from the \code{effects} package.
+#' @examples
+#' data(aclp)
+#' library(logistf)
+#' library(effects)
+#' mod <- logistf(democ ~ gdpw, data=na.omit(aclp), family=binomial)
+#' effs <- effect_logistf("gdpw", mod, na.omit(aclp))
+#' effs
 #' 
 #' @export
 #' 
@@ -6726,7 +6623,7 @@ effect_logistf <- function(var, obj, data, ...){
 #' \deqn{\sigma^2 * \pi^2 / 6}
 #' where \eqn{\gamma}{gamma} is Euler's constant (which can be obtained as \code{-digamma(1)}).
 #' 
-#' @return A vector of probabilities
+#' @returns A vector of probabilities
 #' 
 #' @author Thomas Yee
 #' 
@@ -6766,6 +6663,11 @@ pgumbel <- function (q, location = 0, scale = 1, lower.tail = TRUE, log.p = FALS
   ans
 }
 
+pGumbel <- function (q, mu = 0, sigma = 1){
+  stopifnot(sigma > 0)
+  exp(-exp(-((q - mu)/sigma)))
+}
+
 #' Yeo-Johnson Transformation
 #' 
 #' Computes the normalizing Yeo-Johnson transformation. #' This code and the details of the help file were taken from the \code{VGAM} package.  
@@ -6785,7 +6687,7 @@ pgumbel <- function (q, location = 0, scale = 1, lower.tail = TRUE, log.p = FALS
 #' used to transform the data so as to improve normality. They can be used to 
 #' perform LMS quantile regression.
 #' 
-#' @return A vector of transformed values. 
+#' @returns A vector of transformed values. 
 #' 
 #' @author Thomas Yee
 #' 
@@ -6866,7 +6768,11 @@ is.Numeric <- function (x, length.arg = Inf, integer.valued = FALSE, positive = 
 #' @param vars A character vector of variable names. 
 #' @param byvar A character string giving a variable name of a stratifying variable.  The summaries of the \code{vars} will be provided for each level of \code{byvar}. 
 #' @param convertFactors Logical indicating whether factors should be converted to numeric first and then summarised. 
-#'
+#' @returns a matrix of summary statistics for variables, optionally by the values of another variable. 
+#' @examples
+#' data(aclp)
+#' sumStats(aclp, vars=c("gdpw", "popg"), byvar="democ")
+#' 
 #' @importFrom stats weights 
 #' @importFrom survey svytotal
 #' @export
@@ -6975,12 +6881,14 @@ sumStats.survey.design <- function(data, vars, byvar=NULL, convertFactors=FALSE)
 #' @param byvar Optional column variable for the cross-tabulation.  If \code{NULL}, a frequency and relative frequency distribution of \code{var} will be produced. 
 #' @param controlvar The name of a categorical control variable. 
 #' @param weight If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the cross-tabulation. 
-#' @param weight A vector of weights to be applied to the table. 
 #' @param ... Other arguments to be passed down to \code{make_assoc_stats}.  You can use this to calculate different statistics.  By default, you get Chi-squared, Cramer's V, Gamma and Kendall's Tau-b. 
 #' 
 #' Produces a cross-tabulation and Chi-square statistic for weighted or unweighted data. 
 #' 
-#' @return A list with two elements - table of class \code{tabyl} and the returned results from \code{svychisq}.
+#' @returns A list with two elements - table of class \code{tabyl} and the returned results from \code{svychisq}.
+#' @examples
+#' data(france)
+#' xt(france, "vote", "retnat")
 #' 
 #' @export
 xt <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL, ...){UseMethod("xt")}
@@ -7122,7 +7030,6 @@ xt.data.frame <- function(data, var, byvar=NULL, controlvar=NULL, weight=NULL,  
 }
 
 #' @method print xt
-#' @export
 print.xt <- function(x, ...){
   if(length(x$tab) == 1){
     print.data.frame(x$tab[[1]])
@@ -7155,7 +7062,11 @@ print.xt <- function(x, ...){
 #' @param data A data frame to pass to the ggplot function
 #' @param variable A variable to be plotted. 
 #' @param addPct Where labels should be added - "none" gives no labels, "legend" addes percentages to the color legend, "pie" addes the legends to the pie pieces. 
+#' @returns A ggplot pie chart
 #' 
+#' @examples
+#' data(france)
+#' ggpie(france, "vote")
 #' @return a ggplot
 #' 
 #' @export
@@ -7187,7 +7098,12 @@ if(addPct == "pie") g <- g + geom_text(aes_string(y="place", label = "pctlab"))
 #' @param data A data frame where \code{x} and \code{y} can be found. 
 #' @param ... Other arguments to be passed down to \code{t.test}. 
 #' 
-#' @return an object of class \code{tTest}
+#' @return an object of class \code{tTest} that contains the results from base `t.test` along with 
+#' summary statistics (mean, n, se) for both groups and the difference. 
+#' 
+#' @examples
+#' data(aclp)
+#' tTest("democ", "gdpw", aclp)
 #' 
 #' @export
 tTest <- function(x,y, data, ...){
@@ -7249,7 +7165,11 @@ print.tTest <- function(x, ...){
 #' 
 #' @author John Fox
 #' 
-#' @return A factor
+#' @returns A factor binned according to the instructions, 
+#' @examples
+#' data(aclp)
+#' bv <- binVar(aclp$gdpw, method="proportions")
+#' table(bv)
 #' 
 #' @export
 binVar <- function (x, bins = 4, method = c("intervals", "proportions"), labels = FALSE, include.lowest=TRUE, right=FALSE, ...) 
@@ -7288,7 +7208,11 @@ binVar <- function (x, bins = 4, method = c("intervals", "proportions"), labels 
 #' 
 #' @export
 #' 
-#' @return A matrix of statistics and p-values. 
+#' @returns A matrix of statistics and p-values. 
+#' @examples
+#' data(france)
+#' make_assoc_stats(france$retnat, france$vote, chisq=TRUE, phi=FALSE, lambda=TRUE)
+#' 
 make_assoc_stats <- function(x,y, chisq=FALSE, phi=FALSE, cramersV=TRUE, lambda=FALSE,
                              gamma=TRUE, d=FALSE, taub=TRUE, n=1000, weight=NULL){
   
@@ -7532,10 +7456,13 @@ simtab <- function(TAB, n=1000, stat=NULL){
 #' correlation under the null hypothesis and then calculates a p-value from that 
 #' distribution. 
 #' 
-#' @return An object of class \code{pwc}, which is a list with elements \code{rSig} 
+#' @returns An object of class \code{pwc}, which is a list with elements \code{rSig} 
 #' which is a lower-triangular correlation matrix where only significant correlations 
 #' are printed, \code{r} which is the raw-data pairwise correlation matrix and 
 #' \code{p} which gives the p-values of all of the correlations. 
+#' @examples
+#' data(InteractionEx)
+#' pwCorrMat(~y + x1 + x2 + z, data=InteractionEx)
 #' 
 #' @export
 pwCorrMat <- function(formula, data, method=c("z", "t", "sim"), weight=NULL, alpha=.05, ...){
@@ -7613,7 +7540,6 @@ sig.cor <- function(x,y, method=c("z", "t", "sim"), n.sim = 1000, two.sided=TRUE
 
 
 #' @method print pwc
-#' @export
 print.pwc <- function(x, ...){
   cat("Pairwise Correlations\n")
   print(noquote(x$rSig))
@@ -7630,7 +7556,7 @@ print.pwc <- function(x, ...){
 ##' @param names An optional vector of names for the coefficients. 
 ##' @param orderSize Logical indicating whether the terms are ordered by importance in the graph. 
 ##' 
-##' @return Returns an initialized ggplot, but geometries need to be added to produce meaningful output (see examples). 
+##' @returns Returns an initialized ggplot, but geometries need to be added to produce meaningful output (see examples). 
 ##' 
 ##' @examples 
 ##' data(aclp)
@@ -7686,7 +7612,7 @@ impCoef <- function(obj, pct=FALSE, names=NULL, orderSize=TRUE){
 #' points (2) subject to the overall measurement constraints in the model.
 #' @param starts Optional starting values for the optimal scaling algorithm.
 #' @param ... Other arguments to be passed down to \code{lm}.
-#' @return A list with the following elements:
+#' @returns A list with the following elements:
 #' 
 #' \item{result}{The result of the optimal scaling process}
 #' 
@@ -7697,9 +7623,13 @@ impCoef <- function(obj, pct=FALSE, names=NULL, orderSize=TRUE){
 #' 
 #' \item{form}{Original formula}
 #' @author Dave Armstrong and Bill Jacoby
-#' 
+#' @importFrom stats reformulate
 #' @importFrom dplyr bind_cols
 #' @export
+#' @examples
+#' data(france)
+#' res <- alsosDV(lrself ~ retnat + male + age, data=france)
+#' summary(res$result)
 #' 
 #' @references
 #' 
@@ -7714,9 +7644,10 @@ impCoef <- function(obj, pct=FALSE, names=NULL, orderSize=TRUE){
 #' with Qualitative and Quantitative Variables: An Alternating Least Squares
 #' Method with Optimal Scaling Features} Psychometrika, 41:502-529.
 alsosDV <- function(form, data, maxit = 30, level = 2, process = 1, starts = NULL, ...){
-  dv <- names(model.frame(form, data))[1]
-  os_form <- paste(dv, " ~ 1")
-  raw_form <- paste0("~ ", as.character(form)[[3]])
+  unform <- unformulate(form)
+  dv <- unform$response
+  os_form <- reformulate("1", response=dv)
+  raw_form <- reformulate(unform$termlabels)
   out <- alsos(os_form, raw_form, data=data, maxit=maxit, scale_dv=TRUE, 
                level=level, process=process, starts=starts)
   return(out)
@@ -7757,6 +7688,10 @@ alsosDV <- function(form, data, maxit = 30, level = 2, process = 1, starts = NUL
 #' @author Dave Armstrong and Bill Jacoby
 #' 
 #' @export
+#' @examples
+#' data(france)
+#' res <- alsos(lrself ~ 1, ~retnat + male + age, data=france, scale_dv=TRUE)
+#' summary(res$result)
 #' 
 #' @references
 #' 
@@ -7804,11 +7739,10 @@ alsos <- function(os_form, raw_form = ~1, data, scale_dv=FALSE, maxit=30,
   if(length(level) == 1){
     level <- rep(level, (length(scale_vars) + scale_dv))
   }
-  form <- paste(dv, "~", 
-        paste(as.character(f1)[3], 
-          as.character(f2)[2], 
-          sep="+"), 
-        collapse="")
+  unf1 <- unformulate(f1)
+  unf2 <- unformulate(f2)
+  form <- reformulate(c(unf1$termlabels, unf2$termlabels), 
+                      response=dv)
   if(!is.null(starts)){
     if(length(starts) != nrow(tmpdata)){
       stop("Starting values must be the same length as the dataset\n")
@@ -7874,7 +7808,11 @@ alsos <- function(os_form, raw_form = ~1, data, scale_dv=FALSE, maxit=30,
 ##' @param return_data Logical indicating whether the data should be returned
 ##' (if \code{TRUE}) or a plot generated (if \code{FALSE})
 ##' @param ... arguments to be passed in, currently not implemented.
-##' @return A plot.
+##' @returns A plot of the original and optimally scaled values. 
+#' @examples
+#' data(france)
+#' res <- alsos(lrself ~ 1, ~retnat + male + age, data=france, scale_dv=TRUE)
+#' plot(res)
 ##' @export
 ##' @importFrom tidyr pivot_longer
 ##' @method plot alsos
@@ -7938,7 +7876,12 @@ plot.alsos <- function(x, which_var=NULL, return_data=FALSE, ...){
 #' @param return Whether the aggregated result with percentile confidence intervals, 
 #' the bootstrap object or both should be returned. 
 #' @param ... Other arguments to be passed down to \code{lm}.
-#' @return A list with either \code{data} and/or \code{boot.obj} entries. 
+#' @returns A list with either \code{data} and/or \code{boot.obj} entries. 
+#' @examples
+#' data(france)
+#' res <- boot.alsos(lrself ~ 1, ~retnat + male + age, data=france, scale_dv=TRUE,
+#' return = "both")
+#' res
 #' @importFrom dplyr group_by_at vars
 #' @export 
 boot.alsos <- function(os_form, raw_form=~1, data,
@@ -8016,7 +7959,7 @@ bafun <- function(data, inds, os_form, raw_form=~1,
 #' Makes an interactive list of variables and their descriptive labels.  Uses the \pkg{DT} package to generate the table.  
 #' 
 #' @param data A dataset to be described. 
-#' 
+#' @returns A datatable with variable names and descriptive labels. 
 #' @export
 #' @importFrom DT datatable
 describe_data <- function(data){
@@ -8046,7 +7989,7 @@ datatable(x)
 ##' 
 ##' Fit a local polynomial regression with automatic smoothing parameter selection. The predictor x can either one-dimensional or two-dimensional. This function was taken directly from `fANCOVA` version 0.5-1 and is wholly attributed to its author Xiao-Feng Wang. 
 ##' 
-##' @return An object of class \code{loess}.
+##' @returns An object of class \code{loess} with optimal smoothing parameter.
 ##' 
 ##' @author X.F. Wang 
 ##' 
@@ -8189,10 +8132,13 @@ opt.span <- function(model, criterion = c("aicc", "gcv"),
 #' It also returns the variable names of all of the variables 
 #' implicated in the formula. 
 #' 
-#' @return A list with \code{termlabels} giving the rhs terms of the
+#' @returns A list with \code{termlabels} giving the rhs terms of the
 #' model, \code{response} give the lhs of the model, \code{env} optionally 
 #' giving the environment of the formula and \code{vars} a vector of the 
 #' variable names implicated in the formula
+#' 
+#' @examples
+#' unformulate(y ~ x1 + x2)
 #' 
 #' @export
 #'
@@ -8232,7 +8178,12 @@ unformulate <- function(form, keep_env=FALSE){
 #' @param sig_value Scalar indicating the one-sided p-value required to achieve statistical significance. 
 #' @param ... Other arguments to be passed down to \code{boot.ci()}
 #' 
-#' @return A tibble with the term name, estimate, lower and upper confidence bounds. 
+#' @returns A tibble with the term name, estimate, lower and upper confidence bounds. 
+#' @examples
+#' data(france)
+#' res <- boot.alsos(lrself ~ 1, ~retnat + male + age, data=france, scale_dv=TRUE,
+#' return = "both")
+#' tidy_boot_ci(res$boot.obj, type="perc") 
 #' 
 #' @importFrom boot boot.ci
 #' @importFrom dplyr tibble

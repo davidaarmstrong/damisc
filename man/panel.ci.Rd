@@ -16,10 +16,15 @@ panel.ci(x, y, subscripts, lower, upper, zl)
 \item{zl}{Logical indicating whether or not a horizontal dotted line at zero
 is desired.}
 }
+\value{
+A panel function that plots confidence envelopes with dotted lines 
+suitable for inclusion in a lattice graph
+}
 \description{
 This panel function is defined to plot confidence intervals in a multi-panel
 lattice display. Note, both lower and upper must be passed directly to
-\code{xyplot} as they will be passed down to the prepanel function.
+\code{xyplot} as they will be passed down to the panel function.  This function 
+is used internally by several other functions in the package.
 }
 \author{
 Dave Armstrong

@@ -32,6 +32,11 @@ attribute of the dataset and in an SPSS dataset, they are in the
 \code{variable.labels} attribute.  These are searched, ignoring case, for
 the desired string
 }
+\examples{
+data(france)
+searchVarLabels(france,"vote")
+
+}
 \author{
 Dave Armstrong
 }

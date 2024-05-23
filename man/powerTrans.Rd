@@ -18,3 +18,8 @@ A vector of transformed values
 Power transformation function that treats everything with
 absolute power transform < .01 as the log transform.
 }
+\examples{
+data(aclp)
+## Calculate log transform of gdpw from the aclp data
+powerTrans(aclp$gdpw, 0)
+}

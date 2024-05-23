@@ -43,7 +43,15 @@ entries are supported.}
 \item{...}{Other arguments to be passed down to \code{xyplot}.}
 }
 \value{
-A plot or a data frame
+A plot or a list depending on the value of `plot`.  If: 
+\item{TRUE}{The plot gives the
+average predicted probability and confidence bounds moving across the values  
+of the independent variable of interest}
+\item{FALSE}{A list with three elements - `ci` which has the values of the independent
+variable (labelled `s`), the predicted probability in `mean` and the lower and upper
+confidence bounds in `lower` and `upper` respectively; an empty element named `plot` and
+an element named `sim` that contains the actual simulated values that can be recovered if
+desired.}
 }
 \description{
 For objects of class \code{glm}, it calculates the change the average

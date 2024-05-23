@@ -11,6 +11,9 @@ has.intercept(model, ...)
 
 \item{...}{Other arguments passed down, currently not implemented}
 }
+\value{
+Logical value indicating whether the model has an intercept term
+}
 \description{
 Identify if model has intercept
 }

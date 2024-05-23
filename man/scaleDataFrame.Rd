@@ -16,7 +16,7 @@ scaleDataFrame(data, numsd = 1, nvals_fac = 11, exclude = NULL)
 \item{exclude}{A character vector of names of variables to exclude from the standardization.}
 }
 \value{
-A data frame with standardized quantitative variables
+A data frame with standardized quantitative variables and untransformed variables that are either factors or have sufficiently few values.
 }
 \description{
 This function standardizes quantitative variables in a data frame while

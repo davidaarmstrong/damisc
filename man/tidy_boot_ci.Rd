@@ -41,3 +41,10 @@ A tibble with the term name, estimate, lower and upper confidence bounds.
 Returns a tibble with confidence intervals for all parameters from a bootstrapping
 object estimated with the \code{boot()} function.
 }
+\examples{
+data(france)
+res <- boot.alsos(lrself ~ 1, ~retnat + male + age, data=france, scale_dv=TRUE,
+return = "both")
+tidy_boot_ci(res$boot.obj, type="perc") 
+
+}

@@ -15,6 +15,10 @@ panel.2cat(x, y, subscripts, lower, upper, length = 0.2)
 
 \item{length}{Length of the arrow head lines.}
 }
+\value{
+A panel function that prints capped error bars.  The function is suitable
+for inclusion in a lattice graph.
+}
 \description{
 This panel function is defined to plot confidence intervals in a multi-panel
 lattice display where the x-variable is categorical. Note, both lower and

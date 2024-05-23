@@ -14,6 +14,13 @@
 \item{sim.ci}{Coverage for the simulated confidence interval, if
 \code{sim=TRUE} in the call to \code{pre}.}
 }
+\value{
+Printed results that given the proportion in the modal category (PMC), 
+proportion correctly predicted by the model (PCP) and the proportional reduction
+in error (PRE).  The ePMC, ePCP and ePRE are the expected versions of the terms 
+above that take into account model uncertainty.  The two models being compared
+are also identified.
+}
 \description{
 Prints the output from an object of class \code{pre}.  The function prints
 all components of the calculation and optionally simulated confidence
