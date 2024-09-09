@@ -20,7 +20,7 @@ xt(data, var, byvar = NULL, controlvar = NULL, weight = NULL, ...)
 
 \item{weight}{If using a data frame (rather than a survey design object), specifying the name of a weighting variable will for the function to create a survey design with probability weights equal to the weight variable and then use the survey design object to make the cross-tabulation.}
 
-\item{...}{Other arguments to be passed down to \code{make_assoc_stats}.  You can use this to calculate different statistics.  By default, you get Chi-squared, Cramer's V, Gamma and Kendall's Tau-b. 
+\item{...}{Other arguments to be passed down to \code{make_assoc_stats}.  You can use this to calculate different statistics.  By default, you get Chi-squared, Cramer's V and lambda.  With \code{ordinal = TRUE} you will also get Gamma, Tau-b and Somer's D. 
 
 Produces a cross-tabulation and Chi-square statistic for weighted or unweighted data.}
 }
