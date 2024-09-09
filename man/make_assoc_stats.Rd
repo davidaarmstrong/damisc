@@ -15,38 +15,14 @@
 \alias{simtab}
 \title{Make Categorical Association Statistics}
 \usage{
-make_assoc_stats(
-  x,
-  y,
-  chisq = FALSE,
-  phi = FALSE,
-  cramersV = TRUE,
-  lambda = FALSE,
-  gamma = TRUE,
-  d = FALSE,
-  taub = TRUE,
-  n = 1000,
-  weight = NULL
-)
+make_assoc_stats(x, y, ordinal = FALSE, n = 1000, weight = NULL)
 }
 \arguments{
 \item{x}{The row-variable in a contingency table}
 
 \item{y}{The column-variable in a contingency table}
 
-\item{chisq}{Logical indicating whether the chi-squared statistic should be produced.}
-
-\item{phi}{Logical indicating whether the phi statistic should be produced.}
-
-\item{cramersV}{Logical indicating whether the Cramer's V statistic should be produced.}
-
-\item{lambda}{Logical indicating whether the lambda statistic should be produced.}
-
-\item{gamma}{Logical indicating whether the gamma statistic for ordinal data should be produced.}
-
-\item{d}{Logical indicating whether Somer's D for ordinal data should be produced.}
-
-\item{taub}{Logical indicating whether Kendall's Tau-b statistic should be produced.}
+\item{ordinal}{Logical indicating whether ordinal measures should also be returned.}
 
 \item{n}{Number of iterations in the simulation.}
 

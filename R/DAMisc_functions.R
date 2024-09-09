@@ -7197,13 +7197,7 @@ binVar <- function (x, bins = 4, method = c("intervals", "proportions"), labels 
 #' @aliases make_assoc_stats concordant discordant ord.gamma ord.somers.d tau.b lambda phi V simtable simrho simtab
 #' @param x The row-variable in a contingency table
 #' @param y The column-variable in a contingency table
-#' @param chisq Logical indicating whether the chi-squared statistic should be produced. 
-#' @param phi Logical indicating whether the phi statistic should be produced. 
-#' @param cramersV Logical indicating whether the Cramer's V statistic should be produced. 
-#' @param lambda Logical indicating whether the lambda statistic should be produced. 
-#' @param gamma Logical indicating whether the gamma statistic for ordinal data should be produced. 
-#' @param d Logical indicating whether Somer's D for ordinal data should be produced. 
-#' @param taub Logical indicating whether Kendall's Tau-b statistic should be produced. 
+#' @param ordinal Logical indicating whether ordinal measures should also be returned.
 #' @param n Number of iterations in the simulation. 
 #' @param weight Vector of weights used to generate the table. 
 #' 
@@ -7214,14 +7208,31 @@ binVar <- function (x, bins = 4, method = c("intervals", "proportions"), labels 
 #' data(france)
 #' make_assoc_stats(france$retnat, france$vote, chisq=TRUE, phi=FALSE, lambda=TRUE)
 #' 
-make_assoc_stats <- function(x,y, chisq=FALSE, phi=FALSE, cramersV=TRUE, lambda=FALSE,
-                             gamma=TRUE, d=FALSE, taub=TRUE, n=1000, weight=NULL){
-  
+make_assoc_stats <- function(x,y, ordinal = FALSE, n=1000, weight=NULL){
   if(is.null(weight))tab <- table(x,y)
   if(!is.null(weight)){
     mydf <- data.frame(x=x, y=y, weight=weight)
     des <- svydesign(ids=~1, strata=NULL, weights=~weight, data=mydf, digits=3)
     tab <- svytable(~x+y, design=des, round=TRUE)
+  }
+
+  chisq <- TRUE
+  lambda <- TRUE
+  if(nrow(tab) == 2 & ncol(tab) == 2){
+    phi <- TRUE
+    cramersV <- FALSE
+  }else{
+    phi <- FALSE
+    cramersV <- TRUE
+  }
+  if(ordinal){
+    gamma <- TRUE
+    d <- TRUE
+    taub <- TRUE
+  }else{
+    gamma <- FALSE
+    d <- FALSE
+    taub <- FALSE
   }
   tabs <- simtab(tab,n)
   allStats <- NULL
