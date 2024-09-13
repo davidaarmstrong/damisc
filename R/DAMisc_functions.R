@@ -7499,7 +7499,7 @@ pwCorrMat <- function(formula, data, method=c("z", "t", "sim"), weight=NULL, alp
   colnames(outSig) <- colnames(out) <- rownames(outSig) <- rownames(out) <- colnames(p.out) <- rownames(p.out) <- colnames(X)
   ret <- list(rSig=outSig, r=out, p = p.out )
   class(ret) <- "pwc"
-  return(ret)
+  (ret)
 }
 
 #' @export
@@ -7552,6 +7552,7 @@ sig.cor <- function(x,y, method=c("z", "t", "sim"), n.sim = 1000, two.sided=TRUE
 
 
 #' @method print pwc
+#' @export
 print.pwc <- function(x, ...){
   cat("Pairwise Correlations\n")
   print(noquote(x$rSig))
