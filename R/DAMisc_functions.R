@@ -7206,7 +7206,7 @@ binVar <- function (x, bins = 4, method = c("intervals", "proportions"), labels 
 #' @returns A matrix of statistics and p-values. 
 #' @examples
 #' data(france)
-#' make_assoc_stats(france$retnat, france$vote, chisq=TRUE, phi=FALSE, lambda=TRUE)
+#' make_assoc_stats(france$retnat, france$vote)
 #' 
 make_assoc_stats <- function(x,y, ordinal = FALSE, n=1000, weight=NULL){
   if(is.null(weight))tab <- table(x,y)

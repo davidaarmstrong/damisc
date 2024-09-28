@@ -37,6 +37,6 @@ p-values are obtained through simulation.
 }
 \examples{
 data(france)
-make_assoc_stats(france$retnat, france$vote, chisq=TRUE, phi=FALSE, lambda=TRUE)
+make_assoc_stats(france$retnat, france$vote)
 
 }
