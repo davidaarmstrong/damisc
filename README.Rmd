@@ -22,14 +22,14 @@ The `DAMisc` package has evolved over the past decade to include many of the fun
   - Functions for investigating interactions in different settings (linear models and binomial GLMs).  
   - Functions for post-model evaluation and examination of non-linear models (GLMs, ordinal data models and unordered data models). 
 
-I'll talk about each of these below.
+I will talk about each of these below.
 
 ### Evaluating Un-modeled Non-linearities. 
 
-One of the problems I find most interesting in applied regression analysis is evaluating the extent to which the linear, additive functional form is sufficient to capture the systematic dependence of the outcome on the explanatory variables.  For the purposes of this example, we'll use data from the `carData` package.  Here's a multiple linear regression model where all covariates enter the model linearly and additively.
+One of the problems I find most interesting in applied regression analysis is evaluating the extent to which the linear, additive functional form is sufficient to capture the systematic dependence of the outcome on the explanatory variables.  For the purposes of this example, we will use data from the `carData` package.  Here is a multiple linear regression model where all covariates enter the model linearly and additively.
 
 ```{r}
-data(Prestige, package='carData')
+data(Prestige, package= "carData")
 lin.mod <- lm(prestige ~ income + education + women + type, data=Prestige)
 summary(lin.mod)
 ```
@@ -53,14 +53,14 @@ Here, the test suggests that the `income` and `women` relationships both have si
 car::boxTidwell(prestige ~ income, ~ women + type + education, data=Prestige)
 ```
 
-Here, the MLE of $\lambda$, the transformation parameter, is -0.299.  We might wonder whether that's close enough to the log transform, 
+Here, the MLE of $\lambda$, the transformation parameter, is -0.299.  We might wonder whether that is close enough to the log transform, 
 which is what is used for the 0 power transform.  We could figure that out by imposing the transformation in the `boxTidwell` function. 
 
 ```{r}
 car::boxTidwell(prestige ~ log(income), ~ women + type + education, data=Prestige)
 ```
 
-Since the proposed additional transformation parameter is not significant, we can be confident that the log transform is sufficient. The `women` variable likely needs a polynomial since the non-linearity is not simple and monotone.  We could use a second degree polynomial, but the `NKnots` and `NKnotsTest` functions can help figure this out. Let's look at the `NKnots` function first. 
+Since the proposed additional transformation parameter is not significant, we can be confident that the log transform is sufficient. The `women` variable likely needs a polynomial since the non-linearity is not simple and monotone.  We could use a second degree polynomial, but the `NKnots` and `NKnotsTest` functions can help figure this out. Let us look at the `NKnots` function first. 
 
 ```{r fig.height=8, fig.width=8, out.width="400px", out.height="400px", fig.align="center"}
 NKnots(prestige ~ log(income) + type + education, var="women", 
@@ -81,11 +81,11 @@ Now that we are confident about the correct (additive) functional form of the va
 
 ### Evaluating Interactions
 
-Lots has been written recently in Political Science regarding interactions, in both linear and non-linear (generally binomial GLM) models.  First, we'll tackle linear model interactions. 
+Lots has been written recently in Political Science regarding interactions, in both linear and non-linear (generally binomial GLM) models.  First, we will tackle linear model interactions. 
 
 #### Linear Model Interactions 
 
-We can add an interaction to the model.  Here, we can use the same data as above, though we'll use the linear, conditional specification.  There are two main functions that work in linear models - one for evaluating interactions between quantitative and qualitiative variables and one for evaluating interactions between two quantitative variables.  Let's look at the quantitative-qualitative interaction first. 
+We can add an interaction to the model.  Here, we can use the same data as above, though we will use the linear, conditional specification.  There are two main functions that work in linear models - one for evaluating interactions between quantitative and qualitiative variables and one for evaluating interactions between two quantitative variables.  Let us look at the quantitative-qualitative interaction first. 
 
 ```{r}
 Prestige$income <- Prestige$income/1000
@@ -99,7 +99,7 @@ We can make sure that the interaction is significant with the `Anova` function f
 car::Anova(int.mod1)
 ```
 
-We see that the interaction is significant.  We can use the `intQualQuant` function from the `DAMisc` package to figure out what the interaction implies.  First, let's calculate the simple slopes: 
+We see that the interaction is significant.  We can use the `intQualQuant` function from the `DAMisc` package to figure out what the interaction implies.  First, let us calculate the simple slopes: 
 
 ```{r}
 intQualQuant(int.mod1, c("income", "type"), type="slopes", plot=FALSE)
@@ -111,7 +111,7 @@ Here, we see that the slope of income (in thousands of dollars) on prestige is 3
 intQualQuant(int.mod1, c("income", "type"), type="slopes", plot=TRUE)
 ```
 
-One of the benefits of this function is that it plots a rug for the quantitative variable at each level of the qualitative variable.  This indicates, particularly in this case, that the density of income depends very much on occupation type.  The other side of the interaction is also important.  We can plot that side of the interaction by specifying `type='facs'`.  
+One of the benefits of this function is that it plots a rug for the quantitative variable at each level of the qualitative variable.  This indicates, particularly in this case, that the density of income depends very much on occupation type.  The other side of the interaction is also important.  We can plot that side of the interaction by specifying `type= "facs"`.  
 
 ```{r fig.height=4, fig.width=12, out.width="900px", out.height="300px", fig.align="center"}
 lattice::trellis.par.set(strip.background=list(col="gray75"))
@@ -128,14 +128,14 @@ int.mod2 <- lm(prestige ~ income*education + type + women, data=Prestige)
 summary(int.mod2)
 ```
 
-There are a couple of different things we can do here.  The most recent advice comes from Berry, Golder and Milton's 2012 piece in the _Journal of Politics_.  First, suggested making conditional effects plots.  The `DAintfun2` function in the `DAMisc` package does this for you. 
+There are a couple of different things we can do here.  The most recent advice comes from Berry, Golder and Milton 2012 in the Journal of Politics.  First, suggested making conditional effects plots.  The `DAintfun2` function in the `DAMisc` package does this for you. 
 
 ```{r fig.height=6, fig.width=12, out.width="900px", out.height="450px", fig.align="center"}
 DAintfun2(int.mod2, c("income", "education"), hist=TRUE, 
           scale.hist=.3)
 ```
 
-Here, the conditional effect of one variable is plotted on the $y$-axis and the conditioning variable is plotted on the $x$-axis.  The histogram gives the density of the conditioning variable.  The `scale.hist` argument determines vertically how much of the plotting region the histogram occupies.  The axis numbers on the right-hand side belong to the histogram and the ones on the left belong to the conditional effect.  There are two other visualizations that might be useful in other circumstances.  The first, produced with `DAintfun3` provides the conditional effect of one variable at the mean and the mean$\pm$SD of the other variable. Here's what that looks like in this case. 
+Here, the conditional effect of one variable is plotted on the $y$-axis and the conditioning variable is plotted on the $x$-axis.  The histogram gives the density of the conditioning variable.  The `scale.hist` argument determines vertically how much of the plotting region the histogram occupies.  The axis numbers on the right-hand side belong to the histogram and the ones on the left belong to the conditional effect.  There are two other visualizations that might be useful in other circumstances.  The first, produced with `DAintfun3` provides the conditional effect of one variable at the mean and the mean$\pm$SD of the other variable. Here is what that looks like in this case. 
 
 ```{r fig.height=6, fig.width=12, out.width="900px", out.height="450px", fig.align="center"}
 DAintfun3(int.mod2, c("income", "education"))
@@ -147,13 +147,13 @@ The third method, with `DAintfun` produces a single 3-D surface plot where the a
 DAintfun(int.mod2,c("income", "education"), theta=-45, ticktype="detail", phi=15)
 ```
 
-Finally, there are two more functions that can be used here.  The `changeSig` function calculates where conditional effects change from significant to insignificant.  Here's an example using the model above. 
+Finally, there are two more functions that can be used here.  The `changeSig` function calculates where conditional effects change from significant to insignificant.  Here is an example using the model above. 
 
 ```{r}
 changeSig(int.mod2, c("income", "education"))
 ```
 
-This function shows when the lower and upper confidence bounds cross zero and what percentile of the conditioning variable's distribution that is. 
+This function shows when the lower and upper confidence bounds cross zero and what percentile of the conditioning variable distribution that is. 
 
 Finally, following Berry, Golder and Milton (2012), the function `BGMtest` tests all of the hypotheses they specify. 
 
@@ -170,7 +170,7 @@ There are two related questions:
   1. Is a product term necessary for an interaction to exist? 
   2. How to test for an interaction? 
   
-Rainey's answer to the first problem is compelling.  He argues that unless there is strong theory to suggest that the product term is _not_ necessary, then it should be included.  The counterintuitive part of the argument is that rather than the product term enhancing our ability to find an interaction, the product term actually can mitigate the effect of compression reducing the strength of the interaction if the data is consistent with a more additive process.  
+The answer to the first problem is compelling.  He argues that unless there is strong theory to suggest that the product term is not necessary, then it should be included.  The counterintuitive part of the argument is that rather than the product term enhancing our ability to find an interaction, the product term actually can mitigate the effect of compression reducing the strength of the interaction if the data is consistent with a more additive process.  
 
 The `DAMisc` package has two functions that can help.  The `intEff` function is a more or less direct port of the code that Norton, Wang and Ai proposed in their article in the Stata Journal.  I prefer the `secondDiff` function that directly calculates second differences and uses a parametric bootstrap to find confidence intervals for the calculated quantities.  We will demonstrate with the `conflictData` from the `clarkeTest` package.  
 
@@ -189,7 +189,7 @@ bin.mod2 <- glm(conflict_binary ~ log(pop) + rgdpna_pc *
 In the models above, `bin.mod1` has the terms linearly and additively entered in the model.  `bin.mod2` includes a product term between `rgdpna_pc` and `polity2`.  We could test to see whether the second model fits better than the first. 
 
 ```{r}
-anova(bin.mod1, bin.mod2, test='Chisq')
+anova(bin.mod1, bin.mod2, test="Chisq")
 ```
 
 
@@ -214,7 +214,7 @@ sd2 <- secondDiff(bin.mod2, c("rgdpna_pc", "polity2"), conflictData)
 summary(sd2)
 ```
 
-Note here, that some of the individual second differences are insignificant, but overall, the picture looks pretty similar - the average second differences is 0.065 (slightly bigger than before) and significantly different from zero.  In this case, including the product term doesn't actually change what we think about the interaction much at all. 
+Note here, that some of the individual second differences are insignificant, but overall, the picture looks pretty similar - the average second differences is 0.065 (slightly bigger than before) and significantly different from zero.  In this case, including the product term does not actually change what we think about the interaction much at all. 
 
 ```{r fig.height=8, fig.width=8, out.width="400px", out.height="400px", fig.align="center"}
 print(plot(sd2))
@@ -222,11 +222,11 @@ print(plot(sd2))
 
 ### Non-linear Model Post-Estimation Tools
 
-Probably the largest group of functions in the `DAMisc` package are for post-estimation evaluation of non-linear models - particularly binomial (and to a lesser degree, poisson) GLMs and models for ordered and unordered categorical dependent variables.  We'll talk about each kind in turn. 
+Probably the largest group of functions in the `DAMisc` package are for post-estimation evaluation of non-linear models - particularly binomial (and to a lesser degree, poisson) GLMs and models for ordered and unordered categorical dependent variables.  We will talk about each kind in turn. 
 
 #### Binomial GLMs 
 
-Using the model discussed above, we can test out the tools for binomial GLMs. Just to remind, we'll use the following: 
+Using the model discussed above, we can test out the tools for binomial GLMs. Just to remind, we will use the following: 
 
 ```{r}
 data(conflictData, package="clarkeTest")
@@ -254,32 +254,16 @@ By default, the `pre` function tests the current model relative to the null mode
 pre(bin.mod1, sim=TRUE, R=1500)
 ```
 
-The `glmChange` function uses the marginal effects at reasonable values approach to calculating the change in predicted probability for a change in each explanatory variable. 
-
-```{r}
-glmChange(bin.mod1, data=conflictData, diffchange="sd", sim=TRUE)
-```
-
-What we see above is that the effect of changing population by a standard deviation (from 250 to 79969.46), hodling `rgdpna_pc` constant at 6.28 and `polity2` constant at 3, is to make conflict more likely by 0.425.  That difference is statistically significant.  
-
-For those who would rather have the average marginal effect approach, the `glmChange2` function has you covered.  Here, because of the computational complexity, the function only does one variable at a time.  The result for population is below: 
-
-```{r}
-glmChange2(bin.mod1, "pop", conflictData, "sd")
-```
-
-Here, we can see that the effect is attenuated slightly.  Changing population by a standard deviation for each individual observation produces an average effect of 0.358, which is also significantly bigger than zero.  
-
-Finally, the `probci` function also calculates the difference in predicted probabilities for any combination of values.  For example, here's what it looks like for `rgdpna_pc` and `polity2`: 
+The `probci` function also calculates the difference in predicted probabilities for any combination of values.  For example, here iss what it looks like for `rgdpna_pc` and `polity2`: 
 
 ```{r}
 probci(bin.mod1, conflictData, changeX=c("rgdpna_pc", "polity2"), 
        numQuantVals=2)
 ```
 
-Here, we're choosing 2 values of both variables.  The first two columns show the values of the two variables we change from and the second two columns show the values we are changing to.  The `pred_prob` column gives the difference in probabilities moving from the first set of values to the second.  The `lower` and `upper` are the confidence bounds for the difference in probabilities. 
+Here, we are choosing 2 values of both variables.  The first two columns show the values of the two variables we change from and the second two columns show the values we are changing to.  The `pred_prob` column gives the difference in probabilities moving from the first set of values to the second.  The `lower` and `upper` are the confidence bounds for the difference in probabilities. 
 
-Just like finding predicted probabilities, it's also easy to plot the predicted probabilities using the `effects` package or the `DAMisc` package. The `effects` packages uses the marginal effects at reasonable values approach.  
+Just like finding predicted probabilities, it is also easy to plot the predicted probabilities using the `effects` package or the `DAMisc` package. The `effects` packages uses the marginal effects at reasonable values approach.  
 
 ```{r fig.height=8, fig.width=8, out.width="400px", out.height="400px", fig.align="center"}
 library(effects)
@@ -294,14 +278,14 @@ aveEffPlot(bin.mod1, "rgdpna_pc", conflictData,
            nvals=50)
 ```
 
-If you don't like the lattice plot, you can specify `plot=FALSE` and the data will be returned. 
+If you do not like the lattice plot, you can specify `plot=FALSE` and the data will be returned. 
 
 ```{r fig.height=8, fig.width=8, out.width="400px", out.height="400px", fig.align="center"}
 outDat <- aveEffPlot(bin.mod1, "rgdpna_pc", conflictData, 
            nvals=25, plot=FALSE)
 names(outDat)
 library(ggplot2)
-ggplot(outDat) + 
+ggplot(outDat$ci) + 
   geom_ribbon(aes(x=s, ymin=lower, ymax=upper), col="gray75", alpha=.5) + 
   geom_line(aes(x=s, y=mean)) + 
   theme_bw() + 
@@ -384,7 +368,7 @@ ml1 <- nnet::multinom(Amnesty ~ log(rgdpna_pc) + log(pop) + polity2,
                   data=conflictData)
 ```
 
-The original model summary function isn't all that useful because it prints the coefficient matrix separate from a matrix of standard errors.  The `mnlSig` function prints a more useful summary: 
+The original model summary function is not all that useful because it prints the coefficient matrix separate from a matrix of standard errors.  The `mnlSig` function prints a more useful summary: 
 
 ```{r}
 mnlSig(ml1)
@@ -420,18 +404,18 @@ The `ordAveEffPlot` function works here as well just as it did above.
 
 Ai, Chunrong and Edward C. Norton. 2003. Interaction Terms in Logit and Probit Models. Economics Letters 80(1): 123-129.
 
-Berry, W.D., DeMeritt, J.H.R. and Esarey, J. (2010) "Testing for Interaction in Binary Logit and Probit Models: Is a Product Term Essential?" _American Journal of Political Science_ 54: 248-266. 
+Berry, W.D., DeMeritt, J.H.R. and Esarey, J. (2010) Testing for Interaction in Binary Logit and Probit Models: Is a Product Term Essential? American Journal of Political Science 54: 248-266. 
 
-Berry, W., DeMeritt, J., & Esarey, J. (2016). "Bias and Overconfidence in Parametric Models of Interactive Processes" _American Journal of Political Science_ 60(2): 521-539.
+Berry, W., DeMeritt, J., & Esarey, J. (2016). Bias and Overconfidence in Parametric Models of Interactive Processes American Journal of Political Science 60(2): 521-539.
 
-Berry, William D., Matt Golder and Daniel Milton.  (2012)  "Improving Tests of Theories Positing Interaction" _The Journal of Politics_ 74(3): 653-671.
+Berry, William D., Matt Golder and Daniel Milton.  (2012)  Improving Tests of Theories Positing Interaction. The Journal of Politics 74(3): 653-671.
 
-Herron, M.  1999.  "Postestimation Uncertainty in Limited Dependent Variable Models"  _Political Analysis_ 8(1): 83--98.
+Herron, M.  1999. Postestimation Uncertainty in Limited Dependent Variable Models Political Analysis 8(1): 83-98.
 
 Long, J.S. 1997. Regression Models for Categorical and Limited Dependent Variables. Thousand Oaks, CA: Sage.
 
-Long, J.S. and J. Freese. 2005. Regression Models for Categorical Outcomes Using Stata, 2nd ed. College Station, TX: Stata Press.
+Long, J.S. and J. Freese. 2005. Regression Models for Categorical Outcomes Using Stata College Station, TX: Stata Press.
 
 Norton, Edward C., Hua Wang and Chunrong Ai. 2004. Computing Interaction Effects and Standard Errors in Logit and Probit Models. The Stata Journal 4(2): 154-167.
 
-Rainey, Carlisle. 2016. "Compression and Conditional Effects: A Product Term Is Essential When Using Logistic Regression to Test for Interaction." _Political Science Research and Methods_ 4(3): 621-639.
+Rainey, Carlisle. 2016. Compression and Conditional Effects: A Product Term Is Essential When Using Logistic Regression to Test for Interaction. Political Science Research and Methods 4(3): 621-639.

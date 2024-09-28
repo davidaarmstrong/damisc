@@ -16,7 +16,7 @@ A subset of data from King, Alt, Burns and Laver (1990)
 }
 \references{
 Gary King, James Alt, Nancy Burns, and Michael Laver. 1990. 
-"A Unified Model of Cabinet Dissolution in Parliamentary Democracies." 
-American Journal of Political Science, 34, Pp. 846–871.
+A Unified Model of Cabinet Dissolution in Parliamentary Democracies. 
+American Journal of Political Science.
 }
 \keyword{datasets}
