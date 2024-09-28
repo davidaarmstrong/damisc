@@ -43,6 +43,6 @@ Authors@R: c(person("Dave", "Armstrong", email = "davearmstrong.ps@gmail.com", r
 Description: Miscellaneous set of functions I use in my teaching either at the University of Western Ontario or the Inter-university Consortium for Political and Social Research Summer Program in Quantitative Methods.  Broadly, the functions help with presentation and interpretation of (generalized) linear models, but also implement some new tools like Alternating Least Squares Optimal Scaling for dependent variables, a Bayesian analog to the alternating least squares optimal scaling algorithm.  There are also tools to help understand interactions in both linear models  and binary generalized linear models. 
 Depends: R (>= 4.0.0)
 License: MIT + file LICENSE
-Encoding: UTF-8
+Encoding: ASCII
 LazyLoad: yes
 RoxygenNote: 7.3.2
