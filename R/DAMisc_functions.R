@@ -6574,7 +6574,7 @@ powerTrans <- function(x, transPower){
 #' is to be generated.
 #' @param obj An object of class \code{logistf}.
 #' @param data A data frame.
-#' @param ... Other arguments to be passed down to the \code{\link{Effect}}
+#' @param ... Other arguments to be passed down to the \code{Effect}
 #' function.
 #' @returns An object of class \code{eff} that can be used with other functions
 #' from the \code{effects} package.

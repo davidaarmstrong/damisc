@@ -14,7 +14,7 @@ is to be generated.}
 
 \item{data}{A data frame.}
 
-\item{...}{Other arguments to be passed down to the \code{\link{Effect}}
+\item{...}{Other arguments to be passed down to the \code{Effect}
 function.}
 }
 \value{
